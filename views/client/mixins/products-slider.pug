@@ -1,0 +1,15 @@
+include ../mixins/product-item-2.pug
+
+mixin products-slider(title1, title2, productList)
+  section.wow.fadeInUp(class="related_products mt_90 mb_70")
+    .container
+      .row
+        .col-xl-6
+          div(class="section_heading_2 section_heading")
+            h3
+              span #{title1} 
+              | #{title2}
+      .row(class="mt_25 flash_sell_2_slider")
+        each item in productList
+          .col-xl-1-5
+            +product-item-2(item)

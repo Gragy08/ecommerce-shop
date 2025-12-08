@@ -1,5 +1,6 @@
 extends ../layouts/default.pug
 include ../mixins/page-banner.pug
+include ../mixins/products-slider.pug
 
 block main
   //
@@ -42,8 +43,20 @@ block main
     ============================
     RELATED PRODUCTS START
     =============================
-  include ../partials/related-products.pug
+  //- include ../partials/related-products.pug
+  if (relatedProducts.length > 0)
+    +products-slider("Sản Phẩm", "Liên Quan", relatedProducts)
   //
     ============================
     RELATED PRODUCTS END
+    =============================
+  //
+    ============================
+    Sản phẩm đã xem
+    =============================
+  if (viewedProducts.length > 0)
+    +products-slider("Sản Phẩm", "Đã Xem", viewedProducts)
+  //
+    ============================
+    Hết Sản phẩm đã xem
     =============================
