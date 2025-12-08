@@ -3,6 +3,7 @@ import CategoryProduct from '../../models/category-product.model';
 import Product from '../../models/product.model';
 import slugify from 'slugify';
 import AttributeProduct from '../../models/attribute-product.model';
+import { formatProductItem } from '../../helpers/product.helper';
 
 export const productByCategory = async (req: Request, res: Response) => {
   const slug = req.params.slug;
@@ -184,21 +185,22 @@ export const productByCategory = async (req: Request, res: Response) => {
     .sort(sort)
 
   for (const item of productList) {
-    // Giảm giá
-    item.discount = Math.floor(((item.priceOld - item.priceNew) / item.priceOld) * 100);
+    // // Giảm giá
+    // item.discount = Math.floor(((item.priceOld - item.priceNew) / item.priceOld) * 100);
 
-    // Màu sắc
-    const colorSet = new Set();
-    item.variants
-      .filter((variant: any) => variant.status)
-      .forEach((variant: any) => {
-        variant.attributeValue.forEach((attr: any) => {
-          if(attr.attrType == "color") {
-            colorSet.add(attr.value);
-          }
-        })
-      })
-    item.colorList = [...colorSet];
+    // // Màu sắc
+    // const colorSet = new Set();
+    // item.variants
+    //   .filter((variant: any) => variant.status)
+    //   .forEach((variant: any) => {
+    //     variant.attributeValue.forEach((attr: any) => {
+    //       if(attr.attrType == "color") {
+    //         colorSet.add(attr.value);
+    //       }
+    //     })
+    //   })
+    // item.colorList = [...colorSet];
+    formatProductItem(item);
   }
 
   res.render("client/pages/product-by-category", {
@@ -303,9 +305,28 @@ export const detail = async (req: Request, res: Response) => {
   productDetail.categoryList = categoryList;
   // Hết Danh sách danh mục
 
+  // Sản phẩm liên quan
+  const relatedProducts: any = await Product
+    .find({
+      _id: { $ne: productDetail.id }, // loại bỏ sản phẩm hiện tại
+      category: { $in: productDetail.category },
+      deleted: false,
+      status: "active"
+    })
+    .sort({
+      view: "desc"
+    })
+    .limit(10);
+
+  for (const item of relatedProducts) {
+    formatProductItem(item);
+  }
+  // Hết Sản phẩm liên quan
+
   res.render("client/pages/product-detail", {
     pageTitle: productDetail.name,
     productDetail: productDetail,
-    attributeList: attributeList
+    attributeList: attributeList,
+    relatedProducts: relatedProducts
   });
 }
