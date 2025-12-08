@@ -1,4 +1,6 @@
 div(class="shop_details_text")
+  script.
+    const productVariants = !{JSON.stringify(productDetail.variants)};
   //- p.category Computers & Tablets
   h2(class="details_title") #{productDetail.name}
   .d-flex.flex-wrap.align-items-center
@@ -14,8 +16,8 @@ div(class="shop_details_text")
       i.fas.fa-star
       span (0 Đánh giá)
   h3.price
-    | #{productDetail.priceNew.toLocaleString("vi-VN")}đ
-    del #{productDetail.priceOld.toLocaleString("vi-VN")}đ
+    div.price-new #{productDetail.priceNew.toLocaleString("vi-VN")}đ
+    del.price-old #{productDetail.priceOld.toLocaleString("vi-VN")}đ
   div(class="short_description") !{productDetail.description}
   each attribute in attributeList
     div(class="details_single_variant")
@@ -23,11 +25,18 @@ div(class="shop_details_text")
       if (attribute.type == "color")
         ul(class="details_variant_color")
           each variant in attribute.variants
-            li(style=`background: ${variant};`)
+            li(
+              style=`background: ${variant};`
+              attribute-id=attribute.id
+              variant=variant
+              )
       else if (attribute.type == "text")
         ul(class="details_variant_size")
-          each variantLabel in attribute.variantsLabel
-            li #{variantLabel}
+          each variantLabel, index in attribute.variantsLabel
+            li(
+              attribute-id=attribute.id
+              variant=attribute.variants[index]
+            ) #{variantLabel}
   .d-flex.flex-wrap.align-items-center
     div(class="details_qty_input")
       button.minus

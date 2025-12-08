@@ -214,3 +214,53 @@ if(formSearch) {
   // End Suggest
 }
 // End form-search
+
+// shop_details_text
+const shopDetailsText = document.querySelector(".shop_details_text");
+if(shopDetailsText) {
+  const elementStock = shopDetailsText.querySelector(".stock");
+  const elementPriceNew = shopDetailsText.querySelector(".price-new");
+  const elementPriceOld = shopDetailsText.querySelector(".price-old");
+  const listElementLiVariant = shopDetailsText.querySelectorAll(".details_single_variant li");
+
+  const selected = {};
+
+  listElementLiVariant.forEach(item => {
+    item.addEventListener("click", () => {
+      const attributeId = item.getAttribute("attribute-id");
+      const variant = item.getAttribute("variant");
+
+      // Xóa class active cho item cũ
+      item.closest("ul").querySelectorAll("li").forEach(li => li.classList.remove("active"));
+
+      // Thêm class active cho thẻ li đã chọn
+      item.classList.add("active");
+      
+      // Lưu lựa chọn
+      selected[attributeId] = variant;
+
+      // Kiểm tra xem đã chọn đủ thuộc tính chưa
+      const selectedValues = Object.values(selected);
+      if(selectedValues.length > 0) {
+        // Lọc variant có đủ attributeValue trùng khớp
+        const variantMatched = productVariants.find(variantItem => {
+          return variantItem.attributeValue.every(attr => selected[attr.attrId] == attr.value)
+        })
+
+        if(variantMatched) {
+          elementPriceNew.innerHTML = variantMatched.priceNew.toLocaleString("vi-VN") + "đ";
+          elementPriceOld.innerHTML = variantMatched.priceOld.toLocaleString("vi-VN") + "đ";
+
+          if(variantMatched.stock > 0) {
+            elementStock.innerHTML = `Còn hàng (${variantMatched.stock})`;
+            elementStock.classList.remove("out_stock");
+          } else {
+            elementStock.innerHTML = `Hết hàng`;
+            elementStock.classList.add("out_stock");
+          }
+        }
+      }
+    })
+  })
+}
+// End shop_details_text
