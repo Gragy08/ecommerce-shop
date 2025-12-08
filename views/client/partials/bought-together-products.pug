@@ -1,0 +1,13 @@
+include ../mixins/product-item-2.pug
+
+section.wow.fadeInUp(class="mt_90")
+  .row
+    .col-xl-6
+      div(class="section_heading_2 section_heading")
+        h3
+          span Gợi Ý 
+          | Mua Kèm
+  .row(class="")
+    each item in boughtTogetherProducts
+      .col-xxl-3.col-6.col-md-4.col-lg-6.col-xl-4.wow.fadeInUp
+        +product-item-2(item)

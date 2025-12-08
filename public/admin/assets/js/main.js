@@ -1367,6 +1367,11 @@ if(productCreateForm) {
       const tags = Array.from(selectTag.selectedOptions).map(option => option.value);
       // End tags
 
+      // boughtTogether
+      const selectBoughtTogether = document.querySelector(`select[name="boughtTogether"]`);
+      const boughtTogether = Array.from(selectBoughtTogether.selectedOptions).map(option => option.value);
+      // End boughtTogether
+
       // Tạo FormData
       const formData = new FormData();
       formData.append("name", name);
@@ -1384,6 +1389,7 @@ if(productCreateForm) {
       formData.append("attributes", JSON.stringify(attributes));
       formData.append("variants", JSON.stringify(variants));
       formData.append("tags", JSON.stringify(tags));
+      formData.append("boughtTogether", JSON.stringify(boughtTogether));
 
       console.log(variants);
       
@@ -1485,6 +1491,11 @@ if(productEditForm) {
       const tags = Array.from(selectTag.selectedOptions).map(option => option.value);
       // End tags
 
+      // boughtTogether
+      const selectBoughtTogether = document.querySelector(`select[name="boughtTogether"]`);
+      const boughtTogether = Array.from(selectBoughtTogether.selectedOptions).map(option => option.value);
+      // End boughtTogether
+
       // Tạo FormData
       const formData = new FormData();
       formData.append("name", name);
@@ -1502,6 +1513,7 @@ if(productEditForm) {
       formData.append("attributes", JSON.stringify(attributes));
       formData.append("variants", JSON.stringify(variants));
       formData.append("tags", JSON.stringify(tags));
+      formData.append("boughtTogether", JSON.stringify(boughtTogether));
       
       fetch(`/${pathAdmin}/product/edit/${id}`, {
         method: "PATCH",
@@ -1850,21 +1862,25 @@ if(buttonRenderVariant) {
 // End button-render-variant
 
 // select-tag
-const selectTag = document.querySelector("[select-tag]");
-if(selectTag) {
-  new Selectr('[select-tag]', {
-    taggable: true
-  });
+const listSelectTag = document.querySelectorAll("[select-tag]");
+if(listSelectTag.length > 0) {
+  listSelectTag.forEach(selectTag => {
+    let taggable = selectTag.getAttribute("taggable");
 
-  // Ngăn chặn sự kiện submit form
-  const inputTag = document.querySelector(".selectr-tag-input");
-  if(inputTag) {
-    inputTag.addEventListener("keydown", (event) => {
-      if(event.key == "Enter") {
-        event.preventDefault();
-      }
+    new Selectr(selectTag, {
+      taggable: taggable == "false" ? false : true
     });
-  }
+
+    // Ngăn chặn sự kiện submit form
+  const inputTag = selectTag.closest(".selectr-container").querySelector(".selectr-tag-input");
+    if(inputTag) {
+      inputTag.addEventListener("keydown", (event) => {
+        if(event.key == "Enter") {
+          event.preventDefault();
+        }
+      });
+    }
+  })
 }
 // End select-tag
 

@@ -142,5 +142,14 @@ block main
               select(select-tag name="tags" multiple)
                 each tag in productDetail.tags
                   option(value=tag selected) #{tag}
+          .col-md-12.col-lg-12
+            .mb-3
+              label.form-label Sản phẩm mua kèm
+              select(select-tag name="boughtTogether" multiple taggable="false")
+                each item in productList
+                  option(
+                    value=item._id
+                    selected=(productDetail.boughtTogether.includes(item._id))
+                    ) #{item.name}
         button.btn.btn-primary(type="submit") Cập nhật
         a.btn.btn-danger.ms-1(href=`/${pathAdmin}/product/list`) Hủy
