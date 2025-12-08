@@ -215,13 +215,16 @@ if(formSearch) {
 }
 // End form-search
 
-// shop_details_text
+// // shop_details_text
 const shopDetailsText = document.querySelector(".shop_details_text");
 if(shopDetailsText) {
   const elementStock = shopDetailsText.querySelector(".stock");
   const elementPriceNew = shopDetailsText.querySelector(".price-new");
   const elementPriceOld = shopDetailsText.querySelector(".price-old");
   const listElementLiVariant = shopDetailsText.querySelectorAll(".details_single_variant li");
+  const inputQuantity = shopDetailsText.querySelector(".input-quantity");
+  const buttonPlus = shopDetailsText.querySelector(".plus");
+  const buttonMinus = shopDetailsText.querySelector(".minus");
 
   const selected = {};
 
@@ -254,13 +257,36 @@ if(shopDetailsText) {
           if(variantMatched.stock > 0) {
             elementStock.innerHTML = `Còn hàng (${variantMatched.stock})`;
             elementStock.classList.remove("out_stock");
+            inputQuantity.value = 1;
           } else {
             elementStock.innerHTML = `Hết hàng`;
             elementStock.classList.add("out_stock");
+            inputQuantity.value = 0;
           }
+
+          // Gán lại số lượng tối đa được phép đặt
+          inputQuantity.max = variantMatched.stock;
         }
       }
     })
+  })
+
+  // Tăng số lượng
+  buttonPlus.addEventListener("click", () => {
+    const quantity = parseInt(inputQuantity.value);
+    const max = parseInt(inputQuantity.max);
+    if(quantity < max) {
+      inputQuantity.value = quantity + 1;
+    }
+  })
+
+  // Giảm số lượng
+  buttonMinus.addEventListener("click", () => {
+    const quantity = parseInt(inputQuantity.value);
+    const min = parseInt(inputQuantity.min);
+    if(quantity > min) {
+      inputQuantity.value = quantity - 1;
+    }
   })
 }
 // End shop_details_text
