@@ -8,6 +8,7 @@ import { logAdminAction } from '../../helpers/log.helper';
 import AttributeProduct from '../../models/attribute-product.model';
 import { Parser } from 'json2csv';
 import Papa from 'papaparse';
+import { generateRandomString } from '../../helpers/generate.helper';
 
 
 export const category = async (req: Request, res: Response) => {
@@ -286,6 +287,8 @@ export const createPost = async (req: Request, res: Response) => {
 
     req.body.tags = JSON.parse(req.body.tags);
 
+    req.body.sku = generateRandomString(10).toUpperCase();
+
     const newRecord = new Product(req.body);
     await newRecord.save();
 
@@ -480,6 +483,10 @@ export const editPatch = async (req: Request, res: Response) => {
     req.body.variants = JSON.parse(req.body.variants);
 
     req.body.tags = JSON.parse(req.body.tags);
+
+    if(!productDetail.sku) {
+      req.body.sku = generateRandomString(10).toUpperCase();
+    }
 
     await Product.updateOne({
       _id: id,

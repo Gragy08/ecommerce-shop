@@ -1,38 +1,33 @@
 div(class="shop_details_text")
-  p.category Computers & Tablets
-  h2(class="details_title") Full Sleeve Hoodie Jacket
+  //- p.category Computers & Tablets
+  h2(class="details_title") #{productDetail.name}
   .d-flex.flex-wrap.align-items-center
-    p.stock In Stock
-    // <p class="out_stock stock">out of Stock</p>
+    if (productDetail.stock > 0)
+      p.stock Còn hàng (#{productDetail.stock})
+    else
+      p(class="out_stock stock") Hết hàng
     p.rating
       i.fas.fa-star
       i.fas.fa-star
       i.fas.fa-star
       i.fas.fa-star
       i.fas.fa-star
-      span (93 reviews)
+      span (0 Đánh giá)
   h3.price
-    | $65.00
-    del $70.00
-  p(class="short_description")
-    | Auctor urna nunc id cursus. Scelerisque purus semper eget
-    |   duis at
-    |   pharetra vel turpis nunc eget. Auctor urna nunc id cursus Scelerisque purus.
-  div(class="details_single_variant")
-    p(class="variant_title") Color :
-    ul(class="details_variant_color")
-      li.active(style="background: red;")
-      li(style="background: orange;")
-      li(style="background: green;")
-      li(style="background: black;")
-  div(class="details_single_variant")
-    p(class="variant_title") Size :
-    ul(class="details_variant_size")
-      li s
-      li.active M
-      li L
-      li xl
-      li xxl
+    | #{productDetail.priceNew.toLocaleString("vi-VN")}đ
+    del #{productDetail.priceOld.toLocaleString("vi-VN")}đ
+  div(class="short_description") !{productDetail.description}
+  each attribute in attributeList
+    div(class="details_single_variant")
+      p(class="variant_title") #{attribute.name}:
+      if (attribute.type == "color")
+        ul(class="details_variant_color")
+          each variant in attribute.variants
+            li(style=`background: ${variant};`)
+      else if (attribute.type == "text")
+        ul(class="details_variant_size")
+          each variantLabel in attribute.variantsLabel
+            li #{variantLabel}
   .d-flex.flex-wrap.align-items-center
     div(class="details_qty_input")
       button.minus
@@ -48,48 +43,70 @@ div(class="shop_details_text")
         href="#" 
         class="common_btn buy_now"
         )
-        | Buy Now
+        | Mua Ngay
         i.fas.fa-long-arrow-right
       a(
         href="#" 
         class="common_btn"
         )
-        | Add to cart
+        | Thêm Vào Giỏ
         i.fas.fa-long-arrow-right
   ul(class="details_list_btn")
     li
       a(href="#")
         i.fal.fa-heart
-        | Add Wishlist
+        | Yêu thích
     li
       a(href="#")
         i.fal.fa-exchange
-        | Compare
+        | So sánh
     li
       a(href="#")
         i.fal.fa-question-circle
-        | Ask a question
+        | Hỏi đáp
   ul(class="details_tags_sku")
     li
       span SKU:
-      | HRYUSG67EG
+      | #{productDetail.sku}
     li
-      span Category:
-      | Fashion
+      span Danh mục:
+      each category in productDetail.categoryList
+        a(href=`/product/category/${category.slug}` class="badge text-bg-info me-1") #{category.name}
     li
-      span Tag:
-      | Clothing
+      span Nhãn:
+      each tag in productDetail.tags
+        span(class="badge text-bg-warning me-1") #{tag}
   ul(class="shop_details_shate")
-    li Share:
+    li Chia sẽ:
     li
-      a(href="#")
-        i.fab.fa-facebook-f
+      a(
+        button-share
+        href=`https://www.facebook.com/sharer/sharer.php?u=`
+        target="_blank"
+        rel="noopener noreferrer"
+      )
+        i.fab.fa-facebook-f(aria-hidden="true")
     li
-      a(href="#")
-        i.fab.fa-twitter
+      a(
+        button-share
+        href=`https://twitter.com/intent/tweet?url=`
+        target="_blank"
+        rel="noopener noreferrer"
+      )
+        i.fab.fa-twitter(aria-hidden="true")
     li
-      a(href="#")
-        i.fab.fa-instagram
+      a(
+        button-share
+        href=`https://www.linkedin.com/shareArticle?url=`
+        target="_blank"
+        rel="noopener noreferrer"
+      )
+        i.fab.fa-linkedin-in(aria-hidden="true")
     li
-      a(href="#")
-        i.fab.fa-whatsapp
+      a(
+        button-share
+        href=`https://pinterest.com/pin/create/button/?url=`
+        target="_blank"
+        rel="noopener noreferrer"
+      )
+        i.fab.fa-pinterest

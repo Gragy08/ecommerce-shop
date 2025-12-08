@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import CategoryProduct from '../../models/category-product.model';
 import Product from '../../models/product.model';
 import slugify from 'slugify';
+import AttributeProduct from '../../models/attribute-product.model';
 
 export const productByCategory = async (req: Request, res: Response) => {
   const slug = req.params.slug;
@@ -258,7 +259,7 @@ export const suggest = async (req: Request, res: Response) => {
 }
 
 export const detail = async (req: Request, res: Response) => {
-  const productDetail = await Product.findOne({
+  const productDetail:any = await Product.findOne({
     slug: req.params.slug,
     deleted: false,
     status: "active"
@@ -269,8 +270,42 @@ export const detail = async (req: Request, res: Response) => {
     return;
   }
 
+  // Danh sách thuộc tính
+  const attributeList: any = await AttributeProduct.find({
+    _id: { $in: productDetail.attributes }
+  })
+  for (const attribute of attributeList) {
+    const variantSet = new Set();
+    const variantLabelSet = new Set();
+    productDetail.variants
+      .filter((variant: any) => variant.status)
+      .forEach((variant: any) => {
+        variant.attributeValue.forEach((attr: any) => {
+          if(attr.attrId == attribute.id) {
+            variantSet.add(attr.value);
+            variantLabelSet.add(attr.label);
+          }
+        })
+      })
+    attribute.variants = [...variantSet];
+    attribute.variantsLabel = [...variantLabelSet];
+  }
+  // Hết Danh sách thuộc tính
+
+  // Danh sách danh mục
+  const categoryList = await CategoryProduct
+    .find({
+      _id: { $in: productDetail.category },
+      deleted: false,
+      status: "active"
+    })
+    .select("name slug");
+  productDetail.categoryList = categoryList;
+  // Hết Danh sách danh mục
+
   res.render("client/pages/product-detail", {
     pageTitle: productDetail.name,
     productDetail: productDetail,
+    attributeList: attributeList
   });
 }

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
   {
     name: String,
+    sku: String,
     slug: String,
     position: Number, // Vị trí càng cao càng xuất hiện đầu
     category: [String],
