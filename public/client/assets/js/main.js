@@ -1246,6 +1246,75 @@ const eventQuantityItemInWishlist = () => {
 }
 // Hết Cập nhật số lượng item trong yêu thích
 
+// Nút thêm vào giỏ hàng ở trang Yêu thích
+const eventAddItemToCartInWishlist = () => {
+  const listButtonAdd = document.querySelectorAll("[button-add]");
+  listButtonAdd.forEach(button => {
+    button.addEventListener("click", () => {
+      const index = button.getAttribute("button-add");
+      const wishlist = JSON.parse(localStorage.getItem("wishlist"));
+      const wishItem = wishlist[index];
+      const dataItem = {
+        productId: wishItem.productId,
+        quantity: wishItem.quantity,
+        checked: true
+      };
+
+      const cart = JSON.parse(localStorage.getItem("cart"));
+
+      if(wishItem.variant) {
+        dataItem.variant = wishItem.variant;
+
+        // Tìm xem có sản phẩm trùng productId và trùng các attributeValue hay không
+        const existItem = cart.find(item => {
+          if(item.productId !== dataItem.productId) {
+            return false;
+          }
+
+          // So sánh toàn bộ các thuộc tính trong variant
+          const oldAttrs = item.variant;
+          const newAttrs = dataItem.variant;
+
+          // Số lượng thuộc tính phải trùng
+          if(oldAttrs.length !== newAttrs.length) {
+            return false;
+          }
+
+          // Kiểm tra từng attrId và value
+          return oldAttrs.every(attr => {
+            const match = newAttrs.find(a => a.attrId === attr.attrId && a.value === attr.value);
+            return match ? true : false;
+          });
+        })
+
+        if(existItem) {
+          existItem.quantity = dataItem.quantity;
+          notyf.success("Sản phẩm đã có trong giỏ hàng!");
+        } else {
+          cart.unshift(dataItem);
+          notyf.success("Đã thêm vào giỏ hàng!");
+        }
+      } else {
+        // Tìm xem có sản phẩm trùng productId hay không
+        const existItem = cart.find(item => item.productId === dataItem.productId);
+
+        if(existItem) {
+          existItem.quantity = dataItem.quantity;
+          notyf.success("Sản phẩm đã có trong giỏ hàng!");
+        } else {
+          cart.unshift(dataItem);
+          notyf.success("Đã thêm vào giỏ hàng!");
+        }
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      miniCartQuantity();
+      drawCart();
+    })
+  })
+}
+// Hết Nút thêm vào giỏ hàng ở trang Yêu thích
+
 // Vẽ danh sách yêu thích
 const drawWishlistPage = () => {
   const wishlist = JSON.parse(localStorage.getItem("wishlist"));
@@ -1268,7 +1337,7 @@ const drawWishlistPage = () => {
           
           let htmlWishlistTable = "";
 
-          data.wishlist.forEach(item => {
+          data.wishlist.forEach((item, index) => {
             const { detail } = item;
             let priceOld = 0;
             let priceNew = 0;
@@ -1346,7 +1415,12 @@ const drawWishlistPage = () => {
                   <h3>${(item.quantity*priceNew).toLocaleString("vi-VN")}đ</h3>
                 </td>
                 <td class="cart_page_action">
-                  <a class="common_btn" href="#">Thêm vào giỏ</a>
+                  ${
+                    stock > 0 ? 
+                    '<a class="common_btn" href="javascript:;" button-add="'+index+'">Thêm vào giỏ</a>' 
+                    : 
+                    '<div class="text-danger">Đã hết hàng</div>'
+                  }
                   <a class="remove common_btn" href="#">Xóa</a>
                 </td>
               </tr>
@@ -1357,6 +1431,7 @@ const drawWishlistPage = () => {
           wishlistTable.innerHTML = htmlWishlistTable;
 
           eventQuantityItemInWishlist();
+          eventAddItemToCartInWishlist();
         }
       })
   }
