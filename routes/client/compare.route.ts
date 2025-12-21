@@ -5,4 +5,6 @@ const router = Router();
 
 router.get('/', compareController.compare);
 
+router.post('/list', compareController.list);
+
 export default router;
