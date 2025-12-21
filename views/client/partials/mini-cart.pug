@@ -1,12 +1,13 @@
-div(class="mini_cart")
+div(class="mini_cart" mini-cart)
   #offcanvasRight.offcanvas.offcanvas-end(
     aria-labelledby="offcanvasRightLabel" 
     tabindex="-1"
     )
     .offcanvas-header
       h5#offcanvasRightLabel.offcanvas-title
-        | my cart
-        span (05)
+        | Giỏ hàng (
+        div(mini-cart-quantity) 0
+        | )
       button.btn-close(
         aria-label="Close" 
         data-bs-dismiss="offcanvas" 
@@ -15,147 +16,41 @@ div(class="mini_cart")
         i.far.fa-times
     .offcanvas-body
       ul
-        li
-          a(
-            class="cart_img" 
-            href="shop_details.html"
-            )
-            img.img-fluid.w-100(
-              alt="product" 
-              src="/client/assets/images/product_1.png"
-              )
-          div(class="cart_text")
-            a(
-              href="shop_details.html" 
-              class="cart_title"
-              ) Men's Fashionable Hoodie
-            p
-              | $140
-              del $150
-            span
-              b Color:
-              | Red
-            span
-              b Size:
-              | XL (Extra Large)
-          a(
-            href="#" 
-            class="del_icon"
-            )
-            i.fal.fa-times
-        li
-          a(
-            class="cart_img" 
-            href="#shop_details.html"
-            )
-            img.img-fluid.w-100(
-              alt="product" 
-              src="/client/assets/images/product_2.png"
-              )
-          div(class="cart_text")
-            a(
-              href="shop_details.html" 
-              class="cart_title"
-              ) Kids cotton Combo Set
-            p
-              | $130
-              del $160
-            span
-              b Color:
-              | Orange
-            span
-              b Size:
-              | M (Medium)
-          a(
-            href="#" 
-            class="del_icon"
-            )
-            i.fal.fa-times
-        li
-          a(
-            class="cart_img" 
-            href="shop_details.html"
-            )
-            img.img-fluid.w-100(
-              alt="product" 
-              src="/client/assets/images/product_3.png"
-              )
-          div(class="cart_text")
-            a(
-              href="shop_details.html" 
-              class="cart_title"
-              ) Women's Western Party Dress
-            p
-              | $90
-              del $100
-            span
-              b Color:
-              | Purple
-            span
-              b Size:
-              | S (Small)
-          a(
-            href="#" 
-            class="del_icon"
-            )
-            i.fal.fa-times
-        li
-          a(
-            class="cart_img" 
-            href="shop_details.html"
-            )
-            img.img-fluid.w-100(
-              alt="product" 
-              src="/client/assets/images/product_4.png"
-              )
-          div(class="cart_text")
-            a(
-              href="shop_details.html" 
-              class="cart_title"
-              ) Men's trendy formal shoes
-            p $140
-            span
-              b Color:
-              | Blue
-            span
-              b Size:
-              | XL (Extra Large)
-          a(
-            href="#" 
-            class="del_icon"
-            )
-            i.fal.fa-times
-        li
-          a(
-            class="cart_img" 
-            href="shop_details.html"
-            )
-            img.img-fluid.w-100(
-              alt="product" 
-              src="/client/assets/images/product_5.png"
-              )
-          div(class="cart_text")
-            a(
-              href="shop_details.html" 
-              class="cart_title"
-              ) Kid's Western Party Dress
-            p $99.00
-            span
-              b Color:
-              | Black
-            span
-              b Size:
-              | L (Large)
-          a(
-            href="#" 
-            class="del_icon"
-            )
-            i.fal.fa-times
+        //- li
+        //-   a(
+        //-     class="cart_img" 
+        //-     href="shop_details.html"
+        //-     )
+        //-     img.img-fluid.w-100(
+        //-       alt="product" 
+        //-       src="/client/assets/images/product_1.png"
+        //-       )
+        //-   div(class="cart_text")
+        //-     a(
+        //-       href="shop_details.html" 
+        //-       class="cart_title"
+        //-       ) Men's Fashionable Hoodie
+        //-     p
+        //-       | $140
+        //-       del $150
+        //-     span
+        //-       b Color:
+        //-       | Red
+        //-     span
+        //-       b Size:
+        //-       | XL (Extra Large)
+        //-   a(
+        //-     href="#" 
+        //-     class="del_icon"
+        //-     )
+        //-     i.fal.fa-times
       h5
-        | sub total
-        span $429.00
+        | Tạm tính
+        span
+          span(sub-total) 0
+          span đ
       div(class="minicart_btn_area")
         a(
-          href="cart.html" 
+          href="/cart" 
           class="common_btn"
-          ) view cart
+          ) Xem Giỏ Hàng
