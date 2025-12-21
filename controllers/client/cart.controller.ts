@@ -30,6 +30,7 @@ export const list = async (req: Request, res: Response) => {
             name: productDetail.name,
             priceNew: productDetail.priceNew,
             priceOld: productDetail.priceOld,
+            stock: productDetail.stock,
             attributeList: attributeList,
             variants: productDetail.variants
           }
