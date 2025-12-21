@@ -5,4 +5,6 @@ const router = Router();
 
 router.post('/list', cartController.list);
 
+router.get('/', cartController.cart);
+
 export default router;

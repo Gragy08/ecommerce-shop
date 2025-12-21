@@ -1,0 +1,36 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle
+    },
+    `/cart`
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    CART PAGE START
+    =============================
+  section(class="cart_page mt_100 mb_100")
+    .container
+      .row
+        .col-lg-8.wow.fadeInUp
+          include ../partials/cart-table-area.pug
+        .col-lg-4.col-md-9.wow.fadeInRight
+          div(id="sticky_sidebar")
+            include ../partials/cart-page-summary.pug
+            include ../partials/cart-summary-btn.pug
+  //
+    ============================
+    CART PAGE END
+    =============================
