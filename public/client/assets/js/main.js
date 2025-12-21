@@ -243,6 +243,15 @@ if(formSearch) {
 }
 // End form-search
 
+// mini-cart-quantity
+const miniCartQuantity = () => {
+  const cart = JSON.parse(localStorage.getItem("cart"));
+  const elementMiniCartQuantity = document.querySelector("[mini-cart-quantity]");
+  elementMiniCartQuantity.innerHTML = cart.length;
+}
+miniCartQuantity();
+// End mini-cart-quantity
+
 // shop_details_text
 const shopDetailsText = document.querySelector(".shop_details_text");
 if(shopDetailsText) {
@@ -378,6 +387,7 @@ if(shopDetailsText) {
       }
 
       localStorage.setItem("cart", JSON.stringify(cart));
+      miniCartQuantity();
     }
   })
 }
