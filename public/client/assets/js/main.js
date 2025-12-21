@@ -1177,3 +1177,125 @@ if(comparePage) {
   drawComparePage();
 }
 // Hết Trang so sánh
+
+// Vẽ danh sách yêu thích
+const drawWishlistPage = () => {
+  const wishlist = JSON.parse(localStorage.getItem("wishlist"));
+  if(wishlist.length > 0) {
+    fetch(`/wishlist/list`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(wishlist)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if(data.code == "error") {
+          localStorage.setItem("wishlist", JSON.stringify([]));
+        }
+
+        if(data.code == "success") {
+          localStorage.setItem("wishlist", JSON.stringify(data.wishlist));
+          
+          let htmlWishlistTable = "";
+
+          data.wishlist.forEach(item => {
+            const { detail } = item;
+            let priceOld = 0;
+            let priceNew = 0;
+            let stock = 0;
+            let htmlVariant = "";
+
+            if(item.variant) {
+              // Tìm đúng biến thể khớp trong danh sách
+              const variantMatched = detail.variants.find(variantItem => {
+                return (
+                  variantItem.attributeValue.every(attr => {
+                    const selected = item.variant.find(v => v.attrId === attr.attrId);
+                    return selected && selected.value === attr.value;
+                  })
+                );
+              });
+              priceOld = variantMatched.priceOld;
+              priceNew = variantMatched.priceNew;
+              stock = variantMatched.stock;
+              
+              detail.attributeList.forEach(attr => {
+                const variant = item.variant.find(v => v.attrId === attr._id);
+                htmlVariant += `
+                  <span>
+                    <b>${attr.name}:</b> ${variant.label}
+                  </span>
+                `;
+              })
+            } else {
+              priceOld = detail.priceOld;
+              priceNew = detail.priceNew;
+              stock = detail.stock;
+            }
+
+            htmlWishlistTable += `
+              <tr
+                cart-item 
+                product-id="${item.productId}" 
+                ${item.variant ? `variant="${encodeURIComponent(JSON.stringify(item.variant))}"` : ''}
+              >
+                <td class="cart_page_img">
+                  <div class="img">
+                    <img class="img-fluid w-100" alt="${detail.name}" src="${domainCDN}${detail.images[0]}">
+                  </div>
+                </td>
+                <td class="cart_page_details">
+                  <a class="title" href="/product/detail/${detail.slug}">${detail.name}</a>
+                  <p>
+                    ${priceNew.toLocaleString("vi-VN")}đ
+                    <del>${priceOld.toLocaleString("vi-VN")}đ</del>
+                  </p>
+                  ${htmlVariant}
+                </td>
+                <td class="cart_page_price">
+                  <h3>${priceNew.toLocaleString("vi-VN")}đ</h3>
+                </td>
+                <td class="cart_page_quantity">
+                  <div class="details_qty_input">
+                    <button class="minus">
+                      <i class="fal fa-minus" aria-hidden="true"></i>
+                    </button>
+                    <input 
+                      value="${item.quantity}" 
+                      type="number" 
+                      readonly="" 
+                      min="1" 
+                      max="${stock}" 
+                    />
+                    <button class="plus">
+                      <i class="fal fa-plus" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </td>
+                <td class="cart_page_price">
+                  <h3>${(item.quantity*priceNew).toLocaleString("vi-VN")}đ</h3>
+                </td>
+                <td class="cart_page_action">
+                  <a class="common_btn" href="#">Thêm vào giỏ</a>
+                  <a class="remove common_btn" href="#">Xóa</a>
+                </td>
+              </tr>
+            `;
+          })
+
+          const wishlistTable = document.querySelector("[wishlist-table]");
+          wishlistTable.innerHTML = htmlWishlistTable;
+        }
+      })
+  }
+}
+// Hết Vẽ danh sách yêu thích
+
+// Trang yêu thích
+const wishlistPage = document.querySelector(".wishlist_page");
+if(wishlistPage) {
+  drawWishlistPage();
+}
+// Hết Trang yêu thích

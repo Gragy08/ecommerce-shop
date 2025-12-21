@@ -5,4 +5,6 @@ const router = Router();
 
 router.get('/', wishlistController.wishlist);
 
+router.post('/list', wishlistController.list);
+
 export default router;

@@ -38,48 +38,48 @@ block main
                     th(class="cart_page_action") Hành động
             .table-responsive
               table.table
-                tbody
-                  tr
-                    td(class="cart_page_img")
-                      .img
-                        img.img-fluid.w-100(
-                          alt="Sản phẩm 1" 
-                          src="/client/assets/images/product_18.png"
-                          )
-                    td(class="cart_page_details")
-                      a.title(href="/product/detail/:slug") Sản phẩm 1
-                      p
-                        | 1.000.000đ
-                        del 1.200.000đ
-                      span
-                        b Màu sắc:
-                        | Đỏ
-                      span
-                        b Kích cỡ:
-                        | M
-                    td(class="cart_page_price")
-                      h3 1.000.000đ
-                    td(class="cart_page_quantity")
-                      div(class="details_qty_input")
-                        button.minus
-                          i.fal.fa-minus(aria-hidden="true")
-                        input(
-                          value="2"
-                          type="text"
-                          )
-                        button.plus
-                          i.fal.fa-plus(aria-hidden="true")
-                    td(class="cart_page_price")
-                      h3 2.000.000đ
-                    td(class="cart_page_action")
-                      a(
-                        class="common_btn" 
-                        href="#"
-                        ) Thêm vào giỏ
-                      a.remove(
-                        class="common_btn" 
-                        href="#"
-                        ) Xóa        
+                tbody(wishlist-table)
+                  //- tr
+                  //-   td(class="cart_page_img")
+                  //-     .img
+                  //-       img.img-fluid.w-100(
+                  //-         alt="Sản phẩm 1" 
+                  //-         src="/client/assets/images/product_18.png"
+                  //-         )
+                  //-   td(class="cart_page_details")
+                  //-     a.title(href="/product/detail/:slug") Sản phẩm 1
+                  //-     p
+                  //-       | 1.000.000đ
+                  //-       del 1.200.000đ
+                  //-     span
+                  //-       b Màu sắc:
+                  //-       | Đỏ
+                  //-     span
+                  //-       b Kích cỡ:
+                  //-       | M
+                  //-   td(class="cart_page_price")
+                  //-     h3 1.000.000đ
+                  //-   td(class="cart_page_quantity")
+                  //-     div(class="details_qty_input")
+                  //-       button.minus
+                  //-         i.fal.fa-minus(aria-hidden="true")
+                  //-       input(
+                  //-         value="2"
+                  //-         type="text"
+                  //-         )
+                  //-       button.plus
+                  //-         i.fal.fa-plus(aria-hidden="true")
+                  //-   td(class="cart_page_price")
+                  //-     h3 2.000.000đ
+                  //-   td(class="cart_page_action")
+                  //-     a(
+                  //-       class="common_btn" 
+                  //-       href="#"
+                  //-       ) Thêm vào giỏ
+                  //-     a.remove(
+                  //-       class="common_btn" 
+                  //-       href="#"
+                  //-       ) Xóa        
   //
     ============================
     WISHLIST END
