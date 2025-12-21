@@ -384,6 +384,7 @@ const drawCart = () => {
 
           let htmlMiniCart = "";
           let htmlCartTable = "";
+          let htmlCartSummary = "";
 
           data.cart.forEach(item => {
             const { detail } = item;
@@ -391,6 +392,7 @@ const drawCart = () => {
             let priceNew = 0;
             let stock = 0;
             let htmlVariant = "";
+            let htmlVariantSummary = "";
 
             if(item.variant) {
               // Tìm đúng biến thể khớp trong danh sách
@@ -412,6 +414,10 @@ const drawCart = () => {
                   <span>
                     <b>${attr.name}:</b> ${variant.label}
                   </span>
+                `;
+
+                htmlVariantSummary += `
+                  <p>${attr.name}: ${variant.label}</p>
                 `;
               })
             } else {
@@ -502,9 +508,27 @@ const drawCart = () => {
                     <i class="fal fa-times" aria-hidden="true"></i> Xóa
                   </a>
                 </td>
-            </tr>
+              </tr>
+            `;
+
+            htmlCartSummary += `
+              <li>
+                <a class="img" href="/product/detail/${detail.slug}">
+                  <img class="img-fluid w-100" alt="${detail.name}" src="${domainCDN}${detail.images[0]}">
+                </a>
+                <div class="text">
+                  <a class="title" href="/product/detail/${detail.slug}">
+                    ${detail.name}
+                  </a>
+                  <p>${priceNew.toLocaleString("vi-VN")}đ × ${item.quantity}</p>
+                  ${htmlVariantSummary}
+                </div>
+              </li>
             `;
           })
+
+          let discount = 0;
+          let total = subTotal - discount;
 
           const ulMiniCart = miniCart.querySelector(".offcanvas-body ul");
           ulMiniCart.innerHTML = htmlMiniCart;
@@ -514,8 +538,25 @@ const drawCart = () => {
             cartTable.innerHTML = htmlCartTable;
           }
 
-          const elementSubTotal = miniCart.querySelector("[sub-total]");
-          elementSubTotal.innerHTML = subTotal.toLocaleString("vi-VN");
+          const cartSummary = document.querySelector("[cart-summary]");
+          if(cartSummary) {
+            cartSummary.innerHTML = htmlCartSummary;
+          }
+
+          const listElementSubTotal = document.querySelectorAll("[sub-total]");
+          listElementSubTotal.forEach(item => {
+            item.innerHTML = subTotal.toLocaleString("vi-VN");
+          })
+
+          const elementDiscount = document.querySelector("[discount]");
+          if(elementDiscount) {
+            elementDiscount.innerHTML = discount.toLocaleString("vi-VN");
+          }
+
+          const elementTotal = document.querySelector("[total]");
+          if(elementTotal) {
+            elementTotal.innerHTML = total.toLocaleString("vi-VN");
+          }
 
           eventRemoveItemInCart();
           eventQuantityItemInCart();
@@ -536,8 +577,10 @@ const drawCart = () => {
       `;
     }
 
-    const elementSubTotal = miniCart.querySelector("[sub-total]");
-    elementSubTotal.innerHTML = 0;
+    const listElementSubTotal = document.querySelectorAll("[sub-total]");
+    listElementSubTotal.forEach(item => {
+      item.innerHTML = 0;
+    })
   }
 }
 // Hết Vẽ giỏ hàng
