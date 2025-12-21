@@ -294,6 +294,40 @@ const eventRemoveItemInCart = () => {
 }
 // Hết Xóa item trong giỏ hàng
 
+// Check item trong giỏ hàng
+const eventCheckItemInCart = () => {
+  const listInputCheckItem = document.querySelectorAll("[cart-table] .cart_page_checkbox input");
+  listInputCheckItem.forEach(input => {
+    input.addEventListener("change", () => {
+      const checked = input.checked;
+      const item = input.closest("[cart-item]");
+      const productId = item.getAttribute("product-id");
+      let variant = item.getAttribute("variant");
+      if(variant) {
+        variant = JSON.parse(decodeURIComponent(variant));
+      }
+      
+      const cart = JSON.parse(localStorage.getItem("cart"));
+      const itemUpdate = cart.find(cartItem => {
+        // So sánh giống productId
+        const sameProduct = cartItem.productId == productId;
+
+        // So sánh giống variant
+        const variantItemInCart = cartItem.variant ? JSON.stringify(cartItem.variant) : "[]";
+        const variantItemRemove = variant ? JSON.stringify(variant) : "[]";
+        const sameVariant = variantItemInCart == variantItemRemove;
+
+        return (sameProduct && sameVariant);
+      })
+
+      itemUpdate.checked = checked;
+      localStorage.setItem("cart", JSON.stringify(cart));
+      drawCart();
+    })
+  })
+}
+// Hết Check item trong giỏ hàng
+
 // Cập nhật số lượng item trong giỏ hàng
 const eventQuantityItemInCart = () => {
   const listBoxQuantity = document.querySelectorAll("[cart-table] .cart_page_quantity");
@@ -426,7 +460,9 @@ const drawCart = () => {
               stock = detail.stock;
             }
 
-            subTotal += priceNew * item.quantity;
+            if(item.checked) {
+              subTotal += priceNew * item.quantity;
+            }
 
             htmlMiniCart += `
               <li
@@ -464,7 +500,7 @@ const drawCart = () => {
               >
                 <td class="cart_page_checkbox">
                   <div class="form-check">
-                    <input class="form-check-input" value="" type="checkbox" />
+                    <input class="form-check-input" value="" type="checkbox" ${item.checked && "checked"} />
                   </div>
                 </td>
                 <td class="cart_page_img">
@@ -511,20 +547,22 @@ const drawCart = () => {
               </tr>
             `;
 
-            htmlCartSummary += `
-              <li>
-                <a class="img" href="/product/detail/${detail.slug}">
-                  <img class="img-fluid w-100" alt="${detail.name}" src="${domainCDN}${detail.images[0]}">
-                </a>
-                <div class="text">
-                  <a class="title" href="/product/detail/${detail.slug}">
-                    ${detail.name}
+            if(item.checked) {
+              htmlCartSummary += `
+                <li>
+                  <a class="img" href="/product/detail/${detail.slug}">
+                    <img class="img-fluid w-100" alt="${detail.name}" src="${domainCDN}${detail.images[0]}">
                   </a>
-                  <p>${priceNew.toLocaleString("vi-VN")}đ × ${item.quantity}</p>
-                  ${htmlVariantSummary}
-                </div>
-              </li>
-            `;
+                  <div class="text">
+                    <a class="title" href="/product/detail/${detail.slug}">
+                      ${detail.name}
+                    </a>
+                    <p>${priceNew.toLocaleString("vi-VN")}đ × ${item.quantity}</p>
+                    ${htmlVariantSummary}
+                  </div>
+                </li>
+              `;
+            }
           })
 
           let discount = 0;
@@ -560,6 +598,7 @@ const drawCart = () => {
 
           eventRemoveItemInCart();
           eventQuantityItemInCart();
+          eventCheckItemInCart();
         }
       })
   } else {
@@ -575,6 +614,11 @@ const drawCart = () => {
           </td>
         </tr>
       `;
+    }
+
+    const cartSummary = document.querySelector("[cart-summary]");
+    if(cartSummary) {
+      cartSummary.innerHTML = "";
     }
 
     const listElementSubTotal = document.querySelectorAll("[sub-total]");
@@ -670,7 +714,8 @@ if(shopDetailsText) {
     if(productId && quantity > 0) {
       const dataItem = {
         productId: productId,
-        quantity: quantity
+        quantity: quantity,
+        checked: true
       };
       const cart = JSON.parse(localStorage.getItem("cart"));
 
@@ -733,3 +778,16 @@ if(miniCart) {
   drawCart();
 }
 // Hết Giỏ hàng
+
+// Input Check All
+const inputCartCheckAll = document.querySelector("[input-cart-check-all]");
+if(inputCartCheckAll) {
+  inputCartCheckAll.addEventListener("change", () => {
+    const checked = inputCartCheckAll.checked;
+    const cart = JSON.parse(localStorage.getItem("cart"));
+    cart.forEach(item => item.checked = checked);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    drawCart();
+  })
+}
+// End Input Check All
