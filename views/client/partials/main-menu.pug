@@ -11,8 +11,8 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
               href="index.html"
               )
               img.img-fluid.w-100(
-                alt="TPQShop"
-                src="/client/assets/images/LogoTPQ.png"
+                alt="Zenis" 
+                src="/client/assets/images/logo_2.png"
                 )
             div(class="menu_category_bar")
               p
@@ -21,7 +21,7 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                     alt="category icon" 
                     src="/client/assets/images/bar_icon_white.svg"
                     )
-                | Danh mục sản phẩm
+                | Danh Mục Sản Phẩm
               i.fas.fa-chevron-down
             +renderCategory(categoryProductList, 0)
           ul(class="menu_item")
@@ -30,7 +30,7 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                 | Trang Chủ
             li
               a(href="#")
-                | Sản phẩm
+                | Sản Phẩm
                 i.fas.fa-chevron-down
               ul(class="menu_droapdown")
                 each item in categoryProductList
@@ -39,39 +39,22 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                       a(href=`/product/category/${item.slug}`) #{item.name}
             li
               a(href="#")
-                | Bài viết
+                | Bài Viết
                 i.fas.fa-chevron-down
               ul(class="menu_droapdown")
                 each item in categoryArticleList
                   if (item.status)
                     li
                       a(href=`/article/category/${item.slug}`) #{item.name}
-            //- li
-            //-   a(href="#")
-            //-     | blog
-            //-     i.fas.fa-chevron-down
-            //-   ul(class="menu_droapdown")
-            //-     li
-            //-       a(href="blog_classic.html") blog classic
-            //-     li
-            //-       a(href="blog_right_sidebar.html") blog right sidebar
-            //-     li
-            //-       a(href="blog_left_sidebar.html") blog left sidebar
-            //-     li
-            //-       a(href="blog_details.html") blog details
-            li
-              a(href="contact_us.html") Liên hệ
-            li
-              a(href="about_us.html") Về chúng tôi
           ul(class="menu_icon")
             li
-              a(href="compare.html")
+              a(href="/compare")
                 b
                   img.img-fluid(
-                    alt="Wishlist" 
+                    alt="So sánh" 
                     src="/client/assets/images/compare_black.svg"
                     )
-                span 2
+                span(mini-compare-quantity) 0
             li
               a(href="wishlist.html")
                 b
@@ -115,7 +98,7 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                         stroke-linejoin="round" 
                         stroke-linecap="round"
                         )
-                    | Tổng quan
+                    | Dashboard
                 li
                   a(href="dashboard_profile.html")
                     svg.size-6(
@@ -130,7 +113,7 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                         stroke-linejoin="round" 
                         stroke-linecap="round"
                         )
-                    | Thông tin cá nhân
+                    | my account
                 li
                   a(href="dashboard_order.html")
                     svg.size-6(
@@ -145,7 +128,7 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                         stroke-linejoin="round" 
                         stroke-linecap="round"
                         )
-                    | Đơn hàng
+                    | my order
                 li
                   a(href="dashboard_wishlist.html")
                     svg.size-6(
@@ -160,7 +143,7 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                         stroke-linejoin="round" 
                         stroke-linecap="round"
                         )
-                    | Yêu thích
+                    | wishlist
                 li
                   a(href="#")
                     svg.size-6(
@@ -175,4 +158,4 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                         stroke-linejoin="round" 
                         stroke-linecap="round"
                         )
-                    | Đăng xuất
+                    | logout

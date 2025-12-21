@@ -1,0 +1,221 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle
+    },
+    `/compare`
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    COMPARE PAGE START
+    =============================
+  section(class="compare_page mt_100 mb_100")
+    .container
+      .row
+        .col-12
+          .wow.fadeInUp(class="compare_list_area")
+            .table-responsive
+              table.table
+                tbody
+                  tr
+                    td
+                      p
+                        b Product
+                    td
+                      img.img-fluid.w-100(
+                        alt="product" 
+                        src="/client/assets/images/product_1.png"
+                        )
+                      a.title(href="shop_details.html") Full Sleeve Hoodie Jacket
+                    td
+                      img.img-fluid.w-100(
+                        alt="product" 
+                        src="/client/assets/images/product_2.png"
+                        )
+                      a.title(href="shop_details.html") Full Sleeve Hoodie Jacket
+                    td
+                      img.img-fluid.w-100(
+                        alt="product" 
+                        src="/client/assets/images/product_3.png"
+                        )
+                      a.title(href="shop_details.html") Full Sleeve Hoodie Jacket
+                    td
+                      img.img-fluid.w-100(
+                        alt="product" 
+                        src="/client/assets/images/product_4.png"
+                        )
+                      a.title(href="shop_details.html") Full Sleeve Hoodie Jacket
+                    td
+                      img.img-fluid.w-100(
+                        alt="product" 
+                        src="/client/assets/images/product_5.png"
+                        )
+                      a.title(href="shop_details.html") Full Sleeve Hoodie Jacket
+                  tr
+                    td
+                      p
+                        b description
+                    td
+                      p
+                        | Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis
+                        |   laudantium tempora iusto
+                    td
+                      p
+                        | Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis
+                        |   laudantium tempora iusto
+                    td
+                      p
+                        | Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis
+                        |   laudantium tempora iusto
+                    td
+                      p
+                        | Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis
+                        |   laudantium tempora iusto
+                    td
+                      p
+                        | Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis
+                        |   laudantium tempora iusto
+                  tr
+                    td
+                      p
+                        b Price
+                    td
+                      p
+                        | $45.00
+                        del $52.00
+                    td
+                      p $72.00
+                    td
+                      p
+                        | $57.00
+                        del $69.00
+                    td
+                      p $82.00
+                    td
+                      p
+                        | $57.00
+                        del $69.00
+                  tr
+                    td
+                      p
+                        b size
+                    td
+                      p XL (Extra Large)
+                    td
+                      p M (Medium)
+                    td
+                      p L (Large)
+                    td
+                      p S (Small)
+                    td
+                      p xL (Extra Large)
+                  tr
+                    td
+                      p
+                        b Rating
+                    td
+                      p.rating
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star-half-alt
+                    td
+                      p.rating
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fal.fa-star
+                    td
+                      p.rating
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star-half-alt
+                    td
+                      p.rating
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fal.fa-star
+                    td
+                      p.rating
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star
+                        i.fas.fa-star-half-alt
+                  tr
+                    td
+                      p
+                        b Action
+                    td
+                      a(
+                        class="common_btn" 
+                        href="#"
+                        ) add to cart
+                      a.remove(
+                        class="common_btn" 
+                        href="#"
+                        )
+                        i.fal.fa-trash
+                    td
+                      a(
+                        class="common_btn" 
+                        href="#"
+                        ) add to cart
+                      a.remove(
+                        class="common_btn" 
+                        href="#"
+                        )
+                        i.fal.fa-trash
+                    td
+                      a(
+                        class="common_btn" 
+                        href="#"
+                        ) add to cart
+                      a.remove(
+                        class="common_btn" 
+                        href="#"
+                        )
+                        i.fal.fa-trash
+                    td
+                      a(
+                        class="common_btn" 
+                        href="#"
+                        ) add to cart
+                      a.remove(
+                        class="common_btn" 
+                        href="#"
+                        )
+                        i.fal.fa-trash
+                    td
+                      a(
+                        class="common_btn" 
+                        href="#"
+                        ) add to cart
+                      a.remove(
+                        class="common_btn" 
+                        href="#"
+                        )
+                        i.fal.fa-trash
+  //
+    ============================
+    COMPARE PAGE END
+    =============================
