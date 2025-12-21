@@ -645,6 +645,22 @@ const miniCompareQuantity = () => {
 miniCompareQuantity();
 // End mini-compare-quantity
 
+// Tạo mảng yêu thích mới
+const existWishlist = localStorage.getItem("wishlist");
+if(!existWishlist) {
+  localStorage.setItem("wishlist", JSON.stringify([]));
+}
+// Hết Tạo mảng yêu thích mới
+
+// mini-wishlist-quantity
+const miniWishlistQuantity = () => {
+  const wishlist = JSON.parse(localStorage.getItem("wishlist"));
+  const miniWishlistQuantity = document.querySelector("[mini-wishlist-quantity]");
+  miniWishlistQuantity.innerHTML = wishlist.length;
+}
+miniWishlistQuantity();
+// End mini-wishlist-quantity
+
 // shop_details_text
 const shopDetailsText = document.querySelector(".shop_details_text");
 if(shopDetailsText) {
@@ -845,6 +861,66 @@ if(shopDetailsText) {
       } else {
         notyf.error("Số lượng sản phẩm so sánh đã đủ!");
       }
+    }
+  })
+
+  // Thêm vào yêu thích
+  const buttonAddWishlist = shopDetailsText.querySelector("[button-add-wishlist]");
+  buttonAddWishlist.addEventListener("click", () => {
+    const productId = buttonAddWishlist.getAttribute("product-id");
+    const quantity = parseInt(inputQuantity.value);
+    if(productId && quantity > 0) {
+      const dataItem = {
+        productId: productId,
+        quantity: quantity
+      };
+      const wishlist = JSON.parse(localStorage.getItem("wishlist"));
+
+      if(productVariants && productVariants.length > 0 && variantSelected) {
+        dataItem.variant = variantSelected.attributeValue;
+
+        // Tìm xem có sản phẩm trùng productId và trùng các attributeValue hay không
+        const existItem = wishlist.find(item => {
+          if(item.productId !== dataItem.productId) {
+            return false;
+          }
+
+          // So sánh toàn bộ các thuộc tính trong variant
+          const oldAttrs = item.variant;
+          const newAttrs = dataItem.variant;
+
+          // Số lượng thuộc tính phải trùng
+          if(oldAttrs.length !== newAttrs.length) {
+            return false;
+          }
+
+          // Kiểm tra từng attrId và value
+          return oldAttrs.every(attr => {
+            const match = newAttrs.find(a => a.attrId === attr.attrId && a.value === attr.value);
+            return match ? true : false;
+          });
+        })
+
+        if(existItem) {
+          notyf.success("Sản phẩm đã có trong yêu thích!");
+        } else {
+          wishlist.unshift(dataItem);
+          notyf.success("Đã thêm vào yêu thích!");
+        }
+      } else {
+        // Tìm xem có sản phẩm trùng productId hay không
+        const existItem = wishlist.find(item => item.productId === dataItem.productId);
+
+        if(existItem) {
+          notyf.success("Sản phẩm đã có trong yêu thích!");
+        } else {
+          wishlist.unshift(dataItem);
+          notyf.success("Đã thêm vào yêu thích!");
+        }
+      }
+
+      localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      miniWishlistQuantity();
     }
   })
 }
