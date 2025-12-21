@@ -937,6 +937,22 @@ const eventAddItemToCartInCompare = () => {
 }
 // Hết Nút thêm vào giỏ hàng ở trang So sánh
 
+// Nút xóa item khỏi trang so sánh
+const eventRemoveItemInCompare = () => {
+  const listButtonRemove = document.querySelectorAll("[button-remove]");
+  listButtonRemove.forEach(button => {
+    button.addEventListener("click", () => {
+      const index = parseInt(button.getAttribute("button-remove"));
+      const compareList = JSON.parse(localStorage.getItem("compare"));
+      compareList.splice(index, 1);
+      localStorage.setItem("compare", JSON.stringify(compareList));
+      drawNotify("success", "Đã xóa sản phẩm khỏi so sánh!");
+      window.location.reload();
+    })
+  })
+}
+// Hết Nút xóa item khỏi trang so sánh
+
 // Vẽ Vẽ trang so sánh
 const drawComparePage = () => {
   const compareList = JSON.parse(localStorage.getItem("compare"));
@@ -1046,7 +1062,7 @@ const drawComparePage = () => {
                   : 
                   '<div class="text-danger">Đã hết hàng</div>'
                 }
-                <a class="remove common_btn" href="#">
+                <a class="remove common_btn" href="javascript:;" button-remove="${index}">
                   <i class="fal fa-trash" aria-hidden="true"></i>
                 </a>
               </td>
@@ -1072,6 +1088,7 @@ const drawComparePage = () => {
           elementHtml6.outerHTML = html6;
 
           eventAddItemToCartInCompare();
+          eventRemoveItemInCompare();
         }
       })
   }
