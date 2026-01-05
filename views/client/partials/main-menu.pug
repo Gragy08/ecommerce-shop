@@ -11,8 +11,8 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
               href="index.html"
               )
               img.img-fluid.w-100(
-                alt="Zenis" 
-                src="/client/assets/images/logo_2.png"
+                alt="TPQLogo" 
+                src="/client/assets/images/LogoTPQ.png"
                 )
             div(class="menu_category_bar")
               p
@@ -46,6 +46,12 @@ nav.d-none.d-lg-block(class="main_menu_2 main_menu")
                   if (item.status)
                     li
                       a(href=`/article/category/${item.slug}`) #{item.name}
+            li
+              a(href="/")
+                | Liên hệ
+            li
+              a(href="/")
+                | Về chúng tôi
           ul(class="menu_icon")
             li
               a(href="/compare")
