@@ -1686,3 +1686,47 @@ if(forgotPasswordForm) {
   ;
 }
 // End Forgot Password Form
+
+// OTP Password Form
+const otpPasswordForm = document.querySelector("#otpPasswordForm");
+if(otpPasswordForm) {
+  const validation = new JustValidate('#otpPasswordForm');
+
+  validation
+    .addField('#otp', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập mã OTP!',
+      },
+    ])
+    .onSuccess((event) => {
+      const email = event.target.email.value;
+      const otp = event.target.otp.value;
+
+      const dataFinal = {
+        email: email,
+        otp: otp
+      };
+
+      fetch(`/auth/otp-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify(data.code, data.message);
+            window.location.href = `/auth/reset-password`;
+          }
+        })
+    })
+  ;
+}
+// End OTP Password Form

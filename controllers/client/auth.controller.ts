@@ -269,3 +269,74 @@ export const forgotPasswordPost = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const otpPassword = async (req: Request, res: Response) => {
+  const { email } = req.query;
+
+  res.render("client/pages/otp-password", {
+    pageTitle: "Xác thực OTP",
+    email: email
+  });
+}
+
+export const otpPasswordPost = async (req: Request, res: Response) => {
+  try {
+    const { email, otp } = req.body;
+
+    const existAccount = await AccountUser.findOne({
+      email: email,
+      deleted: false,
+      status: "active"
+    })
+
+    if(!existAccount) {
+      res.json({
+        code: "error",
+        message: "Email không tồn tại!"
+      })
+      return;
+    }
+
+    const existVerifyOTP = await VerifyOTP.findOne({
+      email: email,
+      otp: otp,
+      type: "otp-password"
+    })
+
+    if(!existVerifyOTP) {
+      res.json({
+        code: "error",
+        message: "Mã OTP không đúng!"
+      })
+      return;
+    }
+
+    const tokenUser = jwt.sign(
+      {
+        id: existAccount.id,
+        email: existAccount.email
+      },
+      `${process.env.JWT_SECRET}`,
+      {
+        expiresIn: "1d"
+      }
+    );
+
+    res.cookie("tokenUser", tokenUser, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+      sameSite: "strict"
+    });
+
+    res.json({
+      code: "success",
+      message: "Xác thực mã OTP thành công. Vui lòng đổi mật khẩu mới!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}
