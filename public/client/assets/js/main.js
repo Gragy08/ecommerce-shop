@@ -1640,3 +1640,49 @@ if(loginForm) {
   ;
 }
 // End Login Form
+
+// Forgot Password Form
+const forgotPasswordForm = document.querySelector("#forgotPasswordForm");
+if(forgotPasswordForm) {
+  const validation = new JustValidate('#forgotPasswordForm');
+
+  validation
+    .addField('#email', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập email của bạn!',
+      },
+      {
+        rule: 'email',
+        errorMessage: 'Email không đúng định dạng!',
+      },
+    ])
+    .onSuccess((event) => {
+      const email = event.target.email.value;
+
+      const dataFinal = {
+        email: email
+      };
+
+      fetch(`/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify(data.code, data.message);
+            window.location.href = `/auth/otp-password?email=${email}`;
+          }
+        })
+    })
+  ;
+}
+// End Forgot Password Form

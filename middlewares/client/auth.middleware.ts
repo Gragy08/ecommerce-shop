@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import AccountUser from "../../models/account-user.model.ts";
+import AccountUser from "../../models/account-user.model";
 
 const paths = [
   "/.well-known",

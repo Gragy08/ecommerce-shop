@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as FacebookStrategy } from "passport-facebook";
-import AccountUser from "../models/account-user.model.ts";
+import AccountUser from "../models/account-user.model";
 import slugify from "slugify";
 
 // Hàm nhận passport để cấu hình
