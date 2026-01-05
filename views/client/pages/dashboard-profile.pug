@@ -1,0 +1,63 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle
+    },
+    `/dashboard/profile`
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    DSHBOARD START
+    =============================
+  section.dashboard(class="mb_100")
+    .container
+      .row
+        .col-xl-3.wow.fadeInUp
+          include ../partials/dashboard-sidebar.pug
+        .col-xl-9.wow.fadeInRight
+          div(class="dashboard_content mt_100")
+            h3(class="dashboard_title")
+              | #{pageTitle}
+              a(
+                href="/dashboard/profile/edit" 
+                class="common_btn"
+                ) Chỉnh sửa
+            div(class="dashboard_profile_info_list")
+              ul
+                li
+                  span Họ tên:
+                  | #{accountUser.fullName}
+                li
+                  span Email:
+                  | #{accountUser.email}
+                li
+                  span SĐT:
+                  | #{accountUser.phone}
+                //- li
+                //-   span Country:
+                //-   | USA
+                //- li
+                //-   span City:
+                //-   | Washington Dc
+                //- li
+                //-   span Zip:
+                //-   | 1234
+                //- li
+                //-   span Address:
+                //-   | 441, 4th street, Washington DC, USA
+  //
+    ============================
+    DSHBOARD END
+    =============================
