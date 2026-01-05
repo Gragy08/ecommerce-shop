@@ -340,3 +340,35 @@ export const otpPasswordPost = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const resetPassword = async (req: Request, res: Response) => {
+  res.render("client/pages/reset-password", {
+    pageTitle: "Đổi mật khẩu mới"
+  });
+}
+
+export const resetPasswordPost = async (req: Request, res: Response) => {
+  try {
+    const { password } = req.body;
+    const userId = res.locals.accountUser.id;
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    await AccountUser.updateOne({
+      _id: userId
+    }, {
+      password: hashPassword
+    })
+
+    res.json({
+      code: "success",
+      message: "Đã đổi mật khẩu thành công!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}
