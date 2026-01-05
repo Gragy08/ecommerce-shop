@@ -2,8 +2,17 @@ import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import AccountUser from "../../models/account-user.model.ts";
 
+const paths = [
+  "/.well-known",
+  "/client"
+];
+
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if(paths.some(path => req.path.startsWith(path))) {
+      return next();
+    }
+
     const token = req.cookies.tokenUser;
     
     if(token) {
