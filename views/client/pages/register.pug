@@ -1,0 +1,106 @@
+extends ../layouts/default.pug
+
+block main
+  //
+    =========================
+    SIGN UP PAGE START
+    ==========================
+  section(class="sign_up mt_100 mb_100")
+    .container
+      .row.justify-content-center
+        .col-xxl-3.col-lg-4.col-xl-4.d-none.d-lg-block.wow.fadeInLeft
+          div(class="sign_in_img")
+            img.img-fluid.w-100(
+              alt="Sign In" 
+              src="/client/assets/images/sign_in_img_2.jpg"
+              )
+        .col-xxl-5.col-lg-8.col-xl-6.col-md-10.wow.fadeInRight
+          div(class="sign_in_form")
+            h3 #{pageTitle}
+            form(id="registerForm")
+              .row
+                .col-lg-12
+                  div(class="single_input")
+                    label(for="fullName") Họ tên
+                    input(
+                      placeholder="Ví dụ: Lê Văn A" 
+                      type="text"
+                      name="fullName"
+                      id="fullName"
+                      )
+                .col-lg-12
+                  div(class="single_input")
+                    label(for="email") Email
+                    input(
+                      placeholder="Ví dụ: levana@gmail.com" 
+                      type="email"
+                      name="email"
+                      id="email"
+                      )
+                .col-lg-12
+                  div(class="single_input")
+                    label(for="phone") Số điện thoại
+                    input(
+                      placeholder="Ví dụ: 0987654321" 
+                      type="text"
+                      name="phone"
+                      id="phone"
+                      )
+                .col-lg-6
+                  div(class="single_input")
+                    label(for="password") Mật khẩu
+                    input(
+                      placeholder="********" 
+                      type="password"
+                      name="password"
+                      id="password"
+                      )
+                .col-lg-6
+                  div(class="single_input")
+                    label(for="confirmPassword") Xác nhận mật khẩu
+                    input(
+                      placeholder="********" 
+                      type="password"
+                      name="confirmPassword"
+                      id="confirmPassword"
+                      )
+                .col-lg-12
+                  button(
+                    class="common_btn" 
+                    type="submit"
+                    )
+                    | Đăng Ký
+                    i.fas.fa-long-arrow-right
+            p(class="dont_account")
+              | Bạn đã có tài khoản? 
+              a(href="/auth/login") Đăng Nhập
+            p.or Hoặc
+            ul
+              li
+                a(href="#")
+                  span
+                    img.img-fluid.w-100(
+                      alt="Google" 
+                      src="/client/assets/images/google_logo.png"
+                      )
+                  | Google
+              li
+                a(href="#")
+                  span
+                    img.img-fluid.w-100(
+                      alt="Facebook" 
+                      src="/client/assets/images/fb_logo.png"
+                      )
+                  | Facebook
+              li
+                a(href="#")
+                  span
+                    img.img-fluid.w-100(
+                      alt="Twitter" 
+                      src="/client/assets/images/twitter_logo.png"
+                      )
+                  | Twitter
+  //
+    =========================
+    SIGN UP PAGE END
+    ==========================
