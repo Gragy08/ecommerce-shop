@@ -1,0 +1,89 @@
+extends ../layouts/default.pug
+
+block main
+  //
+    =========================
+    SIGN IN PAGE START
+    ==========================
+  section(class="sign_in mt_100 mb_100")
+    .container
+      .row.justify-content-center
+        .col-xxl-3.col-lg-4.col-xl-4.d-none.d-lg-block.wow.fadeInLeft
+          div(class="sign_in_img")
+            img.img-fluid.w-100(
+              alt="Sign In" 
+              src="/client/assets/images/sign_in_img.jpg"
+              )
+        .col-xxl-4.col-lg-7.col-xl-6.col-md-10.wow.fadeInRight
+          div(class="sign_in_form")
+            h3 #{pageTitle}
+            form(id="loginForm")
+              .row
+                .col-xl-12
+                  div(class="single_input")
+                    label(for="email") Email
+                    input(
+                      placeholder="Ví dụ: levana@gmail.com" 
+                      type="email"
+                      name="email"
+                      id="email"
+                      )
+                .col-xl-12
+                  div(class="single_input")
+                    label(for="password") Mật khẩu
+                    input(
+                      placeholder="********" 
+                      type="password"
+                      name="password"
+                      id="password"
+                      )
+                .col-12
+                  .forgot
+                    .form-check
+                      input#flexCheckDefault.form-check-input(
+                        value="" 
+                        type="checkbox"
+                        name="rememberPassword"
+                        )
+                      label.form-check-label(for="flexCheckDefault") Nhớ mật khẩu
+                    a(href="forgot_password.html") Quên mật khẩu?
+                .col-xl-12
+                  button(
+                    class="common_btn" 
+                    type="submit"
+                    )
+                    | Đăng Nhập
+                    i.fas.fa-long-arrow-right
+            p(class="dont_account")
+              | Bạn chưa có tài khoản? 
+              a(href="/auth/register") Đăng Ký
+            p.or Hoặc
+            ul
+              li
+                a(href="#")
+                  span
+                    img.img-fluid.w-100(
+                      alt="Google" 
+                      src="/client/assets/images/google_logo.png"
+                      )
+                  | Google
+              li
+                a(href="#")
+                  span
+                    img.img-fluid.w-100(
+                      alt="Facebook" 
+                      src="/client/assets/images/fb_logo.png"
+                      )
+                  | Facebook
+              li
+                a(href="#")
+                  span
+                    img.img-fluid.w-100(
+                      alt="Twitter" 
+                      src="/client/assets/images/twitter_logo.png"
+                      )
+                  | Twitter
+  //
+    =========================
+    SIGN IN PAGE END
+    ==========================

@@ -1584,3 +1584,59 @@ if(registerForm) {
   ;
 }
 // End Register Form
+
+// Login Form
+const loginForm = document.querySelector("#loginForm");
+if(loginForm) {
+  const validation = new JustValidate('#loginForm');
+
+  validation
+    .addField('#email', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập email của bạn!',
+      },
+      {
+        rule: 'email',
+        errorMessage: 'Email không đúng định dạng!',
+      },
+    ])
+    .addField('#password', [
+      {
+        rule: 'required',
+        errorMessage: "Vui lòng nhập mật khẩu!"
+      },
+    ])
+    .onSuccess((event) => {
+      const email = event.target.email.value;
+      const password = event.target.password.value;
+      const rememberPassword = event.target.rememberPassword.checked;
+
+      const dataFinal = {
+        email: email,
+        password: password,
+        rememberPassword: rememberPassword
+      };
+
+      fetch(`/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify(data.code, data.message);
+            window.location.href = `/`;
+          }
+        })
+    })
+  ;
+}
+// End Login Form
