@@ -6,6 +6,10 @@ const schema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    facebookId: {
+      type: String,
+      default: ""
+    },
     fullName: String,
     email: String,
     phone: String,

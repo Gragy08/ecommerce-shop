@@ -174,3 +174,26 @@ export const callbackGoogle = async (req: Request, res: Response) => {
 
   res.redirect('/');
 }
+
+export const callbackFacebook = async (req: Request, res: Response) => {
+  const user = req.user as any;
+
+  const tokenUser = jwt.sign(
+    {
+      id: user.id,
+      email: user.email
+    },
+    `${process.env.JWT_SECRET}`,
+    {
+      expiresIn: "1d"
+    }
+  );
+
+  res.cookie("tokenUser", tokenUser, {
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+    sameSite: "lax"
+  });
+
+  res.redirect('/');
+}
