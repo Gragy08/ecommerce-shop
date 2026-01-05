@@ -6,6 +6,9 @@ import { domainCDN, pathAdmin } from './configs/variable.config';
 import dotenv from 'dotenv';
 import { connectDB } from './configs/database.config';
 import cookieParser from "cookie-parser";
+import session from "express-session";
+import passport from "passport";
+import { configureGooglePassport } from './configs/googleOauth.config';
 
 // Load biến môi trường từ file .env
 dotenv.config();
@@ -51,6 +54,20 @@ app.locals.domainCDN = domainCDN;
 
 // Khởi tạo thư viện lấy cookie
 app.use(cookieParser());
+
+
+// Cấu hình session
+app.use(session({
+  secret: `${process.env.SESSION_SECRET}`,
+  resave: false,
+  saveUninitialized: true,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+configureGooglePassport(passport);
+
 
 app.use(`/${pathAdmin}`, adminRoutes);
 app.use("/", clientRoutes);
