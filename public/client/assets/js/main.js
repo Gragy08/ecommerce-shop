@@ -1810,3 +1810,75 @@ if(resetPasswordForm) {
   ;
 }
 // End Reset Password Form
+
+// Dashboard Profile Edit Form
+const dashboardProfileEditForm = document.querySelector("#dashboardProfileEditForm");
+if(dashboardProfileEditForm) {
+  const validation = new JustValidate('#dashboardProfileEditForm');
+
+  validation
+    .addField('#fullName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập họ tên!'
+      },
+      {
+        rule: 'minLength',
+        value: 5,
+        errorMessage: 'Họ tên phải có ít nhất 5 ký tự!',
+      },
+      {
+        rule: 'maxLength',
+        value: 50,
+        errorMessage: 'Họ tên không được vượt quá 50 ký tự!',
+      },
+    ])
+    .addField('#email', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập email của bạn!',
+      },
+      {
+        rule: 'email',
+        errorMessage: 'Email không đúng định dạng!',
+      },
+    ])
+    .addField('#phone', [
+      {
+        rule: 'customRegexp',
+        value: /^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/,
+        errorMessage: "Số điện thoại không đúng định dạng!"
+      },
+    ])
+    .onSuccess((event) => {
+      const fullName = event.target.fullName.value;
+      const email = event.target.email.value;
+      const phone = event.target.phone.value;
+
+      const dataFinal = {
+        fullName: fullName,
+        email: email,
+        phone: phone,
+      };
+
+      fetch(`/dashboard/profile/edit`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Dashboard Profile Edit Form
