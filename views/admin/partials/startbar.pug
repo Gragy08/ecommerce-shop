@@ -33,30 +33,31 @@
                 i.iconoir-home-simple.menu-icon
                 span Tổng quan
           // end nav-item
-          li.nav-item
-            a.nav-link(
-              aria-controls="sidebarProduct" 
-              aria-expanded="false" 
-              role="button" 
-              data-bs-toggle="collapse" 
-              href="#sidebarProduct"
-              )
-              i.iconoir-shop.menu-icon
-              span Sản phẩm
-            #sidebarProduct.collapse
-              ul.nav.flex-column
-                li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/product/create`) Tạo sản phẩm
-                // end nav-item
-                li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/product/list`) Danh sách sản phẩm
-                // end nav-item
-                li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/product/category`) Danh mục sản phẩm
-                // end nav-item
-                li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/product/attribute`) Thuộc tính sản phẩm
-                // end nav-item
+          if (permissions.includes("coupon-role"))
+            li.nav-item
+              a.nav-link(
+                aria-controls="sidebarProduct" 
+                aria-expanded="false" 
+                role="button" 
+                data-bs-toggle="collapse" 
+                href="#sidebarProduct"
+                )
+                i.iconoir-shop.menu-icon
+                span Sản phẩm
+              #sidebarProduct.collapse
+                ul.nav.flex-column
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/product/create`) Tạo sản phẩm
+                  // end nav-item
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/product/list`) Danh sách sản phẩm
+                  // end nav-item
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/product/category`) Danh mục sản phẩm
+                  // end nav-item
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/product/attribute`) Thuộc tính sản phẩm
+                  // end nav-item
           if (permissions.includes("article-role"))
             li.nav-item
               a.nav-link(
@@ -127,24 +128,25 @@
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/account-admin/list`) Danh sách tài khoản
                     // end nav-item
-          li.nav-item
-            a.nav-link(
-              aria-controls="sidebarCoupon" 
-              aria-expanded="false" 
-              role="button" 
-              data-bs-toggle="collapse" 
-              href="#sidebarCoupon"
-              )
-              i.iconoir-percentage-circle.menu-icon
-              span Mã giảm giá
-            #sidebarCoupon.collapse
-              ul.nav.flex-column
-                li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/coupon/create`) Tạo mã giảm giá
-                // end nav-item
-                li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/coupon/list`) Danh sách mã giảm giá
-                // end nav-item
+          if (permissions.includes("coupon-role"))
+            li.nav-item
+              a.nav-link(
+                aria-controls="sidebarCoupon" 
+                aria-expanded="false" 
+                role="button" 
+                data-bs-toggle="collapse" 
+                href="#sidebarCoupon"
+                )
+                i.iconoir-percentage-circle.menu-icon
+                span Mã giảm giá
+              #sidebarCoupon.collapse
+                ul.nav.flex-column
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/coupon/create`) Tạo mã giảm giá
+                  // end nav-item
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/coupon/list`) Danh sách mã giảm giá
+                  // end nav-item
           if (permissions.includes("log-activity-role"))
             li.nav-item
               a.nav-link(

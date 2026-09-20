@@ -1,0 +1,17 @@
+section(
+  style="background: url(/client/assets/images/page_banner_bg.jpg);" 
+  class="page_banner"
+  )
+  div(class="page_banner_overlay")
+    .container
+      .row
+        .col-12
+          .wow.fadeInUp(class="page_banner_text")
+            h1 #{categoryDetail.name}
+            ul
+              li
+                a(href="#")
+                  i.fal.fa-home-lg
+                  | Trang chủ
+              li
+                a(href=`/article/category/${categoryDetail.slug}`) #{categoryDetail.name}

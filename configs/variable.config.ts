@@ -8,6 +8,26 @@ export const permissionList = [
     name: "Trang tổng quan"
   },
   {
+    id: "product-role",
+    name: "Quản lý sản phẩm"
+  },
+  {
+    id: "product-list",
+    name: "Danh sách sản phẩm"
+  },
+  {
+    id: "product-create",
+    name: "Tạo sản phẩm"
+  },
+  {
+    id: "product-edit",
+    name: "Sửa sản phẩm"
+  },
+  {
+    id: "product-delete",
+    name: "Xóa sản phẩm"
+  },
+  {
     id: "article-role",
     name: "Quản lý bài viết"
   },
@@ -102,6 +122,26 @@ export const permissionList = [
   {
     id: "log-activity-role",
     name: "Quản lý hoạt động quản trị"
+  },
+  {
+    id: "coupon-role",
+    name: "Quản lý mã giảm giá"
+  },
+  {
+    id: "coupon-list",
+    name: "Danh sách mã giảm giá"
+  },
+  {
+    id: "coupon-create",
+    name: "Tạo mã giảm giá"
+  },
+  {
+    id: "coupon-edit",
+    name: "Chỉnh sửa lý mã giảm giá"
+  },
+  {
+    id: "coupon-delete",
+    name: "Xóa mã giảm giá"
   },
   {
     id: "log-activity-list",
