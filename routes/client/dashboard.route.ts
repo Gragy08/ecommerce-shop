@@ -14,4 +14,6 @@ router.patch(
     dashboardController.profileEditPatch
 ); 
 
+router.get('/change-password', dashboardController.changePassword);
+
 export default router;

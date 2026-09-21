@@ -86,3 +86,9 @@ export const profileEditPatch = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const changePassword = (req: Request, res: Response) => {
+  res.render("client/pages/dashboard-change-password", {
+    pageTitle: "Đổi mật khẩu"
+  });
+}

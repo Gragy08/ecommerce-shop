@@ -1803,7 +1803,8 @@ if(resetPasswordForm) {
 
           if(data.code == "success") {
             drawNotify(data.code, data.message);
-            window.location.href = `/`;
+            const dataHrefSuccess = resetPasswordForm.getAttribute("data-href-success");
+            window.location.href = dataHrefSuccess ? dataHrefSuccess : `/`;
           }
         })
     })
