@@ -2040,6 +2040,17 @@ if(boxMap) {
     markerLayer.getSource().addFeature(marker);
   }
 
+  // Hiển thị vị trí mặc định
+  const inputLon = document.querySelector(`[name="longitude"]`);
+  const inputLat = document.querySelector(`[name="latitude"]`);
+  if(inputLon.value && inputLat.value) {
+    const lon = parseFloat(inputLon.value);
+    const lat = parseFloat(inputLat.value);
+    setMarker(lon, lat);
+    // Di chuyển bản đồ đến đúng vị trí
+    map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: 15 });
+  }
+
   // Cho phép click để chọn vị trí
   map.on('click', (event) => {
     const coord = ol.proj.toLonLat(event.coordinate);
@@ -2103,3 +2114,94 @@ if(boxMap) {
   })
 }
 // End Map
+
+// Dashboard Address Edit Form
+const dashboardAddressEditForm = document.querySelector("#dashboardAddressEditForm");
+if(dashboardAddressEditForm) {
+  const validation = new JustValidate('#dashboardAddressEditForm');
+
+  validation
+    .addField('#fullName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập họ tên!'
+      },
+      {
+        rule: 'minLength',
+        value: 5,
+        errorMessage: 'Họ tên phải có ít nhất 5 ký tự!',
+      },
+      {
+        rule: 'maxLength',
+        value: 50,
+        errorMessage: 'Họ tên không được vượt quá 50 ký tự!',
+      },
+    ])
+    .addField('#phone', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập số điện thoại!'
+      },
+      {
+        rule: 'customRegexp',
+        value: /^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/,
+        errorMessage: "Số điện thoại không đúng định dạng!"
+      },
+    ])
+    .addField('#address', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên đường, tòa nhà, số nhà!',
+      },
+    ])
+    .addField('#longitude', [
+      {
+        rule: 'required',
+        errorMessage: 'Địa chỉ không hợp lệ!',
+      },
+    ])
+    .addField('#latitude', [
+      {
+        rule: 'required',
+        errorMessage: 'Địa chỉ không hợp lệ!',
+      },
+    ])
+    .onSuccess((event) => {
+      const id = event.target.id.value;
+      const fullName = event.target.fullName.value;
+      const phone = event.target.phone.value;
+      const address = event.target.address.value;
+      const longitude = parseFloat(event.target.longitude.value);
+      const latitude = parseFloat(event.target.latitude.value);
+      const isDefault = event.target.isDefault.checked;
+
+      const dataFinal = {
+        fullName: fullName,
+        phone: phone,
+        address: address,
+        longitude: longitude,
+        latitude: latitude,
+        isDefault: isDefault,
+      };
+
+      fetch(`/dashboard/address/edit/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Dashboard Address Edit Form

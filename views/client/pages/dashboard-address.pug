@@ -62,7 +62,11 @@ block main
                             data-api=`/dashboard/address/change-default/${item.id}`
                             )
                             | Đặt mặc định
-                        <a class="btn btn-warning" href="#">Sửa</a>
+                        a(
+                          class="btn btn-warning" 
+                          href=`/dashboard/address/edit/${item.id}`
+                          )
+                          | Sửa
                         a(
                           class="btn btn-danger" 
                           href="javascript:;"

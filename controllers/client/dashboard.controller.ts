@@ -206,3 +206,72 @@ export const addressDelete = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const addressEdit = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const addressId = req.params.id;
+
+    const addressDetail = await UserAddress.findOne({
+      _id: addressId,
+      userId: userId,
+    });
+
+    if(!addressDetail) {
+      res.redirect(`/dashboard/address`);
+      return;
+    }
+
+    res.render("client/pages/dashboard-address-edit", {
+      pageTitle: "Sửa địa chỉ",
+      addressDetail: addressDetail
+    });
+  } catch (error) {
+    res.redirect(`/dashboard/address`);
+  }
+}
+
+export const addressEditPatch = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const addressId = req.params.id;
+
+    const existAddress = await UserAddress.findOne({
+      _id: addressId,
+      userId: userId,
+    });
+
+    if(!existAddress) {
+      res.json({
+        code: "error",
+        message: "Địa chỉ không tồn tại!"
+      });
+      return;
+    }
+
+    if(req.body.isDefault) {
+      await UserAddress.findOneAndUpdate({
+        userId: userId,
+        isDefault: true
+      }, {
+        isDefault: false
+      });
+    }
+
+    await UserAddress.updateOne({
+      _id: addressId,
+      userId: userId,
+    }, req.body);
+
+    res.json({
+      code: "success",
+      message: "Đã cập nhật lại địa chỉ!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}
