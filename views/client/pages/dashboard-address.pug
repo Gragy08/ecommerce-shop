@@ -36,24 +36,27 @@ block main
                 ) Thêm địa chỉ
             div(class="checkout_address_area")
               .row
-                .col-md-6
-                  div(class="checkout_single_address")
-                    .inner-info.text-success
-                      <i class="fas fa-check-circle"></i>
-                      | Mặc định
-                    .inner-info
-                      <i class="fas fa-address-card"></i>
-                      | Lê Văn A
-                    .inner-info
-                      <i class="fas fa-phone"></i>
-                      | 0987654321
-                    .inner-info
-                      <i class="fas fa-map-marker-alt"></i>
-                      | Số 123, đường ABC, Hà Nội
-                    .inner-info
-                      <a class="btn btn-primary" href="#">Đặt mặc định</a>
-                      <a class="btn btn-warning" href="#">Sửa</a>
-                      <a class="btn btn-danger" href="#">Xóa</a>
+                each item in addressList
+                  .col-md-6
+                    div(class="checkout_single_address")
+                      if (item.isDefault)
+                        .inner-info.text-success
+                          <i class="fas fa-check-circle"></i>
+                          | Mặc định
+                      .inner-info
+                        <i class="fas fa-address-card"></i>
+                        | #{item.fullName}
+                      .inner-info
+                        <i class="fas fa-phone"></i>
+                        | #{item.phone}
+                      .inner-info
+                        <i class="fas fa-map-marker-alt"></i>
+                        | #{item.address}
+                      .inner-info
+                        if (!item.isDefault)
+                          <a class="btn btn-primary" href="#">Đặt mặc định</a>
+                        <a class="btn btn-warning" href="#">Sửa</a>
+                        <a class="btn btn-danger" href="#">Xóa</a>
   //
     ============================
     DSHBOARD END

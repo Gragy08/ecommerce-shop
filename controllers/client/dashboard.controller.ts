@@ -94,9 +94,20 @@ export const changePassword = (req: Request, res: Response) => {
   });
 }
 
-export const address = (req: Request, res: Response) => {
+export const address = async (req: Request, res: Response) => {
+  const id = res.locals.accountUser.id;
+
+  const addressList = await UserAddress
+    .find({
+      userId: id
+    })
+    .sort({
+      createdAt: "desc"
+    })
+
   res.render("client/pages/dashboard-address", {
-    pageTitle: "Danh sách địa chỉ"
+    pageTitle: "Danh sách địa chỉ",
+    addressList: addressList
   });
 }
 
