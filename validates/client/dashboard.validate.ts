@@ -75,6 +75,18 @@ export const addressCreatePost = (req: Request, res: Response, next: NextFunctio
       .messages({
         "string.empty": "Vui lòng nhập tên đường, tòa nhà, số nhà!",
       }),
+    longitude: Joi.number()
+      .required()
+      .messages({
+        "number.base": "Địa chỉ không hợp lệ!",
+        "any.required": "Vui lòng chọn vị trí trên bản đồ!"
+      }),
+    latitude: Joi.number()
+      .required()
+      .messages({
+        "number.base": "Địa chỉ không hợp lệ!",
+        "any.required": "Vui lòng chọn vị trí trên bản đồ!"
+      }),
     isDefault: Joi.boolean()
       .required()
       .messages({

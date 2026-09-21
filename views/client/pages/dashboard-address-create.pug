@@ -56,6 +56,20 @@ block main
                         id="phone"
                         )
                   .col-md-12
+                    label Chọn địa chỉ trên bản đồ *
+                    div(class="input-group")
+                      input(
+                        class="form-control" 
+                        placeholder="Nhập địa chỉ cần tìm..." 
+                        type="text"
+                        id="mapSearchInput"
+                        )
+                      span(
+                        class="btn btn-outline-secondary"
+                        id="mapSearchBtn"
+                        ) Tìm kiếm
+                    div(id="boxMap" style="height: 350px; margin-bottom: 25px;")
+                  .col-md-12
                     div(class="single_input")
                       label(for="address") Địa chỉ *
                       input(
@@ -63,6 +77,14 @@ block main
                         name="address" 
                         id="address"
                         )
+                  .col-md-6
+                    div(class="single_input")
+                      label(for="longitude") Kinh độ *
+                      input(type="text" name="longitude" id="longitude")
+                  .col-md-6
+                    div(class="single_input")
+                      label(for="latitude") Vĩ độ *
+                      input(type="text" name="latitude" id="latitude")
                   .col-md-6
                     div(class="form-check" style="margin-bottom: 25px")
                       input(

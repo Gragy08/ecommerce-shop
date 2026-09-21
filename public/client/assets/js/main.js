@@ -1922,17 +1922,32 @@ if(dashboardAddressCreateForm) {
         rule: 'required',
         errorMessage: 'Vui lòng nhập tên đường, tòa nhà, số nhà!',
       },
+    ]).addField('#longitude', [
+      {
+        rule: 'required',
+        errorMessage: 'Địa chỉ không hợp lệ!',
+      },
+    ])
+    .addField('#latitude', [
+      {
+        rule: 'required',
+        errorMessage: 'Địa chỉ không hợp lệ!',
+      },
     ])
     .onSuccess((event) => {
       const fullName = event.target.fullName.value;
       const phone = event.target.phone.value;
       const address = event.target.address.value;
+      const longitude = event.target.longitude.value;
+      const latitude = event.target.latitude.value;
       const isDefault = event.target.isDefault.checked;
 
       const dataFinal = {
         fullName: fullName,
         phone: phone,
         address: address,
+        longitude: longitude,
+        latitude: latitude,
         isDefault: isDefault,
       };
 
@@ -1985,3 +2000,106 @@ if(listButtonApi.length > 0) {
   })
 }
 // End button-api
+
+// Map
+const boxMap = document.querySelector("#boxMap");
+if(boxMap) {
+  // Khởi tạo bản đồ
+  const map = new ol.Map({
+    target: 'boxMap',
+    layers: [
+      new ol.layer.Tile({
+        source: new ol.source.OSM()
+      })
+    ],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([105.8163212, 21.0227384]),
+      zoom: 13
+    })
+  });
+
+  // Layer để chứa marker (điểm đánh dấu)
+  const markerLayer = new ol.layer.Vector({ source: new ol.source.Vector() });
+  map.addLayer(markerLayer);
+
+  // Hàm thêm marker (điểm đánh dấu)
+  const setMarker = (lon, lat) => {
+    markerLayer.getSource().clear();
+    const marker = new ol.Feature({
+      geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
+    });
+    
+    marker.setStyle(new ol.style.Style({
+      image: new ol.style.Icon({
+        anchor: [0.5, 1],
+        src: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png', // icon location
+        scale: 0.5 // thu nhỏ lại cho vừa bản đồ
+      })
+    }));
+
+    markerLayer.getSource().addFeature(marker);
+  }
+
+  // Cho phép click để chọn vị trí
+  map.on('click', (event) => {
+    const coord = ol.proj.toLonLat(event.coordinate);
+    const lon = coord[0];
+    const lat = coord[1];
+    setMarker(lon, lat);
+
+    // Gọi API Nominatim để lấy địa chỉ chi tiết
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+      .then(res => res.json())
+      .then(data => {
+        if(data && data.display_name) {
+          const inputAddress = document.querySelector(`[name="address"]`);
+          inputAddress.value = data.display_name;
+
+          const inputLon = document.querySelector(`[name="longitude"]`);
+          inputLon.value = lon;
+
+          const inputLat = document.querySelector(`[name="latitude"]`);
+          inputLat.value = lat;
+        } else {
+          notyf.error("Không tìm thấy địa chỉ!");
+        }
+      })
+  });
+
+  // Tìm kiếm địa điểm
+  const searchInput = document.querySelector("#mapSearchInput");
+  const searchBtn = document.querySelector("#mapSearchBtn");
+  searchBtn.addEventListener("click", () => {
+    const keyword = searchInput.value;
+    if(!keyword) {
+      notyf.error("Vui lòng nhập địa chỉ tìm kiếm!");
+      return;
+    }
+    
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(keyword)}&countrycodes=vn`)
+      .then(res => res.json())
+      .then(data => {
+        if(data && data.length > 0) {
+          const firstResult = data[0];
+          const lon = parseFloat(firstResult.lon);
+          const lat = parseFloat(firstResult.lat);
+          setMarker(lon, lat);
+          // Di chuyển bản đồ đến đúng vị trí
+          map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: 15 });
+
+          // Gán lại địa chỉ vào ô input
+          const inputAddress = document.querySelector(`[name="address"]`);
+          inputAddress.value = firstResult.display_name;
+
+          const inputLon = document.querySelector(`[name="longitude"]`);
+          inputLon.value = lon;
+
+          const inputLat = document.querySelector(`[name="latitude"]`);
+          inputLat.value = lat;
+        } else {
+          notyf.error("Không tìm thấy địa chỉ!");
+        }
+	  });
+  })
+}
+// End Map

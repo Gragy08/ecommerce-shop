@@ -5,6 +5,8 @@ const schema = new mongoose.Schema({
   fullName: String,
   phone: String,
   address: String,
+  longitude: Number,
+  latitude: Number,
   isDefault: {
     type: Boolean,
     default: false,
