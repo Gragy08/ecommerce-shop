@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import AccountUser from '../../models/account-user.model';
 import slugify from 'slugify';
 import jwt from 'jsonwebtoken';
+import UserAddress from '../../models/user-address.model';
 
 
 export const profile = (req: Request, res: Response) => {
@@ -97,4 +98,41 @@ export const address = (req: Request, res: Response) => {
   res.render("client/pages/dashboard-address", {
     pageTitle: "Danh sách địa chỉ"
   });
+}
+
+export const addressCreate = (req: Request, res: Response) => {
+  res.render("client/pages/dashboard-address-create", {
+    pageTitle: "Thêm địa chỉ"
+  });
+}
+
+export const addressCreatePost = async (req: Request, res: Response) => {
+  try {
+    const id = res.locals.accountUser.id;
+
+    req.body.userId = id;
+
+    if(req.body.isDefault) {
+      await UserAddress.findOneAndUpdate({
+        userId: id,
+        isDefault: true
+      }, {
+        isDefault: false
+      });
+    }
+
+    const newRecord = new UserAddress(req.body);
+    await newRecord.save();
+
+    res.json({
+      code: "success",
+      message: "Thêm địa chỉ thành công!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
 }

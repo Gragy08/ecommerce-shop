@@ -1883,3 +1883,78 @@ if(dashboardProfileEditForm) {
   ;
 }
 // End Dashboard Profile Edit Form
+
+// Dashboard Address Create Form
+const dashboardAddressCreateForm = document.querySelector("#dashboardAddressCreateForm");
+if(dashboardAddressCreateForm) {
+  const validation = new JustValidate('#dashboardAddressCreateForm');
+
+  validation
+    .addField('#fullName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập họ tên!'
+      },
+      {
+        rule: 'minLength',
+        value: 5,
+        errorMessage: 'Họ tên phải có ít nhất 5 ký tự!',
+      },
+      {
+        rule: 'maxLength',
+        value: 50,
+        errorMessage: 'Họ tên không được vượt quá 50 ký tự!',
+      },
+    ])
+    .addField('#phone', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập số điện thoại!'
+      },
+      {
+        rule: 'customRegexp',
+        value: /^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/,
+        errorMessage: "Số điện thoại không đúng định dạng!"
+      },
+    ])
+    .addField('#address', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên đường, tòa nhà, số nhà!',
+      },
+    ])
+    .onSuccess((event) => {
+      const fullName = event.target.fullName.value;
+      const phone = event.target.phone.value;
+      const address = event.target.address.value;
+      const isDefault = event.target.isDefault.checked;
+
+      const dataFinal = {
+        fullName: fullName,
+        phone: phone,
+        address: address,
+        isDefault: isDefault,
+      };
+
+      fetch(`/dashboard/address/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify(data.code, data.message);
+            window.location.href = `/dashboard/address`;
+          }
+        })
+    })
+  ;
+}
+// End Dashboard Address Create Form

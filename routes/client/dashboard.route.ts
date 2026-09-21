@@ -18,4 +18,12 @@ router.get('/change-password', dashboardController.changePassword);
 
 router.get('/address', dashboardController.address);
 
+router.get('/address/create', dashboardController.addressCreate);
+
+router.post(
+  '/address/create', 
+  dashboardValidate.addressCreatePost,
+  dashboardController.addressCreatePost
+);
+
 export default router;
