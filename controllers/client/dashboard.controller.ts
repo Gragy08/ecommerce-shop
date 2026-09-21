@@ -92,3 +92,9 @@ export const changePassword = (req: Request, res: Response) => {
     pageTitle: "Đổi mật khẩu"
   });
 }
+
+export const address = (req: Request, res: Response) => {
+  res.render("client/pages/dashboard-address", {
+    pageTitle: "Danh sách địa chỉ"
+  });
+}

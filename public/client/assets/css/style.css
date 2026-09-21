@@ -9984,6 +9984,19 @@ footer {
     -o-border-radius: 8px;
 }
 
+.checkout_single_address {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.checkout_single_address .inner-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 16px;
+}
+
 .checkout_single_address .form-check input {
     padding: 0;
 }

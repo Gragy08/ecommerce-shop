@@ -1,0 +1,60 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle,
+    },
+    "/dashboard/address"
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    DSHBOARD START
+    =============================
+  section.dashboard(class="mb_100")
+    .container
+      .row
+        .col-xl-3.wow.fadeInUp
+          include ../partials/dashboard-sidebar.pug
+        .col-xl-9.wow.fadeInRight
+          div(class="dashboard_content mt_100")
+            h3(class="dashboard_title")
+              | #{pageTitle}
+              a(
+                href="/dashboard/address/create"
+                class="common_btn"
+                ) Thêm địa chỉ
+            div(class="checkout_address_area")
+              .row
+                .col-md-6
+                  div(class="checkout_single_address")
+                    .inner-info.text-success
+                      <i class="fas fa-check-circle"></i>
+                      | Mặc định
+                    .inner-info
+                      <i class="fas fa-address-card"></i>
+                      | Lê Văn A
+                    .inner-info
+                      <i class="fas fa-phone"></i>
+                      | 0987654321
+                    .inner-info
+                      <i class="fas fa-map-marker-alt"></i>
+                      | Số 123, đường ABC, Hà Nội
+                    .inner-info
+                      <a class="btn btn-primary" href="#">Đặt mặc định</a>
+                      <a class="btn btn-warning" href="#">Sửa</a>
+                      <a class="btn btn-danger" href="#">Xóa</a>
+  //
+    ============================
+    DSHBOARD END
+    =============================
