@@ -63,7 +63,15 @@ block main
                             )
                             | Đặt mặc định
                         <a class="btn btn-warning" href="#">Sửa</a>
-                        <a class="btn btn-danger" href="#">Xóa</a>
+                        a(
+                          class="btn btn-danger" 
+                          href="javascript:;"
+                          button-api
+                          data-method="DELETE"
+                          data-api=`/dashboard/address/delete/${item.id}`
+                          )
+                          | Xóa
+
   //
     ============================
     DSHBOARD END

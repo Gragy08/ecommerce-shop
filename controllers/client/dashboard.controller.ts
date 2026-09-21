@@ -182,3 +182,27 @@ export const addressChangeDefaultPatch = async (req: Request, res: Response) => 
     })
   }
 }
+
+export const addressDelete = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const addressId = req.params.id;
+
+    // Xóa địa chỉ
+    await UserAddress.findOneAndDelete({
+      _id: addressId,
+      userId: userId
+    });
+
+    res.json({
+      code: "success",
+      message: "Đã xóa địa chỉ!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}
