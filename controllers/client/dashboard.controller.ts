@@ -147,3 +147,38 @@ export const addressCreatePost = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const addressChangeDefaultPatch = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const addressId = req.params.id;
+
+    // Tìm địa chỉ mặc định hiện tại để xóa mặc định
+    await UserAddress.findOneAndUpdate({
+      userId: userId,
+      isDefault: true
+    }, {
+      isDefault: false
+    });
+
+    // Đặt địa chỉ mới làm mặc định
+    await UserAddress.findOneAndUpdate({
+      _id: addressId,
+      userId: userId,
+      isDefault: false
+    }, {
+      isDefault: true
+    });
+
+    res.json({
+      code: "success",
+      message: "Đã đặt địa chỉ làm mặc định!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}

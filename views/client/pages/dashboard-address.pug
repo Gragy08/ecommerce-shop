@@ -54,7 +54,14 @@ block main
                         | #{item.address}
                       .inner-info
                         if (!item.isDefault)
-                          <a class="btn btn-primary" href="#">Đặt mặc định</a>
+                          a(
+                            class="btn btn-primary" 
+                            href="javascript:;"
+                            button-api
+                            data-method="PATCH"
+                            data-api=`/dashboard/address/change-default/${item.id}`
+                            )
+                            | Đặt mặc định
                         <a class="btn btn-warning" href="#">Sửa</a>
                         <a class="btn btn-danger" href="#">Xóa</a>
   //

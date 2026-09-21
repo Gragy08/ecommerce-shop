@@ -1958,3 +1958,30 @@ if(dashboardAddressCreateForm) {
   ;
 }
 // End Dashboard Address Create Form
+
+// button-api
+const listButtonApi = document.querySelectorAll("[button-api]");
+if(listButtonApi.length > 0) {
+  listButtonApi.forEach(button => {
+    button.addEventListener("click", () => {
+      const method = button.getAttribute("data-method");
+      const api = button.getAttribute("data-api");
+
+      fetch(api, {
+        method: method || "GET"
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify(data.code, data.message);
+            location.reload();
+          }
+        })
+    })
+  })
+}
+// End button-api
