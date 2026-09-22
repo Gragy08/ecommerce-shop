@@ -2205,3 +2205,34 @@ if(dashboardAddressEditForm) {
   ;
 }
 // End Dashboard Address Edit Form
+
+// Profile Photo
+const profilePhoto = document.querySelector("#profile_photo");
+if(profilePhoto) {
+  profilePhoto.addEventListener("change", (event) => {
+    const avatar = event.target.files[0];
+    if(avatar) {
+      // Tạo FormData
+      const formData = new FormData();
+      formData.append("avatar", avatar);
+      
+      fetch(`/dashboard/profile/change-avatar`, {
+        method: "PATCH",
+        body: formData
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            const profilePhotoPreview = document.querySelector("[profile-photo-preview]");
+            profilePhotoPreview.src = `${domainCDN}${data.linkAvatar}`;
+            notyf.success(data.message);
+          }
+        })
+    }
+  })
+}
+// End Profile Photo

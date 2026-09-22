@@ -31,6 +31,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
           fullName: existAccount.fullName,
           email: existAccount.email,
           phone: existAccount.phone,
+          avatar: existAccount.avatar,
         };
       }
     }
