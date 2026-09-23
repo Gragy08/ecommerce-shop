@@ -1,0 +1,77 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+include ../mixins/form-search.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            // end col
+            .col-auto
+              a.btn.btn-primary(
+                href=`/${pathAdmin}/account-user/create`
+                )
+                i.fa-solid.fa-plus.me-1
+                | Tạo tài khoản
+                // end col
+            // end col
+          // end row
+        // end card-header
+        .card-body.pt-0
+          .row
+            .col-lg-6
+              +form-search()
+          .table-responsive
+            table.table.table-striped.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Ảnh đại diện
+                  th Họ tên
+                  th Email
+                  th Số điện thoại
+                  th Kiểu tài khoản
+                  th Trạng thái
+                  th.text-end Hành động
+              tbody
+                each item, index in recordList
+                  tr
+                    td #{pagination.skip + index + 1}
+                    td
+                      img(
+                        src=`${domainCDN}${item.avatar}`
+                        class="rounded thumb-lg me-1 d-inline"
+                      )
+                    td #{item.fullName}
+                    td #{item.email}
+                    td #{item.phone}
+                    td
+                      if (item.googleId)
+                        span(class="badge bg-danger") Google
+                      else if (item.facebookId)
+                        span(class="badge bg-info") Facebook
+                      else
+                        span(class="badge bg-warning") Hệ thống
+                    td
+                      if (item.status == "active")
+                        span(class="badge bg-success") Hoạt động
+                      else if (item.status == "inactive")
+                        span(class="badge bg-danger") Tạm dừng
+                    td.text-end
+                      a(href=`/${pathAdmin}/account-user/change-password/${item.id}`)
+                        i.las.la-key.text-secondary.fs-20
+                      a(href=`/${pathAdmin}/account-user/edit/${item.id}`)
+                        i.las.la-pen.text-secondary.fs-20
+                      a(
+                        href="javascript:;"
+                        button-api
+                        data-method="PATCH"
+                        data-api=`/${pathAdmin}/account-user/delete/${item.id}`
+                      )
+                        i.las.la-trash-alt.text-secondary.fs-20
+          +pagination()
+    // end col

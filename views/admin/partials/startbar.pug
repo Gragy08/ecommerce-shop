@@ -128,6 +128,21 @@
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/account-admin/list`) Danh sách tài khoản
                     // end nav-item
+          li.nav-item
+            a.nav-link(
+              aria-controls="sidebarAccountUser" 
+              aria-expanded="false" 
+              role="button" 
+              data-bs-toggle="collapse" 
+              href="#sidebarAccountUser"
+              )
+              i.iconoir-user-crown.menu-icon
+              span Tài khoản người dùng
+            #sidebarAccountUser.collapse
+              ul.nav.flex-column
+                li.nav-item
+                  a.nav-link(href=`/${pathAdmin}/account-user/list`) Danh sách tài khoản
+                // end nav-item
           if (permissions.includes("coupon-role"))
             li.nav-item
               a.nav-link(
