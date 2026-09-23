@@ -27,16 +27,21 @@ div(class="cart_page_summary")
     span
       span(total) 0
       span đ
-  form(action="#")
+  form(id="applyCouponForm")
     input(
       placeholder="Mã giảm giá" 
       type="text"
+      class="inner-input"
+      name="coupon"
       )
     button(
       class="common_btn" 
       type="submit"
+      class="inner-button"
       ) Áp dụng
-    p
-      | Mã giảm giá: HEM4556JL
+    p(class="inner-view-coupon")
+      span
+        | Mã giảm giá: 
+        b HEM4556JL
       a(href="#")
         i.fal.fa-times

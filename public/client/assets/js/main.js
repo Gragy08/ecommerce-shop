@@ -2236,3 +2236,43 @@ if(profilePhoto) {
   })
 }
 // End Profile Photo
+
+// Apply Coupon Form
+const applyCouponForm = document.querySelector("#applyCouponForm");
+if(applyCouponForm) {
+  applyCouponForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const coupon = event.target.coupon.value;
+
+    if(!coupon) {
+      notyf.error("Vui lòng nhập mã giảm giá!");
+      return;
+    }
+
+    const dataFinal = {
+      coupon: coupon,
+    };
+
+    fetch(`/coupon/check`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(dataFinal)
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log(data);
+
+        if(data.code == "error") {
+          notyf.error(data.message);
+        }
+
+        if(data.code == "success") {
+          notyf.success(data.message);
+        }
+      })
+  })
+}
+// End Apply Coupon Form
