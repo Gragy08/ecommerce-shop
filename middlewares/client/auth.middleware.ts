@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import AccountUser from "../../models/account-user.model";
+import UserAddress from "../../models/user-address.model";
 
 const paths = [
   "/.well-known",
@@ -26,12 +27,21 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       });
 
       if(existAccount) {
+        const addressList = await UserAddress
+          .find({
+            userId: existAccount.id
+          })
+          .sort({
+            createdAt: "desc"
+          })
+
         res.locals.accountUser = {
           id: existAccount.id,
           fullName: existAccount.fullName,
           email: existAccount.email,
           phone: existAccount.phone,
           avatar: existAccount.avatar,
+          addressList: addressList
         };
       }
     }

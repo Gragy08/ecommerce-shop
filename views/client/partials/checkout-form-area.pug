@@ -1,4 +1,4 @@
-form(class="checkout_form_area")
+form(class="checkout_form_area" id="checkoutAddressForm")
   #accordionExample.accordion
     .accordion-item.border-0
       .accordion-header
@@ -12,85 +12,63 @@ form(class="checkout_form_area")
           .form-check
             input#flexCheckDefault.form-check-input(
               value="" 
-              type="checkbox"
+              type="radio"
+              name="userAddress"
               )
-            label.form-check-label(for="flexCheckDefault") Bill to a different address?
+            label.form-check-label(for="flexCheckDefault") Nhập địa chỉ mới
       #collapseThree.accordion-collapse.collapse(data-bs-parent="#accordionExample")
         .accordion-body.p-0
           .row
             .col-md-6
               div(class="single_input")
-                label Name *
+                label Họ tên *
                 input(
-                  placeholder="Jhon deo" 
+                  placeholder="Ví dụ: Lê Văn A" 
                   type="text"
+                  name="fullName"
                   )
             .col-md-6
               div(class="single_input")
-                label Email *
+                label Số điện thoại *
                 input(
-                  placeholder="example@Zenis.com" 
-                  type="email"
-                  )
-            .col-md-6
-              div(class="single_input")
-                label Phone
-                input(
-                  placeholder="+965421541845845" 
+                  placeholder="Ví dụ: 0987654321" 
                   type="text"
+                  name="phone"
                   )
-            .col-md-6
-              div(class="single_input")
-                label Company name
+            .col-md-12.mt-4
+              label Chọn địa chỉ trên bản đồ *
+              div(class="input-group")
                 input(
-                  placeholder="Zenis.com" 
+                  class="form-control" 
+                  placeholder="Nhập địa chỉ cần tìm..." 
                   type="text"
+                  id="mapSearchInput"
                   )
+                span(
+                  class="btn btn-outline-secondary"
+                  id="mapSearchBtn"
+                  ) Tìm kiếm
+              div(id="boxMap" style="height: 350px; margin-bottom: 25px;")
             .col-md-6
               div(class="single_input")
-                label Country
-                select(class="select_2")
-                  option(value="#") Singapore
-                  option(value="#") Japan
-                  option(value="#") Korea
-                  option(value="#") Thailand
-                  option(value="#") Kanada
+                label(for="longitude") Kinh độ *
+                input(type="text" name="longitude" id="longitude")
             .col-md-6
               div(class="single_input")
-                label City
-                select(class="select_2")
-                  option(value="#") Tokyo
-                  option(value="#") Japan
-                  option(value="#") Korea
-                  option(value="#") Thailand
-                  option(value="#") Kanada
-            .col-md-6
+                label(for="latitude") Vĩ độ *
+                input(type="text" name="latitude" id="latitude")
+            .col-md-12
               div(class="single_input")
-                label state
-                select(class="select_2")
-                  option(value="#") Korea
-                  option(value="#") Singapore
-                  option(value="#") Japan
-                  option(value="#") Thailand
-                  option(value="#") Kanada
-            .col-md-6
-              div(class="single_input")
-                label zip
+                label Địa chỉ *
                 input(
-                  placeholder="1234" 
+                  placeholder="Ví dụ: Số 123, đường ABC,..." 
                   type="text"
-                  )
-            .col-xl-12
-              div(class="single_input")
-                label Address
-                textarea(
-                  placeholder="Write your address" 
-                  rows="4"
+                  name="address"
                   )
   .col-xl-12
     div(class="single_input")
-      label Order notes (optional)
+      label Ghi chú
       textarea(
-        placeholder="Note" 
         rows="2"
+        name="note"
         )
