@@ -1,0 +1,96 @@
+form(class="checkout_form_area")
+  #accordionExample.accordion
+    .accordion-item.border-0
+      .accordion-header
+        .accordion-button.collapsed.p-0(
+          aria-controls="collapseThree" 
+          aria-expanded="false" 
+          data-bs-target="#collapseThree" 
+          role="tabpanel" 
+          data-bs-toggle="collapse"
+          )
+          .form-check
+            input#flexCheckDefault.form-check-input(
+              value="" 
+              type="checkbox"
+              )
+            label.form-check-label(for="flexCheckDefault") Bill to a different address?
+      #collapseThree.accordion-collapse.collapse(data-bs-parent="#accordionExample")
+        .accordion-body.p-0
+          .row
+            .col-md-6
+              div(class="single_input")
+                label Name *
+                input(
+                  placeholder="Jhon deo" 
+                  type="text"
+                  )
+            .col-md-6
+              div(class="single_input")
+                label Email *
+                input(
+                  placeholder="example@Zenis.com" 
+                  type="email"
+                  )
+            .col-md-6
+              div(class="single_input")
+                label Phone
+                input(
+                  placeholder="+965421541845845" 
+                  type="text"
+                  )
+            .col-md-6
+              div(class="single_input")
+                label Company name
+                input(
+                  placeholder="Zenis.com" 
+                  type="text"
+                  )
+            .col-md-6
+              div(class="single_input")
+                label Country
+                select(class="select_2")
+                  option(value="#") Singapore
+                  option(value="#") Japan
+                  option(value="#") Korea
+                  option(value="#") Thailand
+                  option(value="#") Kanada
+            .col-md-6
+              div(class="single_input")
+                label City
+                select(class="select_2")
+                  option(value="#") Tokyo
+                  option(value="#") Japan
+                  option(value="#") Korea
+                  option(value="#") Thailand
+                  option(value="#") Kanada
+            .col-md-6
+              div(class="single_input")
+                label state
+                select(class="select_2")
+                  option(value="#") Korea
+                  option(value="#") Singapore
+                  option(value="#") Japan
+                  option(value="#") Thailand
+                  option(value="#") Kanada
+            .col-md-6
+              div(class="single_input")
+                label zip
+                input(
+                  placeholder="1234" 
+                  type="text"
+                  )
+            .col-xl-12
+              div(class="single_input")
+                label Address
+                textarea(
+                  placeholder="Write your address" 
+                  rows="4"
+                  )
+  .col-xl-12
+    div(class="single_input")
+      label Order notes (optional)
+      textarea(
+        placeholder="Note" 
+        rows="2"
+        )

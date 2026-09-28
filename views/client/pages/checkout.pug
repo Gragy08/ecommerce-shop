@@ -1,0 +1,37 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle,
+    },
+    "/checkout"
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    CHECKOUT START
+    =============================
+  section(class="checkout_page mt_100 mb_100")
+    .container
+      .row
+        .col-lg-8.wow.fadeInUp
+          include ../partials/checkout-header.pug
+          include ../partials/checkout-address-area.pug
+          include ../partials/checkout-form-area.pug
+        .col-lg-4.col-md-9.wow.fadeInRight
+          include ../partials/cart-page-summary.pug
+          include ../partials/checkout-payment.pug
+  //
+    ============================
+    CHECKOUT END
+    =============================

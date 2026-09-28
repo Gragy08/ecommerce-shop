@@ -1,0 +1,61 @@
+div(class="checkout_payment")
+  h3 payment method
+  .form-check
+    input#flexRadioDefault1.form-check-input(
+      name="flexRadioDefault" 
+      type="radio"
+      )
+    label.form-check-label(for="flexRadioDefault1") Direct Bank Transfer
+  .form-check
+    input#flexRadioDefault2.form-check-input(
+      name="flexRadioDefault" 
+      type="radio"
+      )
+    label.form-check-label(for="flexRadioDefault2") Cheque Payment
+  .form-check
+    input#flexRadioDefault3.form-check-input(
+      name="flexRadioDefault" 
+      type="radio"
+      )
+    label.form-check-label(for="flexRadioDefault3") Cash on Delivery
+  div(class="checkout_card")
+    p Card Payment
+    ul
+      li
+        img.img-fluid.w-100(
+          alt="Payment" 
+          src="/client/assets/images/payment-1.jpg"
+          )
+      li.active
+        img.img-fluid.w-100(
+          alt="Payment" 
+          src="/client/assets/images/payment-2.jpg"
+          )
+      li
+        img.img-fluid.w-100(
+          alt="Payment" 
+          src="/client/assets/images/payment-3.jpg"
+          )
+      li
+        img.img-fluid.w-100(
+          alt="Payment" 
+          src="/client/assets/images/payment-4.jpg"
+          )
+      li
+        img.img-fluid.w-100(
+          alt="Payment" 
+          src="/client/assets/images/payment-5.jpg"
+          )
+  .terms
+    .form-check
+      input#flexCheckDefaultterms.form-check-input(
+        value="" 
+        type="checkbox"
+        )
+      label.form-check-label(for="flexCheckDefaultterms") I have read and agree to the website.
+  button(
+    class="common_btn" 
+    type="submit"
+    )
+    | Place order
+    i.fas.fa-long-arrow-right
