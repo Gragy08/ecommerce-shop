@@ -11,6 +11,7 @@ if (accountUser && accountUser.addressList.length > 0)
                 type="radio"
                 id=`userAddress${index}`
                 checked=(item.isDefault)
+                data-info=`${JSON.stringify(item)}`
                 )
               label.form-check-label(for=`userAddress${index}`)
                 span

@@ -57,5 +57,35 @@ div(class="checkout_payment")
     class="common_btn" 
     type="submit"
     )
-    | Place order
+    | Place orderdiv(class="checkout_payment")
+  h3 Phương Thức Thanh Toán
+  .form-check
+    input#paymentMethodMoney.form-check-input(
+      name="paymentMethod" 
+      type="radio"
+      value="money"
+      checked
+      )
+    label.form-check-label(for="paymentMethodMoney") Thanh toán khi nhận hàng
+  .form-check
+    input#paymentMethodVNPay.form-check-input(
+      name="paymentMethod" 
+      type="radio"
+      value="vnpay"
+      )
+    label.form-check-label(for="paymentMethodVNPay") Thanh toán qua VNPay
+  .form-check
+    input#paymentMethodZaloPay.form-check-input(
+      name="paymentMethod" 
+      type="radio"
+      value="zalopay"
+      )
+    label.form-check-label(for="paymentMethodZaloPay") Thanh toán qua ZaloPay
+  button(
+    class="common_btn" 
+    type="submit"
+    button-order
+    )
+    | Đặt Hàng
+    i.fas.fa-long-arrow-right
     i.fas.fa-long-arrow-right
