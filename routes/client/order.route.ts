@@ -7,4 +7,6 @@ const router = Router();
 
 router.post('/create', authMiddleware.verifyToken, orderValidate.createPost, orderController.createPost);
 
+router.get('/success', orderController.success);
+
 export default router;

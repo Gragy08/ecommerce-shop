@@ -1,0 +1,35 @@
+extends ../layouts/default.pug
+
+block main
+  //
+    ============================
+    PAYMENT SUCCESS START
+    =============================
+  section(class="payment_success mt_100 mb_100")
+    .container
+      .row.justify-content-center
+        .col-xl-6.col-md-10.col-lg-8.col-xxl-5.wow.fadeInUp
+          div(class="payment_success_text")
+            .img
+              img.img-fluid.w-100(
+                alt="payment" 
+                src="/client/assets/images/payment_success_img.png"
+                )
+            h3 Đặt hàng thành công!
+            p
+              | Cảm ơn bạn đã mua hàng! Mã đơn hàng của bạn là <b>#{orderCode}</b>
+            .d-flex.flex-wrap.align-items-center.justify-content-center.gap-3
+              a(
+                class="common_btn go_btn" 
+                href="/"
+                ) Về trang chủ
+              a(
+                class="common_btn" 
+                href="/order/track"
+                )
+                | Theo dõi đơn hàng
+                i.fas.fa-long-arrow-right
+  //
+    ============================
+    PAYMENT SUCCESS END
+    =============================
