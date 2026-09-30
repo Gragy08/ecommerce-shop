@@ -54,6 +54,13 @@ const schema = new mongoose.Schema(
       ],
       default: "pending",
     },
+    shipping: {
+      goshipOrderId: String,
+      carrierName: String,
+      carrierCode: String,
+      fee: Number,
+      cod: Number
+    },
     deleted: {
       type: Boolean,
       default: false

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Product from '../../models/product.model';
 import AttributeProduct from '../../models/attribute-product.model';
 import axios from 'axios';
+import { getInfoAddress } from '../../helpers/location.helper';
 
 export const list = async (req: Request, res: Response) => {
   try {
@@ -47,25 +48,38 @@ export const list = async (req: Request, res: Response) => {
     // Tinh phi ship
     let shippingOptions = null;
     if(userAddress) {
+      // Toa do nguoi gui
+      const shopLocation = {
+        latitude: 9.9881201,
+        longitude: 105.0978115
+      }
+
+      const shopInfoAddress = await getInfoAddress(shopLocation.latitude, shopLocation.longitude);
+
+      const userInfoAddress = await getInfoAddress(userAddress.latitude, userAddress.longitude);
+
+      // Tính trọng lượng đơn hàng
+      const totalWeight = cartDetail.reduce((total, item) => total + item.quantity * 500, 0); // mỗi 1 sản phẩm nặng 500gram
+
       const dataGoShip = {
         shipment: {
           address_from: {
-            city: "100000", // Lấy từ API: /cities
-            district: "100900", // Lấy từ API: /districs
-            ward: "113" // Lấy từ API: /wards
+            city: shopInfoAddress.city, // Lấy từ API: /cities
+            district: shopInfoAddress.district, // Lấy từ API: /districs
+            ward: shopInfoAddress.ward // Lấy từ API: /wards
           },
           address_to: {
-            city: "100000",
-            district: "100200",
-            ward: "79"
+            city: userInfoAddress.city,
+            district: userInfoAddress.district,
+            ward: userInfoAddress.ward
           },
           parcel: {
-            cod: "500000", // Tiền thu hộ
-            amout: "500000", // Giá trị khai giá
-            weight: "220",
-            width: "1",
-            height: "1",
-            length: "1"
+            cod: "0", // Tiền thu hộ
+            amout: "0", // Giá trị khai giá
+            weight: totalWeight,
+            width: "10",
+            height: "10",
+            length: "10"
           }
         }
       };
