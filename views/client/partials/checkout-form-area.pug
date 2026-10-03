@@ -26,6 +26,7 @@ form(class="checkout_form_area" id="checkoutAddressForm")
                   placeholder="Ví dụ: Lê Văn A" 
                   type="text"
                   name="fullName"
+                  value=(accountUser ? accountUser.fullName : "")
                   )
             .col-md-6
               div(class="single_input")
@@ -34,6 +35,7 @@ form(class="checkout_form_area" id="checkoutAddressForm")
                   placeholder="Ví dụ: 0987654321" 
                   type="text"
                   name="phone"
+                  value=(accountUser ? accountUser.phone : "")
                   )
             .col-md-12.mt-4
               label Chọn địa chỉ trên bản đồ *

@@ -1,17 +1,6 @@
 div(class="cart_page_summary")
   h3 Tóm tắt thanh toán
   ul(cart-summary)
-    li
-      a.img(href=`/product/detail/:slug`)
-        img.img-fluid.w-100(
-          alt="Sản phẩm 1" 
-          src="/client/assets/images/product_18.png"
-          )
-      .text
-        a.title(href=`/product/detail/:slug`) Sản phẩm 1
-        p 1.000.000đ × 2
-        p Màu sắc: Đỏ
-        p Kích cỡ: Size M
   h6
     | Tạm tính
     span
@@ -62,7 +51,7 @@ div(class="cart_page_summary")
       type="submit"
       class="inner-button"
       ) Áp dụng
-    pp(class="inner-view-coupon" style="display: none;")
+    p(class="inner-view-coupon" style="display: none;")
       span
         | Mã giảm giá: 
         b(class="inner-coupon")

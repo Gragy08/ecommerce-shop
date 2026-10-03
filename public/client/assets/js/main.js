@@ -448,7 +448,7 @@ const drawCart = () => {
       .then(res => res.json())
       .then(data => {
         if(data.code == "error") {
-          localStorage.setItem("cart", JSON.stringify([]));
+          notyf.error(data.message || "Không thể tải giỏ hàng.");
         }
 
         if(data.code == "success") {
@@ -609,7 +609,7 @@ const drawCart = () => {
           })
 
           // Hien thi hang van chuyen
-          if(data.shippingOptions) {
+          if(Array.isArray(data.shippingOptions) && data.shippingOptions.length > 0) {
             const inputChecked = document.querySelector(`[shipping-list] [name="shippingMethod"]:checked`);
             let idInputChecked = null;
             if(inputChecked) {
@@ -617,7 +617,9 @@ const drawCart = () => {
             }
 
             data.shippingOptions.forEach((item, index) => {
-              const checked = idInputChecked == `shippingMethod${index}` ? "checked" : "";
+              const checked = idInputChecked
+                ? idInputChecked == `shippingMethod${index}` ? "checked" : ""
+                : index == 0 ? "checked" : "";
 
               htmlShipping += `
                 <div class="form-check">
@@ -643,6 +645,8 @@ const drawCart = () => {
                 shippingFee = item.total_fee;
               }
             });
+          } else if(data.shippingError) {
+            htmlShipping = `<small class="text-danger">${data.shippingError}</small>`;
           }
 
           let discount = 0;
@@ -2158,6 +2162,13 @@ if(boxMap) {
     markerLayer.getSource().addFeature(marker);
   }
 
+  const updateAddressInput = (name, value) => {
+    const input = document.querySelector(`[name="${name}"]`);
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
   // Hiển thị vị trí mặc định
   const inputLon = document.querySelector(`[name="longitude"]`);
   const inputLat = document.querySelector(`[name="latitude"]`);
@@ -2181,14 +2192,9 @@ if(boxMap) {
       .then(res => res.json())
       .then(data => {
         if(data && data.display_name) {
-          const inputAddress = document.querySelector(`[name="address"]`);
-          inputAddress.value = data.display_name;
-
-          const inputLon = document.querySelector(`[name="longitude"]`);
-          inputLon.value = lon;
-
-          const inputLat = document.querySelector(`[name="latitude"]`);
-          inputLat.value = lat;
+          updateAddressInput("address", data.display_name);
+          updateAddressInput("longitude", lon);
+          updateAddressInput("latitude", lat);
 
           // Cap nhat lai gio hang
           drawCart();
@@ -2220,14 +2226,17 @@ if(boxMap) {
           map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: 15 });
 
           // Gán lại địa chỉ vào ô input
-          const inputAddress = document.querySelector(`[name="address"]`);
-          inputAddress.value = firstResult.display_name;
+          updateAddressInput("address", firstResult.display_name);
+          updateAddressInput("longitude", lon);
+          updateAddressInput("latitude", lat);
 
-          const inputLon = document.querySelector(`[name="longitude"]`);
-          inputLon.value = lon;
-
-          const inputLat = document.querySelector(`[name="latitude"]`);
-          inputLat.value = lat;
+          const inputNewAddress = document.querySelector(`input[name="userAddress"][value=""]`);
+          if(inputNewAddress) {
+            inputNewAddress.checked = true;
+            inputNewAddress.dispatchEvent(new Event("change"));
+          } else {
+            drawCart();
+          }
         } else {
           notyf.error("Không tìm thấy địa chỉ!");
         }
@@ -2438,6 +2447,20 @@ if(checkoutPage) {
 
   const collapseEl = checkoutPage.querySelector("#collapseThree");
   const collapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+
+  const selectedAddress = checkoutPage.querySelector(`input[name="userAddress"]:checked`);
+  if(!selectedAddress) {
+    const initialAddress = checkoutPage.querySelector(`input[name="userAddress"][data-info]`)
+      || checkoutPage.querySelector(`input[name="userAddress"][value=""]`);
+    if(initialAddress) {
+      initialAddress.checked = true;
+      if(!initialAddress.value) {
+        collapse.show();
+      }
+    }
+  }
+
+  drawCart();
 
   listInputUserAddress.forEach(input => {
     input.addEventListener("change", () => {
