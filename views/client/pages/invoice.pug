@@ -1,0 +1,134 @@
+doctype html
+html(lang="vi")
+  head
+    meta(charset="UTF-8")
+    title Hóa đơn #{orderDetail.code}
+  body
+    .invoice
+      // HEADER
+      .header
+        .left
+          h2 TYPHUQUY.SHOP
+          p Hóa đơn bán hàng
+        .right
+          p
+            strong Mã đơn:
+            |  #{orderDetail.code}
+          p
+            strong Ngày tạo:
+            |  #{new Date(orderDetail.createdAt).toLocaleString('vi-VN')}
+
+      hr
+
+      // CUSTOMER
+      .section
+        h3 Thông tin khách hàng
+        p
+          strong Họ tên:
+          |  #{orderDetail.fullName}
+        p
+          strong SĐT:
+          |  #{orderDetail.phone}
+        p
+          strong Địa chỉ:
+          |  #{orderDetail.address}
+
+      // ITEMS
+      .section
+        h3 Chi tiết sản phẩm
+        table
+          thead
+            tr
+              th STT
+              th Sản phẩm
+              th Phân loại
+              th SL
+              th Giá
+              th Thành tiền
+          tbody
+            each item, index in orderDetail.items
+              tr
+                td #{index + 1}
+                td.name #{item.name}
+                td.variant
+                  if item.variant && item.variant.length
+                    ul
+                      each v in item.variant
+                        li #{v}
+                  else
+                    span —
+                td #{item.quantity}
+                td #{item.price.toLocaleString('vi-VN')} đ
+                td #{(item.price * item.quantity).toLocaleString('vi-VN')} đ
+
+      // PAYMENT
+      .section
+        h3 Thanh toán & vận chuyển
+        .two-col
+          .col
+            p
+              strong Phương thức thanh toán:
+              case orderDetail.paymentMethod
+                when 'money'
+                  |  Tiền mặt (COD)
+                when 'vnpay'
+                  |  VNPay
+                when 'zalopay'
+                  |  ZaloPay
+            p
+              strong Trạng thái thanh toán:
+              case orderDetail.paymentStatus
+                when 'paid'
+                  span.badge.paid Đã thanh toán
+                when 'unpaid'
+                  span.badge.unpaid Chưa thanh toán
+                when 'refunded'
+                  span.badge.refunded Đã hoàn tiền
+            p
+              strong Trạng thái đơn hàng:
+              case orderDetail.orderStatus
+                when 'pending'
+                  span.badge.pending Chờ xác nhận
+                when 'confirmed'
+                  span.badge.confirmed Đã xác nhận
+                when 'shipping'
+                  span.badge.shipping Đang giao
+                when 'completed'
+                  span.badge.completed Giao thành công
+                when 'cancelled'
+                  span.badge.cancelled Đã hủy
+                when 'returned'
+                  span.badge.returned Trả hàng
+          .col
+            p
+              strong Đơn vị vận chuyển:
+              |  #{orderDetail.shipping.carrierName}
+            p
+              strong Phí ship:
+              |  #{orderDetail.shipping.fee.toLocaleString('vi-VN')} đ
+
+      // SUMMARY
+      .summary
+        table
+          tr
+            td Tạm tính
+            td #{orderDetail.subTotal.toLocaleString('vi-VN')} đ
+          if orderDetail.coupon
+            tr
+              td Mã giảm giá (#{orderDetail.coupon})
+              td -#{orderDetail.discount.toLocaleString('vi-VN')} đ
+          tr
+            td Phí vận chuyển
+            td #{orderDetail.shipping.fee.toLocaleString('vi-VN')} đ
+          tr.total
+            td Tổng thanh toán
+            td #{orderDetail.total.toLocaleString('vi-VN')} đ
+
+      // NOTE
+      if orderDetail.note
+        .section
+          h3 Ghi chú
+          p #{orderDetail.note}
+
+      .footer
+        p Cảm ơn quý khách đã mua hàng ❤️

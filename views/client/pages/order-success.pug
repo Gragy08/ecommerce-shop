@@ -29,6 +29,11 @@ block main
                 )
                 | Theo dõi đơn hàng
                 i.fas.fa-long-arrow-right
+              a(
+                class="common_btn go_btn" 
+                href=`/order/export-pdf?orderCode=${orderCode}&phone=${phone}`
+                target="_blank"
+                ) Xuất hóa đơn
   //
     ============================
     PAYMENT SUCCESS END

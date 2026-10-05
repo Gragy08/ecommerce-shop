@@ -8,6 +8,8 @@ import { getInfoAddress } from '../../helpers/location.helper';
 import axios from 'axios';
 import moment from 'moment';
 import hmacSHA256 from 'crypto-js/hmac-sha256';
+import { renderFile } from 'pug';
+import fs from "fs";
 
 
 export const createPost = async (req: Request, res: Response) => {
@@ -270,7 +272,8 @@ export const success = async (req: Request, res: Response) => {
   
   res.render("client/pages/order-success", {
     pageTitle: "Đặt hàng thành công!",
-    orderCode: orderCode
+    orderCode: orderCode,
+    phone: phone
   });
 }
 
@@ -464,6 +467,55 @@ export const paymentVNPayResult = async (req: Request, res: Response) => {
   } else{
     res.render('success', {code: '97'})
   }
+}
+
+export const exportPdf = async (req: Request, res: Response) => {
+  const { orderCode, phone } = req.query;
+  
+  const orderDetail = await Order.findOne({
+    code: orderCode,
+    phone: phone,
+    deleted: false
+  });
+
+  if(!orderDetail) {
+    res.redirect("/");
+    return;
+  }
+
+  const css = fs.readFileSync("public/client/assets/css/invoice.css", "utf8");
+
+  // Render PUG sang HTML
+  const renderedHtml = await renderFile('views/client/pages/invoice.pug', {
+    orderDetail: orderDetail
+  });
+
+  const html = `
+    <style>${css}</style>
+    ${renderedHtml}
+  `;
+
+  const { default: puppeteer } = await import("puppeteer");
+  
+  // Tạo PDF từ HTML sử dụng Puppeteer
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
+
+  let pdfBuffer: Uint8Array;
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    pdfBuffer = await page.pdf({ format: "A4" });
+  } finally {
+    await browser.close();
+  }
+
+  // Gửi file PDF về client
+  res.setHeader('Content-Type', 'application/pdf'); // Thiết lập header để trình duyệt nhận biết đây là file PDF
+  res.setHeader('Content-Disposition', `attachment; filename=invoice_${orderCode}.pdf`); // Thiết lập tên file khi tải về
+  res.send(pdfBuffer); // Gửi buffer PDF về client
 }
 
 function sortObject(obj: any) {
