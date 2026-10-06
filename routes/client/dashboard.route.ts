@@ -53,4 +53,6 @@ router.patch(
   dashboardController.profileChangeAvatarPatch
 );
 
+router.get('/order/list', dashboardController.orderList);
+
 export default router;
