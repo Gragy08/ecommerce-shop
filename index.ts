@@ -1,9 +1,9 @@
+import "dotenv/config";
 import express from 'express';
 import path from 'path';
 import adminRoutes from "./routes/admin/index.route";
 import clientRoutes from "./routes/client/index.route";
 import { domainCDN, pathAdmin } from './configs/variable.config';
-import dotenv from 'dotenv';
 import { connectDB } from './configs/database.config';
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -11,11 +11,9 @@ import passport from "passport";
 import { configureGooglePassport } from './configs/googleOauth.config';
 import { configureFacebookPassport } from './configs/facebookOauth.config';
 
-// Load biến môi trường từ file .env
-dotenv.config();
-
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
+app.set("trust proxy", 1);
 
 // Kết nối đến cơ sở dữ liệu
 connectDB();
@@ -74,6 +72,6 @@ configureFacebookPassport(passport);
 app.use(`/${pathAdmin}`, adminRoutes);
 app.use("/", clientRoutes);
 
-app.listen(port, () => {
+app.listen(port, "127.0.0.1", () => {
   console.log(`Website đang chạy trên cổng ${port}`);
 });

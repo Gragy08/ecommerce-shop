@@ -11797,7 +11797,7 @@ footer {
 }
 
 .dashboard_invoice_header .text {
-    width: 45%;
+    width: 100%;
 }
 
 .dashboard_invoice_header .text p {
@@ -11821,7 +11821,7 @@ footer {
     color: var(--colorBlack);
     text-transform: capitalize;
     display: inline-block;
-    width: 80px;
+    width: 200px;
 }
 
 .invoice_table {

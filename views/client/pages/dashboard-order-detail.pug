@@ -1,0 +1,136 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle,
+    },
+    `/dashboard/order/detail/${orderDetail.id}`
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    DSHBOARD START
+    =============================
+  section.dashboard(class="mb_100")
+    .container
+      .row
+        .col-xl-3.wow.fadeInUp
+          include ../partials/dashboard-sidebar.pug
+        .col-xl-9.wow.fadeInRight
+          div(class="dashboard_content mt_100")
+            h3(class="dashboard_title")
+              | #{pageTitle}
+              a(
+                href="/dashboard/order/list" 
+                class="back_btn common_btn"
+                ) Quay lại
+            div(class="dashboard_order_invoice_area")
+              div(class="dashboard_order_invoice")
+                div(class="dashboard_invoice_header")
+                  .text
+                    h2 Thông tin đơn hàng
+                    ul
+                      li
+                        span Họ tên:
+                        | #{orderDetail.fullName}
+                      li
+                        span Số điện thoại:
+                        | #{orderDetail.phone}
+                      li
+                        span Địa chỉ:
+                        | #{orderDetail.address}
+                      li
+                        span Ngày đặt hàng:
+                        | #{orderDetail.createdAt.toLocaleString('vi-VN')}
+                      li
+                        span Phương thức thanh toán:
+                        case orderDetail.paymentMethod
+                          when "money"
+                            | Tiền mặt
+                          when "vnpay"
+                            | VNPay
+                          when "zalopay"
+                            | ZaloPay
+                      li
+                        span Trạng thái thanh toán:
+                        case orderDetail.paymentStatus
+                          when "unpaid"
+                            | Chưa thanh toán
+                          when "paid"
+                            | Đã thanh toán
+                          when "refunded"
+                            | Đã hoàn tiền
+                      li
+                        span Trạng thái đơn hàng:
+                        case orderDetail.orderStatus
+                          when "pending"
+                            | Chờ xác nhận
+                          when "confirmed"
+                            | Đã xác nhận
+                          when "shipping"
+                            | Đang giao
+                          when "completed"
+                            | Giao thành công
+                          when "cancelled"
+                            | Đã hủy
+                          when "returned"
+                            | Đã trả hàng
+                div(class="invoice_table")
+                  .table-responsive
+                    table.table
+                      thead
+                        tr
+                          th Tên sản phẩm
+                          th Đơn giá
+                          th Số lượng
+                          th Tổng cộng
+                      tbody
+                        each item in orderDetail.items
+                          tr
+                            td
+                              | #{item.name} 
+                              if (item.variant && item.variant.length > 0)
+                                | (
+                                each v, index in item.variant
+                                  | #{v}
+                                  if (index < item.variant.length - 1)
+                                    | , 
+                                | )
+                            td #{item.price.toLocaleString("vi-VN")}đ
+                            td #{item.quantity}
+                            td #{(item.price * item.quantity).toLocaleString("vi-VN")}đ
+                      tfoot
+                        tr
+                          td(colspan="3")
+                            b Tạm tính
+                          td
+                            b #{orderDetail.subTotal.toLocaleString("vi-VN")}đ
+                        if (orderDetail.discount)
+                          tr
+                            td(colspan="3") Giảm giá (#{orderDetail.coupon})
+                            td -#{orderDetail.discount.toLocaleString("vi-VN")}đ
+                        tr
+                          td(colspan="3") Phí vận chuyển
+                          td #{orderDetail.shipping.fee.toLocaleString("vi-VN")}đ
+                        tr
+                          td(colspan="3")
+                            b Tổng tiền
+                          td
+                            b #{orderDetail.total.toLocaleString("vi-VN")}đ
+                div(class="dashboard_invoice_footer")
+                  h4 Ghi chú
+                  div #{orderDetail.note}
+                  a(
+                    href=`/order/export-pdf?orderCode=${orderDetail.code}&phone=${orderDetail.phone}`
+                    class="common_btn"
+                    ) In hóa đơn
