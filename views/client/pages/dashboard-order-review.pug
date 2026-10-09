@@ -1,0 +1,168 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+  +page-banner(
+    {
+      name: pageTitle,
+    },
+    `dashboard/order/review/${orderDetail.id}`
+  )
+  //
+    =========================
+    PAGE BANNER START
+    ==========================
+
+  //
+    ============================
+    DSHBOARD START
+    =============================
+  section.dashboard(class="mb_100")
+    .container
+      .row
+        .col-xl-3.wow.fadeInUp
+          include ../partials/dashboard-sidebar.pug
+        .col-xl-9.wow.fadeInRight
+          div(class="dashboard_content mt_100")
+            h3(class="dashboard_title")
+              | #{pageTitle}
+              a(
+                href="/dashboard/order/list" 
+                class="back_btn common_btn"
+                ) Quay lại
+            div(class="dashboard_order_invoice_area")
+              div(class="dashboard_order_invoice")
+                div(class="invoice_table")
+                  .table-responsive
+                    table.table
+                      thead
+                        tr
+                          th Tên sản phẩm
+                          th Đơn giá
+                          th Số lượng
+                          th Tổng cộng
+                          th Đánh giá
+                      tbody
+                        each item in orderDetail.items
+                          tr
+                            td
+                              | #{item.name} 
+                              if (item.variant && item.variant.length > 0)
+                                | (
+                                each v, index in item.variant
+                                  | #{v}
+                                  if (index < item.variant.length - 1)
+                                    | , 
+                                | )
+                            td #{item.price.toLocaleString("vi-VN")}đ
+                            td #{item.quantity}
+                            td #{(item.price * item.quantity).toLocaleString("vi-VN")}đ
+                            td
+                              if (item.review)
+                                div
+                                  - for (let i = 1; i <= 5; i++)
+                                    if i <= item.review.rating
+                                      i.fas.fa-star.text-warning
+                                    else
+                                      i.fas.fa-star
+                                div(class="mt-2") #{item.review.comment}
+                                div(class="mt-2")
+                                  if item.review.images && item.review.images.length > 0
+                                    each img in item.review.images
+                                      div(style="display: inline-block; width: 50px; height: 50px; margin-right: 5px;")
+                                        img(
+                                          src=`${domainCDN}${img}` 
+                                          alt="Review Image" 
+                                          )
+                              else
+                                button.btn.btn-primary(
+                                  data-bs-target="#modalReview" 
+                                  data-bs-toggle="modal"
+                                  type="button"
+                                  product-name=item.name
+                                  order-item-id=item.id
+                                  variant=(item.variant && item.variant.length > 0 ? item.variant.join(", ") : "")
+                                  )
+                                  svg.size-6(
+                                    stroke="currentColor" 
+                                    stroke-width="1.5" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    )
+                                    path(
+                                      d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" 
+                                      stroke-linejoin="round" 
+                                      stroke-linecap="round"
+                                      )
+                                  | Viết đánh giá
+                div(class="dashboard_invoice_header")
+                  .text
+                    h2 Thông tin đơn hàng
+                    ul
+                      li
+                        span Họ tên:
+                        | #{orderDetail.fullName}
+                      li
+                        span Số điện thoại:
+                        | #{orderDetail.phone}
+                      li
+                        span Địa chỉ:
+                        | #{orderDetail.address}
+                      li
+                        span Ngày đặt hàng:
+                        | #{orderDetail.createdAt.toLocaleString('vi-VN')}
+
+  // Rating Modal
+  div(class="rating_modal")
+    #modalReview.modal.fade(
+      aria-hidden="true"
+      tabindex="-1"
+      )
+      .modal-dialog.modal-lg.modal-dialog-centered
+        .modal-content
+          button.btn-close(
+            aria-label="Close" 
+            data-bs-dismiss="modal" 
+            type="button"
+            )
+            i.fal.fa-times
+          .modal-body
+            div(class="single_review_input_area")
+              h3 Đánh giá
+              p(class="mt-3")
+                span Tên sản phẩm: 
+                span(product-name)
+              form(form-review)
+                input(type="text" name="orderId" value=orderDetail.id class="d-none")
+                input(type="text" name="orderItemId" value="" class="d-none")
+                div(class="select_rating" rating)
+                  span Đánh giá của bạn:
+                  i.fas.fa-star
+                  i.fas.fa-star
+                  i.fas.fa-star
+                  i.fas.fa-star
+                  i.fas.fa-star
+                .row
+                  .col-xl-12
+                    div(class="single_input")
+                      label Bình luận của bạn:
+                      textarea(
+                        placeholder="Viết bình luận của bạn..." 
+                        rows="6"
+                        name="comment"
+                        )
+                  .col-12
+                    div(class="img_upload" images)
+                      .gallery
+                        a.cam(href="javascript:void(0)")
+                          span
+                            i.fas.fa-image
+                  .col-12
+                    button(class="common_btn")
+                      | Gửi đánh giá
+                      i.fas.fa-long-arrow-right

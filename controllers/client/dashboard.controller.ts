@@ -7,6 +7,7 @@ import FormData from 'form-data';
 import axios from 'axios';
 import { domainCDN } from '../../configs/variable.config';
 import Order from '../../models/order.model';
+import Review from '../../models/review.model';
 
 
 export const profile = (req: Request, res: Response) => {
@@ -397,5 +398,160 @@ export const orderDetail = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.redirect('/dashboard/order/list');
+  }
+}
+
+export const orderReview = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const orderId = req.params.id;
+
+    const orderDetail: any = await Order.findOne({
+      _id: orderId,
+      userId: userId,
+      deleted: false
+    });
+
+    if(!orderDetail) {
+      res.redirect('/dashboard/order/list');
+      return;
+    }
+
+    // Lấy thông tin đánh giá của từng sản phẩm trong đơn hàng
+    for (const item of orderDetail.items) {
+      const review = await Review.findOne({
+        userId: userId,
+        orderItemId: item.id
+      })
+      if(review) {
+        item.review = review;
+      }
+    }
+
+    res.render("client/pages/dashboard-order-review", {
+      pageTitle: `Đánh giá đơn hàng: ${orderDetail.code}`,
+      orderDetail: orderDetail
+    });
+  } catch (error) {
+    res.redirect('/dashboard/order/list');
+  }
+}
+
+export const orderReviewPost = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const { orderId, orderItemId, rating, comment } = req.body;
+    const files = req.files as Express.Multer.File[];
+
+    const orderDetail: any = await Order.findOne({
+      _id: orderId,
+      userId: userId,
+      deleted: false
+    });
+
+    if(!orderDetail) {
+      res.json({
+        code: "error",
+        message: "Dữ liệu không hợp lệ!"
+      });
+      return;
+    }
+
+    const orderItem = orderDetail.items.find((item: any) => item.id === orderItemId);
+    if(!orderItem) {
+      res.json({
+        code: "error",
+        message: "Dữ liệu không hợp lệ!"
+      });
+      return;
+    }
+
+    const productId = orderItem.productId;
+    const variant = orderItem.variant; // Giả sử variant là chuỗi các lựa chọn, ví dụ: "Size M, Color Red"
+
+    // Kiểm tra xem người dùng đã đánh giá sản phẩm này chưa
+    const existReview = await Review.findOne({
+      userId: userId,
+      orderItemId: orderItemId
+    });
+
+    if(existReview) {
+      res.json({
+        code: "error",
+        message: "Bạn đã đánh giá sản phẩm này rồi!"
+      });
+      return;
+    }
+
+    // Giới hạn số ảnh tối đa
+    const maxImages = 5;
+    if(files && files.length > maxImages) {
+      res.json({
+        code: "error",
+        message: `Chỉ được phép tải lên tối đa ${maxImages} ảnh!`
+      });
+      return;
+    }
+
+    // Giới hạn dung lượng ảnh tối đa (ví dụ: 5MB)
+    const maxSizePerImage = 5 * 1024 * 1024; // 5MB
+    if(files) {
+      for (const file of files) {
+        if(file.size > maxSizePerImage) {
+          res.json({
+            code: "error",
+            message: `Mỗi ảnh không được vượt quá ${maxSizePerImage / (1024 * 1024)} MB!`
+          });
+          return;
+        }
+      }
+    }
+
+    const imageLinks: string[] = [];
+    // Xử lý upload ảnh nếu có
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('files', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype
+        });
+        formData.append('folderPath', `reviews/${userId}`);
+        const response = await axios.post(`${domainCDN}/file-manager/upload`, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${process.env.FILE_MANAGER_SECRET}`
+          } // cần thiết để gửi đúng multipart/form-data
+        });
+        if (response.data.code === "success") {
+          const savedLink = response.data.saveLinks[0];
+          const link = `${savedLink.folder}/${savedLink.filename}`;
+          imageLinks.push(link);
+        }
+      }
+    }
+    // Tạo đánh giá mới
+    const newReview = new Review({
+      userId: userId,
+      orderId: orderId,
+      orderItemId: orderItemId,
+      productId: productId,
+      variant: variant,
+      rating: parseInt(rating),
+      comment: comment,
+      images: imageLinks
+    });
+    await newReview.save();
+
+    res.json({
+      code: "success",
+      message: "Cảm ơn bạn đã đánh giá sản phẩm!"
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
   }
 }
