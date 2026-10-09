@@ -28,128 +28,98 @@ div(id="sticky_sidebar")
             a(href="javascript:;" button-slug=item.slug)
               | #{item.name}
     each attribute in attributeProductList
-      if (attribute.name === "ROM" || attribute.name === "Color")
-        div(class=`${attribute.type == "color" ? "sidebar_color" : "sidebar_status"}`)
-          h3 #{attribute.name}
-          ul(filter-attribute=attribute.id)
-            each option in attribute.options
-              li
-                .form-check
-                  input.form-check-input(
-                    style=`${attribute.type == "color" ? `background-color: ${option.value}` : ""}`
-                    id=`${attribute.type}-${attribute.id}-${option.value}`
-                    value=option.value
-                    type="checkbox"
-                    )
-                  label.form-check-label(
-                    for=`${attribute.type}-${attribute.id}-${option.value}`
-                  ) #{option.label}
-    //- div(class="sidebar_rating")
-    //-   h3 Rating
-    //-   .form-check
-    //-     input#defaultCheck4.form-check-input(
-    //-       value="" 
-    //-       type="checkbox"
-    //-       )
-    //-     label.form-check-label(for="defaultCheck4")
-    //-       i.fas.fa-star(aria-hidden="true")
-    //-       | 5 star
-    //-   .form-check
-    //-     input#defaultCheck5.form-check-input(
-    //-       value="" 
-    //-       type="checkbox"
-    //-       )
-    //-     label.form-check-label(for="defaultCheck5")
-    //-       i.fas.fa-star(aria-hidden="true")
-    //-       | 4 star or above
-    //-   .form-check
-    //-     input#defaultCheck6.form-check-input(
-    //-       value="" 
-    //-       type="checkbox"
-    //-       )
-    //-     label.form-check-label(for="defaultCheck6")
-    //-       i.fas.fa-star(aria-hidden="true")
-    //-       | 3 star or above
-    //-   .form-check
-    //-     input#defaultCheck7.form-check-input(
-    //-       value="" 
-    //-       type="checkbox"
-    //-       )
-    //-     label.form-check-label(for="defaultCheck7")
-    //-       i.fas.fa-star(aria-hidden="true")
-    //-       | 2 star or above
-    //-   .form-check
-    //-     input#defaultCheck8.form-check-input(
-    //-       value="" 
-    //-       type="checkbox"
-    //-       )
-    //-     label.form-check-label(for="defaultCheck8")
-    //-       i.fas.fa-star(aria-hidden="true")
-    //-       | 1 star or above
-    //- div(class="sidebar_related_product")
-    //-   h3 Top Rated Products
-    //-   ul
-    //-     li
-    //-       a.img(href="shop_details.html")
-    //-         img.img-fluid(
-    //-           alt="Product" 
-    //-           src="/client/assets/images/product_18.png"
-    //-           )
-    //-       .text
-    //-         p.rating
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star-half-alt
-    //-           i.far.fa-star
-    //-           span (29)
-    //-         a.title(href="shop_details.html") Kid's Western Party Dress
-    //-         p.price $59.00
-    //-     li
-    //-       a.img(href="shop_details.html")
-    //-         img.img-fluid(
-    //-           alt="Product" 
-    //-           src="/client/assets/images/product_23.png"
-    //-           )
-    //-       .text
-    //-         p.rating
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star-half-alt
-    //-           i.far.fa-star
-    //-           span (12)
-    //-         a.title(href="shop_details.html") Kid's dresses for summer
-    //-         p.price $54.00
-    //-     li
-    //-       a.img(href="shop_details.html")
-    //-         img.img-fluid(
-    //-           alt="Product" 
-    //-           src="/client/assets/images/product_13.png"
-    //-           )
-    //-       .text
-    //-         p.rating
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star-half-alt
-    //-           i.far.fa-star
-    //-           span (09)
-    //-         a.title(href="shop_details.html") Sharee Petticoat For Women
-    //-         p.price $28.00
-    //-     li
-    //-       a.img(href="shop_details.html")
-    //-         img.img-fluid(
-    //-           alt="Product" 
-    //-           src="/client/assets/images/product_7.png"
-    //-           )
-    //-       .text
-    //-         p.rating
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star
-    //-           i.fas.fa-star-half-alt
-    //-           i.far.fa-star
-    //-           span (35)
-    //-         a.title(href="shop_details.html") Denim 2 Quarter Pant
-    //-         p.price $54.00
+      div(class=`${attribute.type == "color" ? "sidebar_color" : "sidebar_status"}`)
+        h3 #{attribute.name}
+        ul(filter-attribute=attribute.id)
+          each option in attribute.options
+            li
+              .form-check
+                input.form-check-input(
+                  style=`${attribute.type == "color" ? `background-color: ${option.value}` : ""}`
+                  id=`${attribute.type}-${attribute.id}-${option.value}`
+                  value=option.value
+                  type="checkbox"
+                  )
+                label.form-check-label(
+                  for=`${attribute.type}-${attribute.id}-${option.value}`
+                ) #{option.label}
+    div(class="sidebar_rating")
+      h3 Đánh giá
+      each star in [5,4,3,2,1]
+        .form-check
+          input.form-check-input(
+            id=`filterRating${star}`
+            name="rating"
+            value=star
+            type="checkbox"
+          )
+          label.form-check-label(for=`filterRating${star}`)
+            i.fas.fa-star.me-1(aria-hidden="true")
+            | #{star} sao
+    div(class="sidebar_related_product")
+      h3 Top Rated Products
+      ul
+        li
+          a.img(href="shop_details.html")
+            img.img-fluid(
+              alt="Product" 
+              src="/client/assets/images/product_18.png"
+              )
+          .text
+            p.rating
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star-half-alt
+              i.far.fa-star
+              span (29)
+            a.title(href="shop_details.html") Kid's Western Party Dress
+            p.price $59.00
+        li
+          a.img(href="shop_details.html")
+            img.img-fluid(
+              alt="Product" 
+              src="/client/assets/images/product_23.png"
+              )
+          .text
+            p.rating
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star-half-alt
+              i.far.fa-star
+              span (12)
+            a.title(href="shop_details.html") Kid's dresses for summer
+            p.price $54.00
+        li
+          a.img(href="shop_details.html")
+            img.img-fluid(
+              alt="Product" 
+              src="/client/assets/images/product_13.png"
+              )
+          .text
+            p.rating
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star-half-alt
+              i.far.fa-star
+              span (09)
+            a.title(href="shop_details.html") Sharee Petticoat For Women
+            p.price $28.00
+        li
+          a.img(href="shop_details.html")
+            img.img-fluid(
+              alt="Product" 
+              src="/client/assets/images/product_7.png"
+              )
+          .text
+            p.rating
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star
+              i.fas.fa-star-half-alt
+              i.far.fa-star
+              span (35)
+            a.title(href="shop_details.html") Denim 2 Quarter Pant
+            p.price $54.00
