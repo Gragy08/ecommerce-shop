@@ -1,3 +1,5 @@
+include stars.pug
+
 mixin product-item-2(item)
   div(class="product_item_2 product_item")
     div(class="product_img")
@@ -38,12 +40,14 @@ mixin product-item-2(item)
         if (item.priceOld)
         del #{item.priceOld.toLocaleString("vi-VN")}đ
       p.rating
-        i.fas.fa-star
-        i.fas.fa-star
-        i.fas.fa-star
-        i.fas.fa-star-half-alt
-        i.far.fa-star
-        span (0 Đánh giá)
+        //- i.fas.fa-star
+        //- i.fas.fa-star
+        //- i.fas.fa-star
+        //- i.fas.fa-star-half-alt
+        //- i.far.fa-star
+        //- span (0 Đánh giá)
+        +stars(item)
+        span (#{item.ratingCount} Đánh giá)
       if (item.colorList.length > 0)
         ul.color
           each color in item.colorList

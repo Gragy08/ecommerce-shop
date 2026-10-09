@@ -32,6 +32,14 @@ const schema = new mongoose.Schema(
     search: String,
     tags: [String],
     boughtTogether: [String],
+    ratingAvg: {
+      type: Number,
+      default: 0
+    },
+    ratingCount: {
+      type: Number,
+      default: 0
+    },
     deleted: {
       type: Boolean,
       default: false

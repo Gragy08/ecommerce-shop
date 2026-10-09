@@ -1,3 +1,5 @@
+include stars.pug
+
 mixin product-list-item(item)
   div(class="product_list_item product_item_2 product_item")
     .row.align-items-center
@@ -31,12 +33,14 @@ mixin product-list-item(item)
           a.title(href=`/product/detail/${item.slug}`)
             | #{item.name}
           p.rating
-            i.fas.fa-star
-            i.fas.fa-star
-            i.fas.fa-star
-            i.fas.fa-star
-            i.fas.fa-star
-            span (0 Đánh giá)
+            //- i.fas.fa-star
+            //- i.fas.fa-star
+            //- i.fas.fa-star
+            //- i.fas.fa-star
+            //- i.fas.fa-star
+            //- span (0 Đánh giá)
+            +stars(item)
+            span (#{item.ratingCount} Đánh giá)
           p.price
             if (item.priceNew)
               | #{item.priceNew.toLocaleString("vi-VN")}đ
