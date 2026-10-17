@@ -1,0 +1,87 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+//- include ../mixins/form-search.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            // end col
+          // end row
+        // end card-header
+        .card-body.pt-0
+          .row
+            //- .col-lg-6
+              //- +form-search()
+          .table-responsive
+            table.table.table-striped.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Mã đơn
+                  th Khách hàng
+                  th Tổng tiền
+                  th Thanh toán
+                  th TT thanh toán
+                  th TT đơn hàng
+                  th Ngày tạo
+                  th.text-end Hành động
+              tbody
+                each item, index in recordList
+                  tr
+                    td #{pagination.skip + index + 1}
+                    td
+                      b #{item.code}
+                    td
+                      div #{item.fullName}
+                      small.text-muted #{item.phone}
+                    td
+                      b.text-danger #{item.total.toLocaleString('vi-VN')} đ
+                    td
+                      case item.paymentMethod
+                        when "money"
+                          span.badge.bg-secondary Tiền mặt
+                        when "vnpay"
+                          span.badge.bg-danger VNPay
+                        when "zalopay"
+                          span.badge.bg-primary ZaloPay
+                    td
+                      case item.paymentStatus
+                        when "unpaid"
+                          span.badge.bg-warning Chưa thanh toán
+                        when "paid"
+                          span.badge.bg-success Đã thanh toán
+                        when "refunded"
+                          span.badge.bg-info Đã hoàn tiền
+                    td
+                      case item.orderStatus
+                        when "pending"
+                          span.badge.bg-secondary Chờ xác nhận
+                        when "confirmed"
+                          span.badge.bg-primary Đã xác nhận
+                        when "shipping"
+                          span.badge.bg-info Đang giao
+                        when "completed"
+                          span.badge.bg-success Giao thành công
+                        when "cancelled"
+                          span.badge.bg-danger Đã hủy
+                        when "returned"
+                          span.badge.bg-dark Đã trả hàng
+                    td
+                      | #{item.createdAt.toLocaleString('vi-VN')}
+                    td.text-end
+                      a(href=`/${pathAdmin}/order/edit/${item.id}`)
+                        i.las.la-pen.text-secondary.fs-20
+                      a(
+                        href="javascript:;"
+                        button-api
+                        data-method="PATCH"
+                        data-api=`/${pathAdmin}/order/delete/${item.id}`
+                      )
+                        i.las.la-trash-alt.text-secondary.fs-20
+          +pagination()
+    // end col

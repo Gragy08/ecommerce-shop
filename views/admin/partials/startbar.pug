@@ -162,6 +162,12 @@
                   li.nav-item
                     a.nav-link(href=`/${pathAdmin}/coupon/list`) Danh sách mã giảm giá
                   // end nav-item
+          li.nav-item
+            a.nav-link(
+              href=`/${pathAdmin}/order/list`
+              )
+              i.iconoir-bag.menu-icon
+              span Quản lý đơn hàng
           if (permissions.includes("log-activity-role"))
             li.nav-item
               a.nav-link(
