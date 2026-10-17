@@ -1,3 +1,5 @@
+include ../mixins/stars.pug
+
 div(id="sticky_sidebar")
   .d-lg-none(class="shop_filter_btn") Bộ lọc
   div(class="shop_filter_area")
@@ -57,69 +59,22 @@ div(id="sticky_sidebar")
             i.fas.fa-star.me-1(aria-hidden="true")
             | #{star} sao
     div(class="sidebar_related_product")
-      h3 Top Rated Products
+      h3 Sản phẩm được đánh giá cao
       ul
-        li
-          a.img(href="shop_details.html")
-            img.img-fluid(
-              alt="Product" 
-              src="/client/assets/images/product_18.png"
-              )
-          .text
-            p.rating
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star-half-alt
-              i.far.fa-star
-              span (29)
-            a.title(href="shop_details.html") Kid's Western Party Dress
-            p.price $59.00
-        li
-          a.img(href="shop_details.html")
-            img.img-fluid(
-              alt="Product" 
-              src="/client/assets/images/product_23.png"
-              )
-          .text
-            p.rating
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star-half-alt
-              i.far.fa-star
-              span (12)
-            a.title(href="shop_details.html") Kid's dresses for summer
-            p.price $54.00
-        li
-          a.img(href="shop_details.html")
-            img.img-fluid(
-              alt="Product" 
-              src="/client/assets/images/product_13.png"
-              )
-          .text
-            p.rating
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star-half-alt
-              i.far.fa-star
-              span (09)
-            a.title(href="shop_details.html") Sharee Petticoat For Women
-            p.price $28.00
-        li
-          a.img(href="shop_details.html")
-            img.img-fluid(
-              alt="Product" 
-              src="/client/assets/images/product_7.png"
-              )
-          .text
-            p.rating
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star
-              i.fas.fa-star-half-alt
-              i.far.fa-star
-              span (35)
-            a.title(href="shop_details.html") Denim 2 Quarter Pant
-            p.price $54.00
+        each item in topRatedProducts
+          li
+            a.img(href=`/product/detail/${item.slug}`)
+              img.img-fluid(
+                alt=item.name
+                src=`${domainCDN}${item.images[0]}`
+                )
+            .text
+              p.rating
+                +stars(item)
+                span (#{item.ratingCount})
+              a.title(href=`/product/detail/${item.slug}`) #{item.name}
+              p.price
+                if (item.priceNew)
+                  | #{item.priceNew.toLocaleString("vi-VN")}đ
+                if (item.priceOld)
+                  del(class="ms-1") #{item.priceOld.toLocaleString("vi-VN")}đ
