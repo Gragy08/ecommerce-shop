@@ -13,6 +13,7 @@ import fs from "fs";
 import { addPointAfterPayment } from '../../helpers/point.helper';
 import { pointConfig } from '../../configs/variable.config';
 import AccountUser from '../../models/account-user.model';
+import { getApiShipping } from '../../configs/setting.config';
 
 
 export const createPost = async (req: Request, res: Response) => {
@@ -224,9 +225,11 @@ export const createPost = async (req: Request, res: Response) => {
     }
   };
 
+  const apiShipping = await getApiShipping();
+
   const goshipRes = await axios.post("https://sandbox.goship.io/api/v2/shipments", dataGoShip, {
     headers: {
-      Authorization: `Bearer ${process.env.GOSHIP_TOKEN}`,
+      Authorization: `Bearer ${apiShipping.tokenGoShip}`,
       "Content-Type": "application/json"
     }
   });

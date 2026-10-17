@@ -2093,3 +2093,39 @@ if(listFormatMoney.length > 0) {
   })
 }
 // End format-money
+
+// Setting Api Shipping Form
+const settingApiShippingForm = document.querySelector("#settingApiShippingForm");
+if(settingApiShippingForm) {
+  const validation = new JustValidate('#settingApiShippingForm');
+
+  validation
+    .onSuccess((event) => {
+      const tokenGoShip = event.target.tokenGoShip.value;
+
+      // Tạo FormData
+      const dataFinal = {
+        tokenGoShip: tokenGoShip
+      };
+      
+      fetch(`/${pathAdmin}/setting/api-shipping`, {
+        method: "PATCH",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataFinal),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Setting Api Shipping Form

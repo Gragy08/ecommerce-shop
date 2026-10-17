@@ -1,0 +1,16 @@
+extends ../layouts/default.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4.card-title #{pageTitle}
+    .card-body.pt-0
+      form(id="settingApiShippingForm")
+        .row
+          .col-md-12.col-lg-12
+            .mb-3
+              label.form-label(for="tokenGoShip") Token GoShip
+              textarea(id="tokenGoShip" name="tokenGoShip" class="form-control") #{record ? record.data.tokenGoShip : ''}
+        button.btn.btn-primary(type="submit") Cập nhật
