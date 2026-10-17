@@ -20,6 +20,14 @@ const schema = new mongoose.Schema(
       default: "active"
     },
     avatar: String,
+    totalPoint: {
+      type: Number,
+      default: 0 // tổng điểm đã tích
+    },
+    usedPoint: {
+      type: Number,
+      default: 0 // điểm đã sử dụng
+    },
     search: String,
     deleted: {
       type: Boolean,

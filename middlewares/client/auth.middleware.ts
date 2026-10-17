@@ -41,7 +41,10 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
           email: existAccount.email,
           phone: existAccount.phone,
           avatar: existAccount.avatar,
-          addressList: addressList
+          addressList: addressList,
+          totalPoint: existAccount.totalPoint,
+          usedPoint: existAccount.usedPoint
+
         };
       }
     }

@@ -61,6 +61,14 @@ const schema = new mongoose.Schema(
       fee: Number,
       cod: Number
     },
+    usedPoint: {
+      type: Number,
+      default: 0 // số điểm đã dùng cho đơn này
+    },
+    pointDiscount: {
+      type: Number,
+      default: 0 // số tiền được trừ từ điểm
+    },
     deleted: {
       type: Boolean,
       default: false
