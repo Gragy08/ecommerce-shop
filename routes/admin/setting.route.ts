@@ -15,4 +15,8 @@ router.get('/api-login-social', settingController.apiLoginSocial);
 
 router.patch('/api-login-social', settingController.apiLoginSocialPatch);
 
+router.get('/api-app-password', settingController.apiAppPassword);
+
+router.patch('/api-app-password', settingController.apiAppPasswordPatch);
+
 export default router;

@@ -1,20 +1,23 @@
 import nodemailer from "nodemailer";
+import { getApiAppPassword } from "../configs/setting.config";
 
-export const sendMail = (email: string, title: string, content: string) => {
+export const sendMail = async (email: string, title: string, content: string) => {
+  const apiAppPassword = await getApiAppPassword();
+
   // Create a transporter object
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: process.env.NODE_ENV === 'production', // true: nếu là https, false: nếu là http
     auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS,
+      user: apiAppPassword.gmailUser,
+      pass: apiAppPassword.gmailPassword,
     }
   });
 
   // Configure the mailoptions object
   const mailOptions = {
-    from: process.env.GMAIL_USER,
+    from: apiAppPassword.gmailUser,
     to: email,
     subject: title,
     html: content

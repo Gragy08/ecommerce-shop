@@ -20,3 +20,10 @@ export const getApiLoginSocial = async () => {
   });
   return setting ? setting.data : null;
 }
+
+export const getApiAppPassword = async () => {
+  const setting = await Setting.findOne({
+    key: "apiAppPassword"
+  });
+  return setting ? setting.data : null;
+}

@@ -2223,3 +2223,41 @@ if(settingApiLoginSocialForm) {
   ;
 }
 // End Setting Api Login Social Form
+
+// Setting Api App Password Form
+const settingApiAppPasswordForm = document.querySelector("#settingApiAppPasswordForm");
+if(settingApiAppPasswordForm) {
+  const validation = new JustValidate('#settingApiAppPasswordForm');
+
+  validation
+    .onSuccess((event) => {
+      const gmailUser = event.target.gmailUser.value;
+      const gmailPassword = event.target.gmailPassword.value;
+
+      // Tạo dataFinal
+      const dataFinal = {
+        gmailUser: gmailUser,
+        gmailPassword: gmailPassword,
+      };
+      
+      fetch(`/${pathAdmin}/setting/api-app-password`, {
+        method: "PATCH",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataFinal),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Setting Api App Password Form
