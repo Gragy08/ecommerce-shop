@@ -2,15 +2,18 @@ import passport from "passport";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import AccountUser from "../models/account-user.model";
 import slugify from "slugify";
+import { getApiLoginSocial } from "./setting.config";
 
 // Hàm nhận passport để cấu hình
-export const configureFacebookPassport = (passportInstance: typeof passport) => {
+export const configureFacebookPassport = async (passportInstance: typeof passport) => {
+  const apiLoginSocial = await getApiLoginSocial();
+
   // Thiết lập chiến lược đăng nhập bằng Facebook
   passportInstance.use(new FacebookStrategy(
     {
-      clientID: `${process.env.FACEBOOK_APP_ID}`, // ID ứng dụng Dacebook
-      clientSecret: `${process.env.FACEBOOK_APP_SECRET}`, // Secret key
-      callbackURL: `${process.env.FACEBOOK_CALLBACK_URL}`, // URL gọi vào sau khi đăng nhập
+      clientID: `${apiLoginSocial.facebookAppId}`, // ID ứng dụng Dacebook
+      clientSecret: `${apiLoginSocial.facebookAppSecret}`, // Secret key
+      callbackURL: `${apiLoginSocial.facebookCallbackUrl}`, // URL gọi vào sau khi đăng nhập
       profileFields: ["id", "displayName", "emails"], // Lấy thêm các trường dữ liệu
     },
     // Hàm callback khi Facebook xác thực thành công

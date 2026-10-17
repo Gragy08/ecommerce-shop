@@ -79,3 +79,39 @@ export const apiPaymentPatch = async (req: RequestAccount, res: Response) => {
     message: "Cập nhật thành công!"
   })
 }
+
+export const apiLoginSocial = async (req: Request, res: Response) => { 
+  const key = "apiLoginSocial";
+
+  const record = await Setting.findOne({
+    key: key
+  });
+  
+  res.render("admin/pages/setting-api-login-social", {
+    pageTitle: "API đăng nhập mạng xã hội",
+    record: record
+  });
+}
+
+export const apiLoginSocialPatch = async (req: RequestAccount, res: Response) => {
+  const key = "apiLoginSocial";
+
+  await Setting.findOneAndUpdate(
+    {
+      key: key
+    },
+    {
+      key: key,
+      data: req.body,
+      updatedBy: req.adminId
+    },
+    {
+      upsert: true, // nếu không tìm thấy bản ghi sẽ tạo bản ghi mới.
+    }
+  );
+  
+  res.json({
+    code: "success",
+    message: "Cập nhật thành công!"
+  })
+}

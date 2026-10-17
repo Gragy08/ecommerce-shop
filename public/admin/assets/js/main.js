@@ -2177,3 +2177,49 @@ if(settingApiPaymentForm) {
   ;
 }
 // End Setting Api Payment Form
+
+// Setting Api Login Social Form
+const settingApiLoginSocialForm = document.querySelector("#settingApiLoginSocialForm");
+if(settingApiLoginSocialForm) {
+  const validation = new JustValidate('#settingApiLoginSocialForm');
+
+  validation
+    .onSuccess((event) => {
+      const googleClientId = event.target.googleClientId.value;
+      const googleClientSecret = event.target.googleClientSecret.value;
+      const googleCallbackUrl = event.target.googleCallbackUrl.value;
+      const facebookAppId = event.target.facebookAppId.value;
+      const facebookAppSecret = event.target.facebookAppSecret.value;
+      const facebookCallbackUrl = event.target.facebookCallbackUrl.value;
+
+      // Tạo dataFinal
+      const dataFinal = {
+        googleClientId: googleClientId,
+        googleClientSecret: googleClientSecret,
+        googleCallbackUrl: googleCallbackUrl,
+        facebookAppId: facebookAppId,
+        facebookAppSecret: facebookAppSecret,
+        facebookCallbackUrl: facebookCallbackUrl,
+      };
+      
+      fetch(`/${pathAdmin}/setting/api-login-social`, {
+        method: "PATCH",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataFinal),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Setting Api Login Social Form

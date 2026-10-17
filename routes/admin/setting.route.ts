@@ -11,4 +11,8 @@ router.get('/api-payment', settingController.apiPayment);
 
 router.patch('/api-payment', settingController.apiPaymentPatch);
 
+router.get('/api-login-social', settingController.apiLoginSocial);
+
+router.patch('/api-login-social', settingController.apiLoginSocialPatch);
+
 export default router;
