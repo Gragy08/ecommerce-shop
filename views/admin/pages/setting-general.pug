@@ -1,0 +1,33 @@
+extends ../layouts/default.pug
+include ../mixins/form-group.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4 #{pageTitle}
+    .card-body.pt-0
+      form(id="settingGeneralForm")
+        .row
+          .col-md-12.col-lg-12
+            .mb-3
+              label.form-label(for="domainWebsite") Tên miền website
+              input(id="domainWebsite" name="domainWebsite" class="form-control" value=`${record ? record.data.domainWebsite : ''}`)
+          .col-md-6.col-lg-6
+            .mb-3
+              +form-group-file(
+                "Logo",
+                "logo",
+                "logo",
+                record ? record.data.logo : ''
+              )
+          .col-md-6.col-lg-6
+            .mb-3
+              +form-group-file(
+                "Favicon",
+                "favicon",
+                "favicon",
+                record ? record.data.favicon : ''
+              )
+        button.btn.btn-primary(type="submit") Cập nhật

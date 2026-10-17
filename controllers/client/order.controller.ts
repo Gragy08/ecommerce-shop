@@ -13,7 +13,7 @@ import fs from "fs";
 import { addPointAfterPayment } from '../../helpers/point.helper';
 import { pointConfig } from '../../configs/variable.config';
 import AccountUser from '../../models/account-user.model';
-import { getApiPayment, getApiShipping } from '../../configs/setting.config';
+import { getApiPayment, getApiShipping, getGeneral } from '../../configs/setting.config';
 
 
 export const createPost = async (req: Request, res: Response) => {
@@ -325,8 +325,10 @@ export const paymentZaloPay = async (req: Request, res: Response) => {
     endpoint: `${apiPayment.zaloPayDomain}/v2/create`
   };
 
+  const settingGeneral = await getGeneral();
+
   const embed_data = {
-    redirecturl: `${process.env.DOMAIN_WEBSITE}/order/success?orderCode=${orderCode}&phone=${phone}`
+    redirecturl: `${settingGeneral.domainWebsite}/order/success?orderCode=${orderCode}&phone=${phone}`
   };
 
   const items = [{}];
@@ -342,7 +344,7 @@ export const paymentZaloPay = async (req: Request, res: Response) => {
     description: `Thanh toán đơn hàng ${orderCode}`,
     bank_code: "",
     mac: "",
-    callback_url: `${process.env.DOMAIN_WEBSITE}/order/payment-zalopay-result`
+    callback_url: `${settingGeneral.domainWebsite}/order/payment-zalopay-result`
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
@@ -428,11 +430,12 @@ export const paymentVNPay = async (req: Request, res: Response) => {
       req.socket.remoteAddress;
   
   const apiPayment = await getApiPayment();
+  const settingGeneral = await getGeneral();
   
   let tmnCode = `${apiPayment.vnPayTmnCode}`;
   let secretKey = `${apiPayment.vnPayHashSecret}`;
   let vnpUrl = `${apiPayment.vnPayURL}`;
-  let returnUrl = `${process.env.DOMAIN_WEBSITE}/order/payment-vnpay-result`;
+  let returnUrl = `${settingGeneral.domainWebsite}/order/payment-vnpay-result`;
   let orderId = `${phone}-${orderCode}-${Date.now()}`;
   let amount = orderDetail.total || 0;
   let bankCode = "";
@@ -503,7 +506,9 @@ export const paymentVNPayResult = async (req: Request, res: Response) => {
     await addPointAfterPayment(orderCode);
     // Hết Tích điểm 
 
-    res.redirect(`${process.env.DOMAIN_WEBSITE}/order/success?orderCode=${orderCode}&phone=${phone}`);
+    const settingGeneral = await getGeneral();
+
+    res.redirect(`${settingGeneral.domainWebsite}/order/success?orderCode=${orderCode}&phone=${phone}`);
   } else{
     res.render('success', {code: '97'})
   }

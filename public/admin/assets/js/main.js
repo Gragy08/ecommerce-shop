@@ -560,21 +560,23 @@ if(listButtonDeleteFolder.length > 0) {
 // End Button Delete Folder
 
 // Form Group File
-const formGroupFile = document.querySelector("[form-group-file]");
-if(formGroupFile) {
-  const inputFile = formGroupFile.querySelector("[input-file]");
-  const previewFile = formGroupFile.querySelector("[preview-file]");
+const listFormGroupFile = document.querySelectorAll("[form-group-file]");
+if(listFormGroupFile.length > 0) {
+  listFormGroupFile.forEach(formGroupFile => {
+    const inputFile = formGroupFile.querySelector("[input-file]");
+    const previewFile = formGroupFile.querySelector("[preview-file]");
 
-  inputFile.addEventListener("input", () => {
-    const value = inputFile.value;
-    previewFile.querySelector("img").src = `${domainCDN}${value}`;
+    inputFile.addEventListener("input", () => {
+      const value = inputFile.value;
+      previewFile.querySelector("img").src = `${domainCDN}${value}`;
+    })
+
+    // Hiển thị mặc định
+    if(inputFile.value) {
+      const value = inputFile.value;
+      previewFile.querySelector("img").src = `${domainCDN}${value}`;
+    }
   })
-
-  // Hiển thị mặc định
-  if(inputFile.value) {
-    const value = inputFile.value;
-    previewFile.querySelector("img").src = `${domainCDN}${value}`;
-  }
 }
 // End Form Group File
 
@@ -2261,3 +2263,43 @@ if(settingApiAppPasswordForm) {
   ;
 }
 // End Setting Api App Password Form
+
+// Setting General Form
+const settingGeneralForm = document.querySelector("#settingGeneralForm");
+if(settingGeneralForm) {
+  const validation = new JustValidate('#settingGeneralForm');
+
+  validation
+    .onSuccess((event) => {
+      const domainWebsite = event.target.domainWebsite.value;
+      const logo = event.target.logo.value;
+      const favicon = event.target.favicon.value;
+
+      // Tạo dataFinal
+      const dataFinal = {
+        domainWebsite: domainWebsite,
+        logo: logo,
+        favicon: favicon,
+      };
+      
+      fetch(`/${pathAdmin}/setting/general`, {
+        method: "PATCH",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataFinal),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Setting General Form

@@ -151,3 +151,39 @@ export const apiAppPasswordPatch = async (req: RequestAccount, res: Response) =>
     message: "Cập nhật thành công!"
   })
 }
+
+export const general = async (req: Request, res: Response) => { 
+  const key = "general";
+
+  const record = await Setting.findOne({
+    key: key
+  });
+  
+  res.render("admin/pages/setting-general", {
+    pageTitle: "Cài đặt chung",
+    record: record
+  });
+}
+
+export const generalPatch = async (req: RequestAccount, res: Response) => {
+  const key = "general";
+
+  await Setting.findOneAndUpdate(
+    {
+      key: key
+    },
+    {
+      key: key,
+      data: req.body,
+      updatedBy: req.adminId
+    },
+    {
+      upsert: true, // nếu không tìm thấy bản ghi sẽ tạo bản ghi mới.
+    }
+  );
+  
+  res.json({
+    code: "success",
+    message: "Cập nhật thành công!"
+  })
+}
