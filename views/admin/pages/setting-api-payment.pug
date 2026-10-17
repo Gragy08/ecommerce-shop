@@ -1,0 +1,44 @@
+extends ../layouts/default.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4 #{pageTitle}
+    .card-body.pt-0
+      form(id="settingApiPaymentForm")
+        h5 ZaloPay
+        .row
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="zaloPayAppId") App Id
+              input(id="zaloPayAppId" name="zaloPayAppId" class="form-control" value=`${record ? record.data.zaloPayAppId : ''}`)
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="zaloPayKey1") Key 1
+              input(id="zaloPayKey1" name="zaloPayKey1" class="form-control" value=`${record ? record.data.zaloPayKey1 : ''}`)
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="zaloPayKey2") Key 2
+              input(id="zaloPayKey2" name="zaloPayKey2" class="form-control" value=`${record ? record.data.zaloPayKey2 : ''}`)
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="zaloPayDomain") Tên miền
+              input(id="zaloPayDomain" name="zaloPayDomain" class="form-control" value=`${record ? record.data.zaloPayDomain : ''}`)
+        hr
+        h5 VNPay
+        .row
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="vnPayTmnCode") Tmn Code
+              input(id="vnPayTmnCode" name="vnPayTmnCode" class="form-control" value=`${record ? record.data.vnPayTmnCode : ''}`)
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="vnPayHashSecret") Hash Secret
+              input(id="vnPayHashSecret" name="vnPayHashSecret" class="form-control" value=`${record ? record.data.vnPayHashSecret : ''}`)
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="vnPayURL") URL
+              input(id="vnPayURL" name="vnPayURL" class="form-control" value=`${record ? record.data.vnPayURL : ''}`)
+        button.btn.btn-primary(type="submit") Cập nhật

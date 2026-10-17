@@ -2129,3 +2129,51 @@ if(settingApiShippingForm) {
   ;
 }
 // End Setting Api Shipping Form
+
+// Setting Api Payment Form
+const settingApiPaymentForm = document.querySelector("#settingApiPaymentForm");
+if(settingApiPaymentForm) {
+  const validation = new JustValidate('#settingApiPaymentForm');
+
+  validation
+    .onSuccess((event) => {
+      const zaloPayAppId = event.target.zaloPayAppId.value;
+      const zaloPayKey1 = event.target.zaloPayKey1.value;
+      const zaloPayKey2 = event.target.zaloPayKey2.value;
+      const zaloPayDomain = event.target.zaloPayDomain.value;
+      const vnPayTmnCode = event.target.vnPayTmnCode.value;
+      const vnPayHashSecret = event.target.vnPayHashSecret.value;
+      const vnPayURL = event.target.vnPayURL.value;
+
+      // Tạo dataFinal
+      const dataFinal = {
+        zaloPayAppId: zaloPayAppId,
+        zaloPayKey1: zaloPayKey1,
+        zaloPayKey2: zaloPayKey2,
+        zaloPayDomain: zaloPayDomain,
+        vnPayTmnCode: vnPayTmnCode,
+        vnPayHashSecret: vnPayHashSecret,
+        vnPayURL: vnPayURL,
+      };
+      
+      fetch(`/${pathAdmin}/setting/api-payment`, {
+        method: "PATCH",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataFinal),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Setting Api Payment Form

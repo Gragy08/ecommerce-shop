@@ -6,3 +6,10 @@ export const getApiShipping = async () => {
   });
   return setting ? setting.data : null;
 }
+
+export const getApiPayment = async () => {
+  const setting = await Setting.findOne({
+    key: "apiPayment"
+  });
+  return setting ? setting.data : null;
+}
