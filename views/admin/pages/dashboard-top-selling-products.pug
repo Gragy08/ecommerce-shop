@@ -1,0 +1,29 @@
+extends ../layouts/default.pug
+
+block main
+  if permissions.includes('dashboard')
+    .row
+      .col-md-12
+        .card
+          .card-header
+            h4.card-title Top 10 sản phẩm bán chạy nhất
+          .card-body
+            table.table.table-bordered.table-hover
+              thead
+                tr
+                  th.text-center STT
+                  th Tên sản phẩm
+                  th.text-center Số lượng bán
+                  th.text-end Doanh thu
+              tbody
+                if (topProducts.length > 0)
+                  each item, index in topProducts
+                    tr
+                      td.text-center #{index + 1}
+                      td #{item.name}
+                      td.text-center #{item.totalQuantity}
+                      td.text-end #{item.totalRevenue.toLocaleString()} ₫
+                else
+                  tr
+                    td(colspan="4" class="text-center text-muted")
+                      | Chưa có dữ liệu

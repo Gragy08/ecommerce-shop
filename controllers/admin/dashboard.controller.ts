@@ -764,3 +764,56 @@ export const orderStatistic = async (req: Request, res: Response) => {
     pieThisYear,
   });
 }
+
+export const topSellingProducts = async (req: Request, res: Response) => {
+
+  /**
+   * Mục tiêu:
+   * - Chỉ lấy đơn hàng đã thanh toán & hoàn thành
+   * - Tách từng item trong đơn
+   * - Gom nhóm theo sản phẩm
+   * - Tính tổng số lượng & doanh thu
+   * - Lấy TOP 10
+   */
+  const topProducts = await Order.aggregate([
+    {
+      // Lọc đơn hàng hợp lệ
+      $match: {
+        paymentStatus: "paid",
+        orderStatus: "completed",
+        deleted: false
+      }
+    },
+    {
+      // Tách từng sản phẩm trong đơn hàng
+      $unwind: "$items"
+    },
+    {
+      // Gom nhóm theo sản phẩm
+      $group: {
+        _id: "$items.productId",
+        name: { $first: "$items.name" }, // tên sản phẩm
+        totalQuantity: { $sum: "$items.quantity" }, // tổng số lượng bán
+        totalRevenue: {
+          $sum: {
+            $multiply: ["$items.quantity", "$items.price"]
+          }
+        }
+      }
+    },
+    {
+      // Sắp xếp theo số lượng bán giảm dần
+      $sort: { totalQuantity: -1 }
+    },
+    {
+      // Lấy top 10
+      $limit: 10
+    }
+  ]);
+
+  // Render giao diện
+  res.render("admin/pages/dashboard-top-selling-products.pug", {
+    pageTitle: "Sản phẩm bán chạy",
+    topProducts
+  });
+};
