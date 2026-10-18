@@ -188,13 +188,131 @@ export const dashboard = async (req: Request, res: Response) => {
       ? 100
       : ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
   // HẾT MỤC DOANH THU
+
+  // ĐƠN HÀNG
+  // Điều kiện chung
+  const baseMatchOrder = {
+    deleted: false
+  };
+
+  // Tổng số đơn hàng toàn thời gian
+  const totalOrders = await Order.countDocuments(baseMatchOrder);
+
+  // Tổng số đơn hàng hôm nay và hôm qua
+  const todayOrders = await Order.countDocuments({
+    ...baseMatchOrder,
+    createdAt: { $gte: startToday, $lte: endToday }
+  });
+
+  const yesterdayOrders = await Order.countDocuments({
+    ...baseMatchOrder,
+    createdAt: { $gte: startYesterday, $lte: endYesterday }
+  });
+
+  const todayOrderPercent =
+    yesterdayOrders === 0
+      ? 100
+      : ((todayOrders - yesterdayOrders) / yesterdayOrders) * 100;
+
+  // Tổng số đơn hàng tháng này và tháng trước
+  const thisMonthOrders = await Order.countDocuments({
+    ...baseMatchOrder,
+    createdAt: { $gte: startThisMonth, $lte: endThisMonth }
+  });
+
+  const lastMonthOrders = await Order.countDocuments({
+    ...baseMatchOrder,
+    createdAt: { $gte: startLastMonth, $lte: endLastMonth }
+  });
+
+  const monthOrderPercent =
+    lastMonthOrders === 0
+      ? 100
+      : ((thisMonthOrders - lastMonthOrders) / lastMonthOrders) * 100;
+
+  // Đơn hàng theo từng trạng thái
+  const ORDER_STATUSES = [
+    "pending",
+    "confirmed",
+    "shipping",
+    "completed",
+    "cancelled",
+    "returned"
+  ];
+
+  const orderStatusStats: any = {}; // Đơn hàng theo từng trạng thái
+
+  for (const status of ORDER_STATUSES) {
+
+    // Tổng số đơn theo trạng thái
+    const total = await Order.countDocuments({
+      ...baseMatchOrder,
+      orderStatus: status
+    });
+
+    // Hôm nay
+    const today = await Order.countDocuments({
+      ...baseMatchOrder,
+      orderStatus: status,
+      createdAt: { $gte: startToday, $lte: endToday }
+    });
+
+    // Hôm qua
+    const yesterday = await Order.countDocuments({
+      ...baseMatchOrder,
+      orderStatus: status,
+      createdAt: { $gte: startYesterday, $lte: endYesterday }
+    });
+
+    const todayPercent =
+      yesterday === 0
+        ? 100
+        : ((today - yesterday) / yesterday) * 100;
+
+    // Tháng này
+    const thisMonth = await Order.countDocuments({
+      ...baseMatchOrder,
+      orderStatus: status,
+      createdAt: { $gte: startThisMonth, $lte: endThisMonth }
+    });
+
+    // Tháng trước
+    const lastMonth = await Order.countDocuments({
+      ...baseMatchOrder,
+      orderStatus: status,
+      createdAt: { $gte: startLastMonth, $lte: endLastMonth }
+    });
+
+    const monthPercent =
+      lastMonth === 0
+        ? 100
+        : ((thisMonth - lastMonth) / lastMonth) * 100;
+
+    // Gom dữ liệu
+    orderStatusStats[status] = {
+      total,
+      today,
+      todayPercent,
+      thisMonth,
+      monthPercent
+    };
+  }
+  // HẾT ĐƠN HÀNG
   
   res.render("admin/pages/dashboard", {
     pageTitle: "Tổng quan",
+    
     totalRevenue,
     todayRevenue,
     todayPercent,
     thisMonthRevenue,
-    monthPercent
+    monthPercent,
+
+    totalOrders,
+    todayOrders,
+    todayOrderPercent,
+    thisMonthOrders,
+    monthOrderPercent,
+    orderStatusStats,
   });
 }

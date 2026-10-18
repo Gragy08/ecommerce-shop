@@ -48,3 +48,333 @@ block main
                             | Giảm
                             span.text-danger.mx-1 #{Math.abs(monthPercent).toFixed(1)}%
                           | so với tháng trước
+    
+    .row
+      .col-md-12.col-lg-12
+        .card
+          .card-header
+            .row.align-items-center
+              .col
+                h4.card-title Đơn hàng
+          .card-body.pt-0
+            h5.fs-14 Tất cả đơn hàng
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{totalOrders.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{todayOrders.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if todayOrderPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{todayOrderPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(todayOrderPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{thisMonthOrders.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if monthOrderPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{monthOrderPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(monthOrderPercent).toFixed(1)}%
+                          |  so với hôm qua
+            
+            h5.fs-14.mt-3 Đơn hàng Chờ xác nhận
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.pending.total.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.pending.today.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.pending.todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.pending.todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.pending.todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.pending.thisMonth.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.pending.monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.pending.monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.pending.monthPercent).toFixed(1)}%
+                          |  so với hôm qua
+
+            h5.fs-14.mt-3 Đơn hàng Đã xác nhận
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.confirmed.total.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.confirmed.today.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.confirmed.todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.confirmed.todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.confirmed.todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.confirmed.thisMonth.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.confirmed.monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.confirmed.monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.confirmed.monthPercent).toFixed(1)}%
+                          |  so với hôm qua
+
+            h5.fs-14.mt-3 Đơn hàng Đang giao
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.shipping.total.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.shipping.today.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.shipping.todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.shipping.todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.shipping.todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.shipping.thisMonth.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.shipping.monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.shipping.monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.shipping.monthPercent).toFixed(1)}%
+                          |  so với hôm qua
+
+            h5.fs-14.mt-3 Đơn hàng Giao thành công
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.completed.total.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.completed.today.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.completed.todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.completed.todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.completed.todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.completed.thisMonth.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.completed.monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.completed.monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.completed.monthPercent).toFixed(1)}%
+                          |  so với hôm qua
+
+            h5.fs-14.mt-3 Đơn hàng Hủy
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.cancelled.total.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.cancelled.today.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.cancelled.todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.cancelled.todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.cancelled.todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.cancelled.thisMonth.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.cancelled.monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.cancelled.monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.cancelled.monthPercent).toFixed(1)}%
+                          |  so với hôm qua
+
+            h5.fs-14.mt-3 Đơn hàng Trả hàng
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Đơn Hàng
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.returned.total.toLocaleString("vi-VN")}
+                          | đơn
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Hôm Nay
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.returned.today.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.returned.todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.returned.todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.returned.todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Tháng Này
+                        div.fs-18.fw-semibold
+                          | #{orderStatusStats.returned.thisMonth.toLocaleString("vi-VN")}
+                          | đơn
+                        div
+                          if orderStatusStats.returned.monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{orderStatusStats.returned.monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(orderStatusStats.returned.monthPercent).toFixed(1)}%
+                          |  so với hôm qua
