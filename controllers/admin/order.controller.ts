@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Order from '../../models/order.model';
 import { pathAdmin } from '../../configs/variable.config';
+import { Parser } from 'json2csv';
 
 export const list = async (req: Request, res: Response) => {
   const find: {
@@ -122,3 +123,21 @@ export const editPatch = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const exportCSV = async (req: Request, res: Response) => {
+  try {
+    const orderList = await Order.find().lean();
+
+    // Chuyển JSON -> CSV
+    const parser = new Parser();
+    let csv = parser.parse(orderList);
+    csv = "\uFEFF" + csv;
+
+    // Gửi file CSV về client
+    res.header("Content-Type", "text/csv");
+    res.attachment("orders.csv");
+    res.send(csv);
+  } catch (err) {
+    console.error("Export CSV error:", err);
+  }
+}
