@@ -316,3 +316,89 @@ export const dashboard = async (req: Request, res: Response) => {
     orderStatusStats,
   });
 }
+
+export const revenueByTime = async (req: Request, res: Response) => {
+  // BIỂU ĐỒ DOANH THU THEO GIỜ
+  // Offset timezone Việt Nam (UTC+7)
+  const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000;
+  
+  // Mốc thời gian hiện tại
+  const now = new Date();
+
+  // Hôm nay
+  const startToday = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+  const endToday = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Hôm qua
+  const startYesterday = new Date(startToday.getTime() - 24 * 60 * 60 * 1000);
+  const endYesterday   = new Date(endToday.getTime()   - 24 * 60 * 60 * 1000);
+
+  // Hàm Lấy dữ liệu theo giờ
+  const buildRevenueByHour = async (start: Date, end: Date) => {
+    const result = await Order.aggregate([
+      {
+        $match: {
+          paymentStatus: "paid",
+          orderStatus: "completed",
+          deleted: false,
+          createdAt: { $gte: start, $lte: end }
+        }
+      },
+      {
+        // Lấy giờ trong ngày (0 → 23)
+        $group: {
+          _id: {
+            hour: {
+              $hour: {
+                date: "$createdAt",
+                timezone: "+07:00"
+              }
+            }
+          },
+          total: { $sum: "$total" }
+        }
+      },
+      {
+        $sort: { "_id.hour": 1 }
+      }
+    ]);
+
+    // Chuẩn hóa dữ liệu: Đảm bảo đủ 24 giờ
+    const data = Array(24).fill(0);
+    result.forEach(item => {
+      data[item._id.hour] = item.total;
+    });
+
+    return data;
+  };
+
+  // Lấy dữ liệu hôm nay và hôm qua
+  const todayData = await buildRevenueByHour(startToday, endToday);
+  const yesterdayData = await buildRevenueByHour(startYesterday, endYesterday);
+  
+  // Label trục x theo giờ
+  const labelsHour = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  // HẾT BIỂU ĐỒ DOANH THU THEO GIỜ
+
+  res.render("admin/pages/dashboard-revenue-by-time.pug", {
+    pageTitle: "Doanh thu theo thời gian",
+
+    labelsHour,
+    todayData,
+    yesterdayData,
+  });
+}

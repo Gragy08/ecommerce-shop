@@ -5,4 +5,6 @@ const router = Router();
 
 router.get('/', dashboardController.dashboard);
 
+router.get('/revenue-by-time', dashboardController.revenueByTime);
+
 export default router;
