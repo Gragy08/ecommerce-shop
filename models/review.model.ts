@@ -27,6 +27,11 @@ const schema = new mongoose.Schema(
     },
     comment: String,
     images: [String],
+    status: {
+      type: String,
+      enum: ["approved", "rejected"], // approved – Đã duyệt, rejected – Từ chối
+      default: null
+    }
   },
   {
     timestamps: true, // Tự động sinh ra trường createdAt và updatedAt

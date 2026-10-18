@@ -61,22 +61,24 @@ block main
                         span(class="badge bg-dark") Chưa duyệt
                     td #{item.createdAt.toLocaleString("vi-VN")}
                     td.text-end
-                      a(
-                        href="javascript:;"
-                        button-api
-                        data-method="PATCH"
-                        data-api=`/${pathAdmin}/review/change-status/${item.id}/approved`
-                        class="btn btn-sm btn-success text-white ms-1"
-                      )
-                        | Duyệt
-                      a(
-                        href="javascript:;"
-                        button-api
-                        data-method="PATCH"
-                        data-api=`/${pathAdmin}/review/change-status/${item.id}/rejected`
-                        class="btn btn-sm btn-warning text-white ms-1"
-                      )
-                        | Ẩn
+                      if (item.status != "approved")
+                        a(
+                            href="javascript:;"
+                            button-api
+                            data-method="PATCH"
+                            data-api=`/${pathAdmin}/review/change-status/${item.id}/approved`
+                            class="btn btn-sm btn-success text-white ms-1"
+                        )
+                            | Duyệt
+                      if (item.status != "rejected")
+                        a(
+                            href="javascript:;"
+                            button-api
+                            data-method="PATCH"
+                            data-api=`/${pathAdmin}/review/change-status/${item.id}/rejected`
+                            class="btn btn-sm btn-warning text-white ms-1"
+                        )
+                            | Ẩn
                       a(
                         href="javascript:;"
                         button-api
