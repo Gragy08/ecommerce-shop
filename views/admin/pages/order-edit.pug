@@ -1,0 +1,158 @@
+extends ../layouts/default.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4.card-title #{pageTitle} - #{orderDetail.code}
+    .card-body.pt-0
+      form(id="orderEditForm")
+        input(type="hidden" name="id" value=orderDetail.id)
+        // =====================
+        // Thông tin khách hàng
+        // =====================
+        h5.mt-3 Thông tin khách hàng
+        .row
+          .col-md-6
+            .mb-3
+              label.form-label Họ tên
+              input.form-control(disabled value=orderDetail.fullName)
+          .col-md-6
+            .mb-3
+              label.form-label Số điện thoại
+              input.form-control(disabled value=orderDetail.phone)
+          .col-md-12
+            .mb-3
+              label.form-label Địa chỉ
+              textarea.form-control(rows="2" disabled)= orderDetail.address
+        // =====================
+        // Danh sách sản phẩm
+        // =====================
+        h5.mt-4 Sản phẩm trong đơn
+        .table-responsive
+          table.table.table-bordered
+            thead.table-light
+              tr
+                th Sản phẩm
+                th Thuộc tính
+                th SL
+                th Giá
+                th Thành tiền
+            tbody
+              each p in orderDetail.items
+                tr
+                  td
+                    .d-flex.align-items-center
+                      img(src=`${domainCDN}${p.image}` width="50" class="me-2 rounded")
+                      span #{p.name}
+                  td
+                    each v in p.variant
+                      div.small.text-muted #{v}
+                  td #{p.quantity}
+                  td #{p.price.toLocaleString('vi-VN')} đ
+                  td.text-danger
+                    b #{(p.price * p.quantity).toLocaleString('vi-VN')} đ
+        // =====================
+        // Thanh toán & vận chuyển
+        // =====================
+        h5.mt-4 Thanh toán & vận chuyển
+        .row
+          .col-md-4
+            .mb-3
+              label.form-label Phương thức thanh toán
+              input.form-control(
+                disabled
+                value=
+                  orderDetail.paymentMethod == 'money' ? 'Tiền mặt' :
+                  orderDetail.paymentMethod == 'vnpay' ? 'VNPay' :
+                  orderDetail.paymentMethod == 'zalopay' ? 'ZaloPay' :
+                  ''
+              )
+          .col-md-4
+            .mb-3
+              label.form-label Trạng thái thanh toán
+              select.form-select(name="paymentStatus")
+                option(
+                  value="unpaid"
+                  selected=(orderDetail.paymentStatus == "unpaid")
+                ) Chưa thanh toán
+                option(
+                  value="paid"
+                  selected=(orderDetail.paymentStatus == "paid")
+                ) Đã thanh toán
+                option(
+                  value="refunded"
+                  selected=(orderDetail.paymentStatus == "refunded")
+                ) Đã hoàn tiền
+          .col-md-4
+            .mb-3
+              label.form-label Đơn vị vận chuyển
+              input.form-control(
+                disabled
+                value=orderDetail.shipping ? orderDetail.shipping.carrierName : ''
+              )
+        .row
+          .col-md-3
+            .mb-3
+              label.form-label Tạm tính
+              input.form-control(disabled value=orderDetail.subTotal.toLocaleString('vi-VN') + 'đ')
+          .col-md-3
+            .mb-3
+              label.form-label Mã giảm giá
+              input.form-control(disabled value=orderDetail.coupon || '—')
+          .col-md-3
+            .mb-3
+              label.form-label Giảm giá
+              input.form-control(disabled value=orderDetail.discount.toLocaleString('vi-VN') + 'đ')
+          .col-md-3
+            .mb-3
+              label.form-label Phí ship
+              input.form-control(
+                disabled 
+                value=
+                  orderDetail.shipping && orderDetail.shipping.fee
+                    ? orderDetail.shipping.fee.toLocaleString('vi-VN') + 'đ'
+                    : '0đ'
+                )
+        .row
+          .col-md-4
+            .mb-3
+              label.form-label Điểm đã dùng
+              input.form-control(disabled value=orderDetail.usedPoint)
+          .col-md-4
+            .mb-3
+              label.form-label Giảm từ điểm
+              input.form-control(disabled value=orderDetail.pointDiscount.toLocaleString('vi-VN') + 'đ')
+          .col-md-4
+            .mb-3
+              label.form-label Tổng thanh toán
+              input.form-control.text-danger(
+                disabled
+                value=orderDetail.total.toLocaleString('vi-VN') + 'đ'
+              )
+        // =====================
+        // Trạng thái đơn hàng
+        // =====================
+        h5.mt-4 Trạng thái đơn hàng
+        .row
+          .col-md-6
+            .mb-3
+              label.form-label Trạng thái
+              select.form-select(name="orderStatus")
+                option(value="pending" selected=(orderDetail.orderStatus=="pending")) Chờ xác nhận
+                option(value="confirmed" selected=(orderDetail.orderStatus=="confirmed")) Đã xác nhận
+                option(value="shipping" selected=(orderDetail.orderStatus=="shipping")) Đang giao
+                option(value="completed" selected=(orderDetail.orderStatus=="completed")) Giao thành công
+                option(value="returned" selected=(orderDetail.orderStatus=="returned")) Trả hàng
+                option(value="cancelled" selected=(orderDetail.orderStatus=="cancelled")) Hủy
+          .col-md-6
+            .mb-3
+              label.form-label Ghi chú
+              textarea.form-control(name="note" rows="2")= orderDetail.note
+        // =====================
+        // Action
+        // =====================
+        .mt-4
+          button.btn.btn-primary(type="submit") Cập nhật đơn hàng
+          a.btn.btn-danger.ms-2(href=`/${pathAdmin}/order/list`) Quay lại

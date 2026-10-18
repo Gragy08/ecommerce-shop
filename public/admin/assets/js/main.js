@@ -2303,3 +2303,45 @@ if(settingGeneralForm) {
   ;
 }
 // End Setting General Form
+
+// Order Edit Form
+const orderEditForm = document.querySelector("#orderEditForm");
+if (orderEditForm) {
+  const validation = new JustValidate('#orderEditForm');
+
+  validation
+    .onSuccess((event) => {
+      const id = event.target.id.value;
+      const orderStatus = event.target.orderStatus.value;
+      const paymentStatus = event.target.paymentStatus.value;
+      const note = event.target.note.value;
+
+      const data = {
+        orderStatus: orderStatus,
+        paymentStatus: paymentStatus,
+        note: note
+      };
+
+      fetch(`/${pathAdmin}/order/edit/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.code === "error") {
+            notyf.error(data.message);
+          }
+
+          if (data.code === "success") {
+            notyf.success(data.message);
+          }
+        })
+        .catch(() => {
+          notyf.error("Có lỗi xảy ra, vui lòng thử lại!");
+        });
+    });
+}
+// End Order Edit Form

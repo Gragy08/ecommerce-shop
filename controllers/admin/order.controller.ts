@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Order from '../../models/order.model';
+import { pathAdmin } from '../../configs/variable.config';
 
 export const list = async (req: Request, res: Response) => {
   const find: {
@@ -41,3 +42,83 @@ export const list = async (req: Request, res: Response) => {
     pagination: pagination
   });
 }
+
+export const edit = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const orderDetail = await Order.findOne({
+      _id: id,
+      deleted: false
+    })
+
+    if(!orderDetail) {
+      res.redirect(`/${pathAdmin}/order/list`);
+      return;
+    }
+
+    res.render("admin/pages/order-edit", {
+      pageTitle: "Chỉnh sửa đơn hàng",
+      orderDetail: orderDetail
+    });
+  } catch (error) {
+    console.log(error);
+    res.redirect(`/${pathAdmin}/order/list`);
+  }
+}
+
+export const editPatch = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const { orderStatus, paymentStatus, note } = req.body;
+
+    // Kiểm tra đơn hàng tồn tại
+    const order = await Order.findOne({
+      _id: id,
+      deleted: false
+    });
+
+    if (!order) {
+      res.json({
+        code: "error",
+        message: "Đơn hàng không tồn tại!"
+      });
+      return;
+    }
+
+    // Không cho quay ngược đơn đã hoàn thành
+    if (order.orderStatus === "completed" && orderStatus !== "completed") {
+      res.json({
+        code: "error",
+        message: "Không thể thay đổi trạng thái đơn hàng đã hoàn thành!"
+      });
+      return;
+    }
+
+    // Không cho paid thành unpaid
+    if (order.paymentStatus === "paid" && paymentStatus === "unpaid") {
+      res.json({
+        code: "error",
+        message: "Không thể chuyển đơn đã thanh toán về chưa thanh toán!"
+      });
+      return;
+    }
+
+    order.orderStatus = orderStatus;
+    order.paymentStatus = paymentStatus;
+    order.note = note;
+
+    await order.save();
+
+    res.json({
+      code: "success",
+      message: "Cập nhật đơn hàng thành công!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Có lỗi xảy ra, vui lòng thử lại!"
+    });
+  }
+};
