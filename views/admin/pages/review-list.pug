@@ -1,0 +1,88 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+        .card-body.pt-0
+          .table-responsive
+            table.table.table-striped.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Người dùng
+                  th Sản phẩm
+                  th(style="width: 200px;") Đánh giá
+                  th Trạng thái
+                  th Ngày tạo
+                  th.text-end Hành động
+              tbody
+                each item, index in recordList
+                  tr
+                    td #{pagination.skip + index + 1}
+                    td
+                      div(class="d-flex align-items-center")
+                        if (item.user.avatar)
+                          img(
+                            src=`${domainCDN}${item.user.avatar}`
+                            class="rounded thumb-md me-1 d-inline"
+                          )
+                        div
+                          div #{item.user.fullName}
+                          div #{item.user.email}
+                    td
+                      div(class="d-flex align-items-center")
+                        if (item.product.images && item.product.images.length > 0)
+                          img(
+                            src=`${domainCDN}${item.product.images[0]}`
+                            class="rounded thumb-md me-1 d-inline"
+                          )
+                        div #{item.product.name}
+                    td
+                      div Số sao: <b>#{item.rating}</b>
+                      div Nội dung: <b>#{item.comment}</b>
+                      div(class="d-flex align-items-center flex-wrap")
+                        each img in item.images
+                          img(
+                            src=`${domainCDN}${img}`
+                            class="rounded thumb-md me-1 d-inline"
+                          )
+                    td
+                      if (item.status == "approved")
+                        span(class="badge bg-success") Đã duyệt
+                      else if (item.status == "rejected")
+                        span(class="badge bg-warning") Đã ẩn
+                      else
+                        span(class="badge bg-dark") Chưa duyệt
+                    td #{item.createdAt.toLocaleString("vi-VN")}
+                    td.text-end
+                      a(
+                        href="javascript:;"
+                        button-api
+                        data-method="PATCH"
+                        data-api=`/${pathAdmin}/review/change-status/${item.id}/approved`
+                        class="btn btn-sm btn-success text-white ms-1"
+                      )
+                        | Duyệt
+                      a(
+                        href="javascript:;"
+                        button-api
+                        data-method="PATCH"
+                        data-api=`/${pathAdmin}/review/change-status/${item.id}/rejected`
+                        class="btn btn-sm btn-warning text-white ms-1"
+                      )
+                        | Ẩn
+                      a(
+                        href="javascript:;"
+                        button-api
+                        data-method="DELETE"
+                        data-api=`/${pathAdmin}/review/delete/${item.id}`
+                        class="btn btn-sm btn-danger text-white ms-1"
+                      )
+                        | Xóa
+          +pagination()

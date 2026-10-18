@@ -168,6 +168,12 @@
               )
               i.iconoir-bag.menu-icon
               span Quản lý đơn hàng
+          li.nav-item
+            a.nav-link(
+              href=`/${pathAdmin}/review/list`
+              )
+              i.iconoir-star.menu-icon
+              span Quản lý đánh giá
           if (permissions.includes("log-activity-role"))
             li.nav-item
               a.nav-link(

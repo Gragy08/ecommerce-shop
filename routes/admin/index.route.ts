@@ -12,6 +12,7 @@ import couponRoutes from "./coupon.route";
 import accountUserRoutes from "./account-user.route";
 import settingRoutes from "./setting.route";
 import orderRoutes from "./order.route";
+import reviewRoutes from "./review.route";
 
 import * as authMiddleware from "../../middlewares/admin/authenticate.middleware";
 
@@ -30,6 +31,7 @@ router.use('/coupon', authMiddleware.verifyToken, couponRoutes);
 router.use('/account-user', authMiddleware.verifyToken, accountUserRoutes);
 router.use('/setting', authMiddleware.verifyToken, settingRoutes);
 router.use('/order', authMiddleware.verifyToken, orderRoutes);
+router.use('/review', authMiddleware.verifyToken, reviewRoutes);
 
 
 export default router;
