@@ -1,3 +1,5 @@
+include ../mixins/stars.pug
+
 div(class="shop_details_des_area")
   ul#pills-tab2.nav.nav-pills(role="tablist")
     li.nav-item(role="presentation")
@@ -33,169 +35,29 @@ div(class="shop_details_des_area")
       )
       div(class="shop_details_review")
         div(class="single_review_list_area")
-          h3 Customer Reviews
-          div(class="single_review")
-            .img
-              img.img-fluid.w-100(
-                alt="Reviews" 
-                src="/client/assets/images/testimonial_img_2.jpg"
-                )
-            .text
-              h5
-                | sumona islam
-                span
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-              p.date 05 January 2025
-              p.description
-                | Lorem ipsum dolor sit amet,
-                |   consectetur adipisicing elit. Delectus
-                |   exercitationem accusantium obcaecati quos voluptate
-                |   nesciunt facilis itaque.
-              ul
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_13.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_9.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_20.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_24.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_6.png"
-                    )
-          div(class="single_review")
-            .img
-              img.img-fluid.w-100(
-                alt="Reviews" 
-                src="/client/assets/images/comment_1.png"
-                )
-            .text
-              h5
-                | Smith Jhon
-                span
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.far.fa-star
-              p.date 03 April 2025
-              p.description
-                | Lorem ipsum dolor sit amet,
-                |   consectetur adipisicing elit. Delectus
-                |   exercitationem accusantium obcaecati quos voluptate.
-              ul
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_20.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_24.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_6.png"
-                    )
-          div(class="single_review")
-            .img
-              img.img-fluid.w-100(
-                alt="Reviews" 
-                src="/client/assets/images/comment_2.png"
-                )
-            .text
-              h5
-                | arun singh
-                span
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-              p.date 10 March 2025
-              p.description
-                | Lorem ipsum dolor sit amet,
-                |   consectetur adipisicing elit. Delectus
-                |   exercitationem accusantium obcaecati quos voluptate
-                |   nesciunt facilis itaque
-              ul
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_13.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_9.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_20.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_24.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_6.png"
-                    )
-          div(class="single_review")
-            .img
-              img.img-fluid.w-100(
-                alt="Reviews" 
-                src="/client/assets/images/testimonial_img_2.jpg"
-                )
-            .text
-              h5
-                | sumona islam
-                span
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-                  i.fas.fa-star
-              p.date 05 January 2025
-              p.description
-                | Lorem ipsum dolor sit amet,
-                |   consectetur adipisicing elit. Delectus
-                |   exercitationem accusantium obcaecati quos voluptate
-                |   nesciunt facilis itaque.
-              ul
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_9.png"
-                    )
-                li
-                  img.img-fluid.w-100(
-                    alt="Image" 
-                    src="/client/assets/images/product_20.png"
-                    )
+          h3 Đánh giá của khách hàng
+          each item in reviewList
+            div(class="single_review")
+              .img
+                img.img-fluid.w-100(
+                  alt=item.user.fullName
+                  src=`${domainCDN}${item.user.avatar}`
+                  )
+              .text
+                h5
+                  | #{item.user.fullName}
+                  span
+                    +stars(item)
+                p.date #{item.createdAt.toLocaleString("vi-VN")}
+                p.description
+                  | #{item.comment}
+                ul
+                  each image in item.images
+                    li
+                      img.img-fluid.w-100(
+                        alt="" 
+                        src=`${domainCDN}${image}`
+                        )
           .row
             div(class="pagination_area")
               nav(aria-label="...")

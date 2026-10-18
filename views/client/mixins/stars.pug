@@ -1,5 +1,5 @@
 mixin stars(item)
-  - const ratingAvg = item.ratingAvg || 0;
+  - const ratingAvg = item.ratingAvg || item.rating || 0;
   - const fullStar = Math.floor(ratingAvg); // 4.5 => 4
   - const hasHalfStar = ratingAvg - fullStar >= 0.5; // true or false
 
