@@ -11,6 +11,15 @@ block main
                 h4.card-title Biểu đồ doanh thu theo giờ
           .card-body.pt-0
             canvas#revenueChartHour
+    .row
+      .col-md-12.col-lg-12
+        .card
+          .card-header
+            .row.align-items-center
+              .col
+                h4.card-title Biểu đồ doanh thu theo ngày
+          .card-body.pt-0
+            canvas#revenueChartDay
 
 block script
   script(src="https://cdn.jsdelivr.net/npm/chart.js")
@@ -18,4 +27,7 @@ block script
     const labelsHour = !{JSON.stringify(labelsHour)};
     const todayData = !{JSON.stringify(todayData)};
     const yesterdayData = !{JSON.stringify(yesterdayData)};
+    const labelsDay = !{JSON.stringify(labelsDay)};
+    const thisMonthData = !{JSON.stringify(thisMonthData)};
+    const lastMonthData = !{JSON.stringify(lastMonthData)};
   script(src="/admin/assets/js/my-chart.js")

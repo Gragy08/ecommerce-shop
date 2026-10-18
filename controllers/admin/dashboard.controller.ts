@@ -394,11 +394,117 @@ export const revenueByTime = async (req: Request, res: Response) => {
   const labelsHour = Array.from({ length: 24 }, (_, i) => `${i}:00`);
   // HẾT BIỂU ĐỒ DOANH THU THEO GIỜ
 
+  // BIỂU ĐỒ DOANH THU THEO NGÀY
+  // Tháng này
+  const startThisMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1,
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+  const endThisMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Tháng trước
+  const startLastMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+  const endLastMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Số ngày của từng tháng
+  const daysInThisMonth = endThisMonth.getDate();
+  const daysInLastMonth = endLastMonth.getDate();
+
+  // Hàm tính doanh thu theo ngày
+  const buildRevenueByDay = async (
+    start: Date,
+    end: Date,
+    totalDays: number
+  ) => {
+    const result = await Order.aggregate([
+      {
+        $match: {
+          paymentStatus: "paid",
+          orderStatus: "completed",
+          deleted: false,
+          createdAt: { $gte: start, $lte: end }
+        }
+      },
+      {
+        // Nhóm theo ngày trong tháng (1 → 31)
+        $group: {
+          _id: {
+            day: {
+              $dayOfMonth: {
+                date: "$createdAt",
+                timezone: "+07:00"
+              }
+            }
+          },
+          total: { $sum: "$total" }
+        }
+      },
+      { $sort: { "_id.day": 1 } }
+    ]);
+
+    // Chuẩn hóa dữ liệu: Luôn trả về đủ số ngày trong tháng
+    const data = Array(totalDays).fill(0);
+    result.forEach(item => {
+      data[item._id.day - 1] = item.total;
+    });
+
+    return data;
+  };
+
+  // Lấy dữ liệu tháng này và thàng trước
+  const thisMonthData = await buildRevenueByDay(
+    startThisMonth,
+    endThisMonth,
+    daysInThisMonth
+  );
+
+  const lastMonthData = await buildRevenueByDay(
+    startLastMonth,
+    endLastMonth,
+    daysInLastMonth
+  );
+
+  // Label trục x theo ngày
+  const labelsDay = Array.from(
+    { length: daysInThisMonth },
+    (_, i) => `Ngày ${i + 1}`
+  );
+  // HẾT BIỂU ĐỒ DOANH THU THEO NGÀY
+
   res.render("admin/pages/dashboard-revenue-by-time.pug", {
     pageTitle: "Doanh thu theo thời gian",
 
     labelsHour,
     todayData,
     yesterdayData,
+
+    labelsDay,
+    thisMonthData,
+    lastMonthData,
   });
 }
