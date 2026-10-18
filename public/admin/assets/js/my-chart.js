@@ -117,3 +117,55 @@ if (revenueChartDay) {
   });
 }
 // HẾT BIỂU ĐỒ DOANH THU THEO NGÀY
+
+// BIỂU ĐỒ DOANH THU THEO THÁNG
+const revenueChartMonth = document.querySelector("#revenueChartMonth");
+if (revenueChartMonth) {
+  const ctx = revenueChartMonth.getContext("2d");
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labelsMonth,
+      datasets: [
+        {
+          label: "Năm hiện tại",
+          data: thisYearData,
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+        },
+        {
+          label: "Năm trước",
+          data: lastYearData,
+          backgroundColor: "rgba(255, 99, 132, 0.6)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              return `${
+                context.dataset.label
+              }: ${context.raw.toLocaleString()} ₫`;
+            },
+          },
+        },
+        legend: {
+          position: "top",
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value) => value.toLocaleString() + " ₫",
+          },
+        },
+      },
+    },
+  });
+}
+// HẾT BIỂU ĐỒ DOANH THU THEO THÁNG

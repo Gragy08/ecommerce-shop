@@ -496,6 +496,114 @@ export const revenueByTime = async (req: Request, res: Response) => {
   );
   // HẾT BIỂU ĐỒ DOANH THU THEO NGÀY
 
+  // BIỂU ĐỒ DOANH THU THEO THÁNG
+  // Năm hiện tại (theo VN)
+  const currentYear = now.getFullYear();
+
+  // Năm trước
+  const lastYear = currentYear - 1;
+
+  // Thời điểm bắt đầu của năm trước
+  const startLastYear = new Date(
+    new Date(
+      lastYear,
+      0,
+      1,
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Thời điểm kết thúc của năm hiện tại
+  const endCurrentYear = new Date(
+    new Date(
+      currentYear,
+      11,
+      31,
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  /**
+   * Mục tiêu:
+   * - Lấy đơn hàng đã thanh toán
+   * - Trong khoảng từ đầu năm trước → cuối năm nay
+   * - Gom nhóm theo NĂM + THÁNG
+   * - Tính tổng doanh thu
+   */
+  const data = await Order.aggregate([
+    {
+      // Lọc đơn hàng hợp lệ
+      $match: {
+        paymentStatus: "paid",
+        orderStatus: "completed",
+        deleted: false,
+        createdAt: {
+          $gte: startLastYear,
+          $lte: endCurrentYear
+        }
+      }
+    },
+    {
+      // Tách năm và tháng từ createdAt
+      $project: {
+        year: {
+          $year: {
+            date: "$createdAt",
+            timezone: "+07:00"
+          }
+        }, // năm của đơn hàng
+        month: {
+          $month: {
+            date: "$createdAt",
+            timezone: "+07:00"
+          }
+        }, // tháng của đơn hàng (1 → 12)
+        total: 1 // giá trị đơn hàng, sô 1 nghĩa là giữ nguyên field đó từ document gốc
+      }
+    },
+    {
+      // Gom nhóm theo năm + tháng
+      $group: {
+        _id: {
+          year: "$year",
+          month: "$month"
+        },
+        revenue: {
+          $sum: "$total" // tổng doanh thu của tháng
+        }
+      }
+    }
+  ]);
+
+  // Doanh thu năm hiện tại (12 tháng)
+  const thisYearData = Array(12).fill(0);
+
+  // Doanh thu năm trước (12 tháng)
+  const lastYearData = Array(12).fill(0);
+
+  // Đổ dữ liệu vào đúng mảng
+  data.forEach(item => {
+    // month trong MongoDB bắt đầu từ 1 -> trừ 1 cho đúng index mảng
+    const monthIndex = item._id.month - 1;
+
+    // Nếu là năm hiện tại
+    if (item._id.year === currentYear) {
+      thisYearData[monthIndex] = item.revenue;
+    }
+
+    // Nếu là năm trước
+    if (item._id.year === lastYear) {
+      lastYearData[monthIndex] = item.revenue;
+    }
+  });
+
+  // Label trục x theo tháng
+  const labelsMonth = Array.from(
+    { length: 12 },
+    (_, i) => `Tháng ${i + 1}`
+  );
+  // HẾT BIỂU ĐỒ DOANH THU THEO THÁNG
+
   res.render("admin/pages/dashboard-revenue-by-time.pug", {
     pageTitle: "Doanh thu theo thời gian",
 
@@ -506,5 +614,9 @@ export const revenueByTime = async (req: Request, res: Response) => {
     labelsDay,
     thisMonthData,
     lastMonthData,
+
+    labelsMonth,
+    thisYearData,
+    lastYearData,
   });
 }
