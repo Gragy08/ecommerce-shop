@@ -620,3 +620,147 @@ export const revenueByTime = async (req: Request, res: Response) => {
     lastYearData,
   });
 }
+
+export const orderStatistic = async (req: Request, res: Response) => {
+  const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000;
+
+  // Thời gian hiện tại
+  const now = new Date();
+
+  // Hôm nay theo giờ VN
+  const startToday = new Date(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime()
+    - TIMEZONE_OFFSET
+  );
+
+  const endToday = new Date(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime()
+    - TIMEZONE_OFFSET
+  );
+
+  // Tháng hiện tại theo giờ VN
+  const startThisMonth = new Date(
+    new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).getTime()
+    - TIMEZONE_OFFSET
+  );
+
+  const endThisMonth = new Date(
+    new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime()
+    - TIMEZONE_OFFSET
+  );
+
+  // Năm hiện tại theo giờ VN
+  const startThisYear = new Date(
+    new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0).getTime()
+    - TIMEZONE_OFFSET
+  );
+
+  const endThisYear = new Date(
+    new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999).getTime()
+    - TIMEZONE_OFFSET
+  );
+
+  // Trạng thái đơn hàng hôm nay
+  const orderStatusToday = await Order.aggregate([
+    {
+      // Lọc đơn hàng trong ngày hôm nay
+      $match: {
+        deleted: false,
+        createdAt: {
+          $gte: startToday,
+          $lte: endToday
+        }
+      }
+    },
+    {
+      // Gom nhóm theo trạng thái đơn hàng
+      $group: {
+        _id: "$orderStatus",
+        total: { $sum: 1 } // Đếm số đơn
+      }
+    }
+  ]);
+
+  // Trạng thái đơn hàng tháng này
+  const orderStatusThisMonth = await Order.aggregate([
+    {
+      // Lọc đơn hàng trong tháng hiện tại
+      $match: {
+        deleted: false,
+        createdAt: {
+          $gte: startThisMonth,
+          $lte: endThisMonth
+        }
+      }
+    },
+    {
+      // Gom nhóm theo trạng thái đơn hàng
+      $group: {
+        _id: "$orderStatus",
+        total: { $sum: 1 }
+      }
+    }
+  ]);
+
+  // Trạng thái đơn hàng năm nay
+  const orderStatusThisYear = await Order.aggregate([
+    {
+      // Lọc đơn hàng trong năm hiện tại
+      $match: {
+        deleted: false,
+        createdAt: {
+          $gte: startThisYear,
+          $lte: endThisYear
+        }
+      }
+    },
+    {
+      // Gom nhóm theo trạng thái đơn hàng
+      $group: {
+        _id: "$orderStatus",
+        total: { $sum: 1 }
+      }
+    }
+  ]);
+
+  // Mảng danh sách các trạng thái
+  const ORDER_STATUS_CONFIG = [
+    { key: "pending", label: "Chờ xác nhận", color: "#facc15" },
+    { key: "confirmed", label: "Đã xác nhận", color: "#3b82f6" },
+    { key: "shipping", label: "Đang giao", color: "#a855f7" },
+    { key: "completed", label: "Giao thành công", color: "#22c55e" },
+    { key: "cancelled", label: "Hủy", color: "#ef4444" },
+    { key: "returned", label: "Trả hàng", color: "#64748b" }
+  ];
+
+  // Hàm chuẩn hóa dữ liệu cho biểu đồ dạng Pie
+  const formatPieData = (data: any[]) => {
+    const map = new Map(
+      data.map(item => [item._id, item.total])
+    );
+
+    return {
+      labels: ORDER_STATUS_CONFIG.map(item => item.label),
+      datasets: [
+        {
+          data: ORDER_STATUS_CONFIG.map(item => map.get(item.key) || 0),
+          backgroundColor: ORDER_STATUS_CONFIG.map(item => item.color)
+        }
+      ]
+    };
+  };
+
+  // Format lại data
+  const pieToday = formatPieData(orderStatusToday);
+  const pieThisMonth = formatPieData(orderStatusThisMonth);
+  const pieThisYear = formatPieData(orderStatusThisYear);
+  
+  // Render giao diện
+  res.render("admin/pages/dashboard-order-statistic.pug", {
+    pageTitle: "Thống kê đơn hàng",
+
+    pieToday,
+    pieThisMonth,
+    pieThisYear,
+  });
+}

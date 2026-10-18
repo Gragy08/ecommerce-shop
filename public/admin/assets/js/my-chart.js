@@ -169,3 +169,33 @@ if (revenueChartMonth) {
   });
 }
 // HẾT BIỂU ĐỒ DOANH THU THEO THÁNG
+
+// TỶ LỆ TRẠNG THÁI ĐƠN HÀNG THEO NGÀY
+const orderStatusToday = document.querySelector("#orderStatusToday");
+if(orderStatusToday) {
+  new Chart(orderStatusToday, {
+    type: 'pie',
+    data: pieToday
+  });
+}
+// HẾT TỶ LỆ TRẠNG THÁI ĐƠN HÀNG THEO NGÀY
+
+// TỶ LỆ TRẠNG THÁI ĐƠN HÀNG THEO THÁNG
+const orderStatusMonth = document.querySelector("#orderStatusMonth");
+if(orderStatusMonth) {
+  new Chart(orderStatusMonth, {
+    type: 'pie',
+    data: pieThisMonth
+  });
+}
+// HẾT TỶ LỆ TRẠNG THÁI ĐƠN HÀNG THEO THÁNG
+
+// TỶ LỆ TRẠNG THÁI ĐƠN HÀNG THEO NĂM
+const orderStatusYear = document.querySelector("#orderStatusYear");
+if(orderStatusYear) {
+  new Chart(orderStatusYear, {
+    type: 'pie',
+    data: pieThisYear
+  });
+}
+// HẾT TỶ LỆ TRẠNG THÁI ĐƠN HÀNG THEO NĂM
