@@ -10,6 +10,46 @@ import Order from '../../models/order.model';
 import Review from '../../models/review.model';
 import Product from '../../models/product.model';
 
+export const dashboard = async (req: Request, res: Response) => {
+  const userId = res.locals.accountUser.id;
+
+  // Tổng đơn hàng
+  const totalOrders = await Order.countDocuments({
+    userId: userId,
+    deleted: false
+  });
+
+  // Giao thành công
+  const totalCompletedOrders = await Order.countDocuments({
+    userId: userId,
+    orderStatus: "completed",
+    deleted: false
+  });
+
+  // Tổng số đánh giá
+  const totalReviews = await Review.countDocuments({
+    userId: userId
+  });
+
+  // Đơn hàng gần đây
+  const orderList = await Order
+    .find({
+      userId: userId,
+      deleted: false
+    })
+    .sort({
+      createdAt: "desc"
+    })
+    .limit(5);
+  
+  res.render("client/pages/dashboard", {
+    pageTitle: "Tổng quan",
+    totalOrders,
+    totalCompletedOrders,
+    totalReviews,
+    orderList,
+  });
+}
 
 export const profile = (req: Request, res: Response) => {
   res.render("client/pages/dashboard-profile", {
