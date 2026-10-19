@@ -1,0 +1,78 @@
+extends ../layouts/default.pug
+
+block main
+  if permissions.includes('dashboard')
+    .row
+      .col-md-12.col-lg-12
+        .card
+          .card-header
+            .row.align-items-center
+              .col
+                h4.card-title Tổng số khách hàng
+          .card-body.pt-0
+            .row.g-3
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Tổng Số Khách Hàng
+                        div.fs-18.fw-semibold #{totalUsers.toLocaleString("vi-VN")}
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Khách Hàng Mới Hôm Nay
+                        div.fs-18.fw-semibold #{todayUsers.toLocaleString("vi-VN")}
+                        div
+                          if todayPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{todayPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(todayPercent).toFixed(1)}%
+                          |  so với hôm qua
+              .col-md-6.col-lg-3
+                .card.shadow-none.border.mb-3.mb-lg-0.h-100
+                  .card-body
+                    .row.align-items-center
+                      .col.text-center
+                        h6.text-muted.mb-2.m-0 Khách Hàng Mới Tháng Này
+                        div.fs-18.fw-semibold #{thisMonthUsers.toLocaleString("vi-VN")}
+                        div
+                          if monthPercent >= 0
+                            | Tăng
+                            span.text-success.mx-1 #{monthPercent.toFixed(1)}%
+                          else
+                            | Giảm
+                            span.text-danger.mx-1 #{Math.abs(monthPercent).toFixed(1)}%
+                          |  so với tháng trước
+
+    .row
+      .col-md-12
+        .card
+          .card-header
+            h4.card-title Top 10 khách hàng mua nhiều nhất
+          .card-body
+            table.table.table-bordered.table-hover
+              thead
+                tr
+                  th.text-center STT
+                  th Khách hàng
+                  th SĐT
+                  th.text-center Số đơn
+                  th.text-end Tổng chi tiêu
+              tbody
+                if (topUsers.length > 0)
+                  each item, index in topUsers
+                    tr
+                      td.text-center #{index + 1}
+                      td #{item.fullName}
+                      td #{item.phone}
+                      td.text-center #{item.totalOrders}
+                      td.text-end #{item.totalSpent.toLocaleString()} ₫
+                else
+                  tr
+                    td(colspan="5" class="text-center text-muted")
+                      | Chưa có dữ liệu

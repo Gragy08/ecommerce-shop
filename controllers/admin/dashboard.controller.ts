@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Order from '../../models/order.model';
+import AccountUser from '../../models/account-user.model';
 
 export const dashboard = async (req: Request, res: Response) => {
   // MỤC DOANH THU
@@ -817,3 +818,178 @@ export const topSellingProducts = async (req: Request, res: Response) => {
     topProducts
   });
 };
+
+export const customerStatistic = async (req: Request, res: Response) => {
+  // Offset timezone Việt Nam (UTC+7)
+  const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000;
+  
+  // Mốc thời gian hiện tại
+  const now = new Date();
+
+  // Hôm nay
+  const startToday = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+  const endToday = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Hôm qua
+  const startYesterday = new Date(startToday.getTime() - 24 * 60 * 60 * 1000);
+  const endYesterday   = new Date(endToday.getTime()   - 24 * 60 * 60 * 1000);
+
+  // Tháng này
+  const startThisMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1,
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+  const endThisMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Tháng trước
+  const startLastMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+      0, 0, 0, 0
+    ).getTime() - TIMEZONE_OFFSET
+  );
+  const endLastMonth = new Date(
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23, 59, 59, 999
+    ).getTime() - TIMEZONE_OFFSET
+  );
+
+  // Tổng số khách hàng
+  const totalUsers = await AccountUser.countDocuments({
+    deleted: false
+  });
+
+  // Khách hàng mới hôm nay & hôm qua
+  const todayUsers = await AccountUser.countDocuments({
+    deleted: false,
+    createdAt: { $gte: startToday, $lte: endToday }
+  });
+
+  const yesterdayUsers = await AccountUser.countDocuments({
+    deleted: false,
+    createdAt: { $gte: startYesterday, $lte: endYesterday }
+  });
+
+  const todayPercent = yesterdayUsers === 0 ? 100 : ((todayUsers - yesterdayUsers) / yesterdayUsers) * 100;
+
+  // Khách hàng mới tháng này & tháng trước
+  const thisMonthUsers = await AccountUser.countDocuments({
+    deleted: false,
+    createdAt: { $gte: startThisMonth, $lte: endThisMonth }
+  });
+
+  const lastMonthUsers = await AccountUser.countDocuments({
+    deleted: false,
+    createdAt: { $gte: startLastMonth, $lte: endLastMonth }
+  });
+
+  const monthPercent = lastMonthUsers === 0 ? 100 : ((thisMonthUsers - lastMonthUsers) / lastMonthUsers) * 100;
+
+  // Top 10 khách hàng mua nhiều nhất
+  const topUsers = await Order.aggregate([
+    {
+      // Lọc đơn hợp lệ
+      $match: {
+        paymentStatus: "paid",
+        orderStatus: "completed",
+        deleted: false
+      }
+    },
+    {
+      // Gom nhóm theo userId (string)
+      $group: {
+        _id: "$userId",
+        totalOrders: { $sum: 1 },
+        totalSpent: { $sum: "$total" }
+      }
+    },
+    {
+      // Sắp xếp theo tổng tiền
+      $sort: { totalSpent: -1 }
+    },
+    {
+      // Lấy top 10
+      $limit: 10
+    },
+    {
+      // Lookup sang bảng accounts-user
+      $lookup: {
+        from: "accounts-user",
+        let: { userId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                // So sánh string(userId) với string(_id)
+                $eq: [
+                  { $toString: "$_id" },
+                  "$$userId"
+                ]
+              }
+            }
+          }
+        ],
+        as: "user"
+      }
+    },
+    {
+      // Bỏ các record không join được
+      $unwind: "$user"
+    },
+    {
+      // Chọn field cần dùng
+      $project: {
+        _id: 0,
+        userId: "$_id",
+        fullName: "$user.fullName",
+        phone: "$user.phone",
+        totalOrders: 1,
+        totalSpent: 1
+      }
+    }
+  ]);
+  
+  // Render giao diện
+  res.render("admin/pages/dashboard-customer-statistic.pug", {
+    pageTitle: "Thống kê khách hàng",
+    
+    totalUsers,
+    todayUsers,
+    todayPercent,
+    
+    thisMonthUsers,
+    monthPercent,
+    
+    topUsers
+  });
+}
