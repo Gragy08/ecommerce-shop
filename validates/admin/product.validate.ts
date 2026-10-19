@@ -130,3 +130,50 @@ export const importCSVPost = (req: Request, res: Response, next: NextFunction) =
 
   next();
 }
+
+export const editSEOPatch = (req: Request, res: Response, next: NextFunction) => {
+  const schema = Joi.object({
+    seoTitle: Joi.string()
+      .max(60)
+      .allow("")
+      .messages({
+        "string.max": "SEO Title tối đa 60 ký tự!",
+      }),
+    seoDescription: Joi.string()
+      .max(160)
+      .allow("")
+      .messages({
+        "string.max": "SEO Description tối đa 160 ký tự!",
+      }),
+    seoKeywords: Joi.string().allow(""),
+    seoRobotsIndex: Joi.string().allow(""),
+    seoRobotsFollow: Joi.string().allow(""),
+    seoOgTitle: Joi.string()
+      .max(95)
+      .allow("")
+      .messages({
+        "string.max": "OG Title tối đa 95 ký tự!",
+      }),
+    seoOgDescription: Joi.string()
+      .max(200)
+      .allow("")
+      .messages({
+        "string.max": "OG Description tối đa 200 ký tự!",
+      }),
+    seoOgImage: Joi.string().allow(""),
+  });
+
+  const { error } = schema.validate(req.body);
+
+  if(error) {
+    const errorMessage = error.details[0].message;
+
+    res.json({
+      code: "error",
+      message: errorMessage
+    });
+    return;
+  }
+
+  next();
+};

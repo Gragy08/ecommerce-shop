@@ -1,0 +1,95 @@
+extends ../layouts/default.pug
+include ../mixins/form-group.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4.card-title #{pageTitle}: #{productDetail.name}
+    .card-body.pt-0
+      form(id="productEditSeoForm")
+        h5.mt-3.mb-2 SEO cơ bản
+        .row
+          .col-md-12.d-none
+            .mb-3
+              label.form-label(for="id") Id
+              input.form-control(id="id" type="text" name="id" value=productDetail.id)
+          .col-md-12
+            .mb-3
+              label.form-label(for="seoTitle") SEO Title
+              input.form-control(
+                id="seoTitle"
+                type="text"
+                name="seoTitle"
+                placeholder="Tiêu đề hiển thị trên kết quả tìm kiếm Google"
+                value=productDetail.seo.title
+              )
+          .col-md-12
+            .mb-3
+              label.form-label(for="seoDescription") SEO Description
+              textarea.form-control(
+                id="seoDescription"
+                name="seoDescription"
+                rows="3"
+                placeholder="Mô tả ngắn hiển thị bên dưới title trên Google"
+              ) #{productDetail.seo.description}
+          .col-md-12.col-lg-12
+            .mb-3
+              label.form-label SEO Keywords
+              select(select-tag name="seoKeywords" multiple)
+                each keyword in productDetail.seo.keywords
+                  option(value=keyword selected) #{keyword}
+        h5.mb-2 Robots
+        .row
+          .col-md-12
+            .mb-3
+              input.form-check-input(
+                id="seoRobotsIndex"
+                type="checkbox"
+                name="seoRobotsIndex"
+                checked=productDetail.seo.robots.index
+              )
+              label.form-check-label.ms-1(for="seoRobotsIndex")
+                | Cho phép index (Nếu không tích sản phẩm sẽ ẩn khỏi Google)
+          .col-md-12
+            .mb-3
+              input.form-check-input(
+                id="seoRobotsFollow"
+                type="checkbox"
+                name="seoRobotsFollow"
+                checked=productDetail.seo.robots.follow
+              )
+              label.form-check-label.ms-1(for="seoRobotsFollow")
+                | Cho phép follow link (Nếu không tích Google sẽ không theo các link trong trang)
+        h5.mb-2 Open Graph
+        .row
+          .col-md-12
+            .mb-3
+              label.form-label(for="seoOgTitle") OG Title
+              input.form-control(
+                id="seoOgTitle"
+                type="text"
+                name="seoOgTitle"
+                placeholder="Tiêu đề hiển thị khi chia sẻ link lên mạng xã hội"
+                value=productDetail.seo.og.title
+              )
+          .col-md-12
+            .mb-3
+              +form-group-file(
+                "OG Image",
+                "seoOgImage",
+                "seoOgImage",
+                productDetail.seo.og.image
+              )
+          .col-md-12
+            .mb-3
+              label.form-label(for="seoOgDescription") OG Description
+              textarea.form-control(
+                id="seoOgDescription"
+                name="seoOgDescription"
+                rows="3"
+                placeholder="Mô tả khi chia sẻ link lên mạng xã hội"
+              ) #{productDetail.seo.og.description}
+        button.btn.btn-primary(type="submit") Cập nhật
+        a.btn.btn-danger.ms-1(href=`/${pathAdmin}/product/list`) Hủy

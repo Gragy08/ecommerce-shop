@@ -91,13 +91,17 @@ block main
                     td #{item.view}
                     td.text-end
                       a(href=`/${pathAdmin}/product/edit/${item.id}`)
-                        i.las.la-pen.text-secondary.fs-20
+                        i.las.la-pen.text-secondary.fs-20.text-info
+                      a(
+                        href=`/${pathAdmin}/product/edit-seo/${item.id}`
+                        )
+                        i.las.la-edit.text-secondary.fs-20.text-warning
                       a(
                         href="javascript:;"
                         button-api
                         data-method="PATCH"
                         data-api=`/${pathAdmin}/product/delete/${item.id}`
                       )
-                        i.las.la-trash-alt.text-secondary.fs-20
+                        i.las.la-trash-alt.text-secondary.fs-20.text-danger
           +pagination()
     // end col

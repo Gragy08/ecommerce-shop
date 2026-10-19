@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import SeoSchema from "./schemas/seo.schema";
 
 const schema = new mongoose.Schema(
   {
@@ -47,6 +48,7 @@ const schema = new mongoose.Schema(
     deletedAt: Date,
     createdBy: String,
     updatedBy: String,
+    seo: SeoSchema // Thông tin SEO cho sản phẩm
   },
   {
     timestamps: true, // Tự động sinh ra trường createdAt và updatedAt

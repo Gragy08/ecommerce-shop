@@ -305,6 +305,23 @@ export const createPost = async (req: Request, res: Response) => {
 
     req.body.sku = generateRandomString(10).toUpperCase();
 
+    // Thêm SEO mặc định
+    req.body.seo = {
+      title: req.body.name,
+      description: "",
+      keywords: req.body.tags || [],
+      robots: {
+        index: true,
+        follow: true,
+      },
+      og: {
+        title: req.body.name,
+        description: "",
+        image: req.body.images?.[0] || "",
+      },
+    };
+    // Hết Thêm SEO mặc định
+
     const newRecord = new Product(req.body);
     await newRecord.save();
 
@@ -783,5 +800,122 @@ export const importCSVPost = async (req: Request, res: Response) => {
       code: "error",
       message: "Dữ liệu không hợp lệ!"
     })
+  }
+}
+
+export const editSEO = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const productDetail = await Product.findOne({
+      _id: id,
+      deleted: false
+    })
+
+    if(!productDetail) {
+      res.redirect(`/${pathAdmin}/product/list`);
+      return;
+    }
+
+    const seo = productDetail.seo as {
+      title?: string;
+      description?: string;
+      keywords?: string[];
+      robots?: {
+        index?: boolean;
+        follow?: boolean;
+      };
+      og?: {
+        title?: string;
+        description?: string;
+        image?: string;
+      };
+    } || {};
+    productDetail.seo = {
+      title: seo.title || productDetail.name,
+      description: seo.description || "",
+      keywords: seo.keywords || [],
+      robots: {
+        index: seo.robots?.index ?? true,
+        follow: seo.robots?.follow ?? true,
+      },
+      og: {
+        title: seo.og?.title || productDetail.name,
+        description: seo.og?.description || "",
+        image: seo.og?.image || productDetail.images?.[0] || "",
+      },
+    };
+
+    res.render("admin/pages/product-edit-seo", {
+      pageTitle: "Chỉnh sửa SEO sản phẩm",
+      productDetail: productDetail,
+    });
+  } catch (error) {
+    console.log(error);
+    res.redirect(`/${pathAdmin}/product/list`);
+  }
+}
+
+export const editSEOPatch = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const productDetail = await Product.findOne({
+      _id: id,
+      deleted: false,
+    });
+
+    if (!productDetail) {
+      res.json({
+        code: "error",
+        message: "Sản phẩm không tồn tại!",
+      });
+      return;
+    }
+
+    const seoTitle = req.body.seoTitle || productDetail.name;
+    const seoDescription = req.body.seoDescription || "";
+    const seoKeywords = req.body.seoKeywords ? JSON.parse(req.body.seoKeywords) : productDetail.tags;
+    const seoRobotsIndex = req.body.seoRobotsIndex == "true" ? true : false;
+    const seoRobotsFollow = req.body.seoRobotsFollow === "true" ? true : false;
+    const seoOgTitle = req.body.seoOgTitle || seoTitle;
+    const seoOgDescription = req.body.seoOgDescription || seoDescription;
+    const seoOgImage = req.body.seoOgImage || productDetail.images[0];
+
+    const seoData = {
+      title: seoTitle,
+      description: seoDescription,
+      keywords: seoKeywords,
+      robots: {
+        index: seoRobotsIndex,
+        follow: seoRobotsFollow,
+      },
+      og: {
+        title: seoOgTitle,
+        description: seoOgDescription,
+        image: seoOgImage,
+      },
+    };
+
+    await Product.updateOne(
+      {
+        _id: id,
+        deleted: false,
+      },
+      {
+        seo: seoData,
+      }
+    );
+
+    res.json({
+      code: "success",
+      message: "Cập nhật SEO sản phẩm thành công!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Id không hợp lệ!",
+    });
   }
 }

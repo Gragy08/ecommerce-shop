@@ -2345,3 +2345,87 @@ if (orderEditForm) {
     });
 }
 // End Order Edit Form
+
+// Product Edit SEO Form
+const productEditSeoForm = document.querySelector("#productEditSeoForm");
+if (productEditSeoForm) {
+  const validation = new JustValidate("#productEditSeoForm");
+  
+  validation
+    .addField("#seoTitle", [
+      {
+        rule: "maxLength",
+        value: 60,
+        errorMessage: "SEO Title tối đa 60 ký tự!",
+      },
+    ])
+    .addField("#seoDescription", [
+      {
+        rule: "maxLength",
+        value: 160,
+        errorMessage: "SEO Description tối đa 160 ký tự!",
+      },
+    ])
+    .addField("#seoOgTitle", [
+      {
+        rule: "maxLength",
+        value: 95,
+        errorMessage: "OG Title tối đa 95 ký tự!",
+      },
+    ])
+    .addField("#seoOgDescription", [
+      {
+        rule: "maxLength",
+        value: 200,
+        errorMessage: "OG Description tối đa 200 ký tự!",
+      },
+    ])
+    .onSuccess((event) => {
+      const id = event.target.id.value;
+      // SEO cơ bản
+      const seoTitle = event.target.seoTitle.value;
+      const seoDescription = event.target.seoDescription.value;
+      const selectSeoKeywords = document.querySelector("select[name='seoKeywords']"); // Lấy SEO Keywords
+      const seoKeywords = Array.from(selectSeoKeywords.selectedOptions).map(opt => opt.value);
+
+      // Robots
+      const seoRobotsIndex = event.target.seoRobotsIndex.checked;
+      const seoRobotsFollow = event.target.seoRobotsFollow.checked;
+      
+      // Open Graph
+      const seoOgTitle = event.target.seoOgTitle.value;
+      const seoOgImage = event.target.seoOgImage.value;
+      const seoOgDescription = event.target.seoOgDescription.value;
+      
+      // Tạo FormData
+      const formData = new FormData();
+      formData.append("seoTitle", seoTitle);
+      formData.append("seoDescription", seoDescription);
+      formData.append("seoKeywords", JSON.stringify(seoKeywords));
+      formData.append("seoRobotsIndex", seoRobotsIndex);
+      formData.append("seoRobotsFollow", seoRobotsFollow);
+      formData.append("seoOgTitle", seoOgTitle);
+      formData.append("seoOgImage", seoOgImage);
+      formData.append("seoOgDescription", seoOgDescription);
+
+      fetch(`/${pathAdmin}/product/edit-seo/${id}`, {
+        method: "PATCH",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.code === "error") {
+            notyf.error(data.message);
+          }
+
+          if (data.code === "success") {
+            drawNotify("success", data.message);
+            window.location.reload();
+          }
+        })
+        .catch(() => {
+          notyf.error("Có lỗi xảy ra, vui lòng thử lại!");
+        });
+    });
+}
+// End Product Edit SEO Form
