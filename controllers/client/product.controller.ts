@@ -430,6 +430,7 @@ export const detail = async (req: Request, res: Response) => {
     relatedProducts: relatedProducts,
     boughtTogetherProducts: boughtTogetherProducts,
     viewedProducts: viewedProducts,
-    reviewList: reviewList
+    reviewList: reviewList,
+    seo: productDetail.seo
   });
 }

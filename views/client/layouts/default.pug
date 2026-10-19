@@ -8,7 +8,26 @@ html(lang="en")
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi" 
       name="viewport"
       )
-    title #{pageTitle}
+    
+    //- SEO cơ bản  
+    title #{seo ? seo.title : pageTitle}
+    meta(name="description" content=(seo ? seo.description : ""))
+    meta(name="keywords" content=(seo && seo.keywords.length > 0 ? seo.keywords.join(", ") : ""))
+
+    //- Robots
+    meta(
+      name="robots",
+      content=`${seo && seo.robots.index ? 'index' : 'noindex'}, ${seo && seo.robots.follow ? 'follow' : 'nofollow'}`
+    )
+
+    //- Open Graph
+    meta(property="og:title" content=(seo ? seo.og.title : ""))
+    meta(property="og:description" content=(seo ? seo.og.description : ""))
+    meta(property="og:image" content=(seo && seo.og.image ? `${domainCDN}${seo.og.image}` : ""))
+
+    //- Tránh duplicate content (Google index đúng URL)
+    link(rel="canonical" href=canonicalUrl)
+
     link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css")
     link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/openlayers@4.6.5/dist/ol.min.css")
     link(
