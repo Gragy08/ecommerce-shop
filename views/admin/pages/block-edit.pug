@@ -1,0 +1,43 @@
+extends ../layouts/default.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4.card-title #{pageTitle}
+    .card-body.pt-0
+      form(id="blockEditForm")
+        .row
+          .col-md-6.col-lg-6.d-none
+            .mb-3
+              label.form-label(for="id") Id
+              input.form-control(id="id" type="text" name="id" value=blockDetail.id)
+          .col-md-12
+            .mb-3
+              label.form-label(for="name") Tên block *
+              input.form-control(id="name" type="text" name="name" value=blockDetail.name)
+          .col-md-6
+            .mb-3
+              label.form-label(for="fileName") File giao diện *
+              select.form-select(name="fileName" id="fileName")
+                option(value="") - Chọn file giao diện --
+                each file in fileList
+                  option(
+                    value=file
+                    selected=(blockDetail.fileName == file)
+                    ) #{file}
+          .col-md-6
+            .mb-3
+              label.form-label(for="status") Trạng thái
+              select.form-select(id="status" name="status")
+                option(
+                  value="active"
+                  selected=(blockDetail.status == "active")
+                  ) Hoạt động
+                option(
+                  value="inactive"
+                  selected=(blockDetail.status == "inactive")
+                  ) Tạm dừng
+        button.btn.btn-primary(type="submit") Cập nhật
+        a.btn.btn-danger.ms-1(href=`/${pathAdmin}/block/list`) Hủy

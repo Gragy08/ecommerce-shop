@@ -2482,3 +2482,56 @@ if(blockCreateForm) {
   ;
 }
 // End Block Create Form
+
+
+// Block Edit Form
+const blockEditForm = document.querySelector("#blockEditForm");
+if(blockEditForm) {
+  const validation = new JustValidate('#blockEditForm');
+
+  validation
+    .addField('#name', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên block!'
+      }
+    ])
+    .addField('#fileName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng chọn file giao diện!'
+      }
+    ])
+    .onSuccess((event) => {
+      const id = event.target.id.value;
+      const name = event.target.name.value;
+      const fileName = event.target.fileName.value;
+      const status = event.target.status.value;
+
+      const dataFinal = {
+        name: name,
+        fileName: fileName,
+        status: status
+      };
+      
+      fetch(`/${pathAdmin}/block/edit/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Block Edit Form
