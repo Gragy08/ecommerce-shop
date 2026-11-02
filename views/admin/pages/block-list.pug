@@ -30,28 +30,28 @@ block main
                   th Trạng thái
                   th.text-end Hành động
               tbody
-                tr
-                  td 1
-                  td Block 1
-                  td file-1.pug
-                  td
-                    span(class="badge bg-success") Hoạt động
-                    //- if (item.status == "active")
-                    //-   span(class="badge bg-success") Hoạt động
-                    //- else if (item.status == "inactive")
-                    //-   span(class="badge bg-danger") Tạm dừng
-                  td.text-end
-                    a(
-                      href=`/${pathAdmin}/block/edit/:id` 
-                      class="btn btn-sm btn-warning text-white"
+                each item, index in recordList
+                  tr
+                    td #{index + 1}
+                    td #{item.name}
+                    td #{item.fileName}
+                    td
+                      if (item.status == "active")
+                        span(class="badge bg-success") Hoạt động
+                      else if (item.status == "inactive")
+                        span(class="badge bg-danger") Tạm dừng
+                    td.text-end
+                      a(
+                        href=`/${pathAdmin}/block/edit/${item.id}` 
+                        class="btn btn-sm btn-warning text-white"
+                        )
+                        | Sửa
+                      a(
+                        href="javascript:;"
+                        button-api
+                        data-method="DELETE"
+                        data-api=`/${pathAdmin}/block/delete/${item.id}`
+                        class="btn btn-sm btn-danger text-white ms-1"
                       )
-                      | Sửa
-                    a(
-                      href="javascript:;"
-                      button-api
-                      data-method="DELETE"
-                      data-api=`/${pathAdmin}/block/delete/:id`
-                      class="btn btn-sm btn-danger text-white ms-1"
-                    )
-                      | Xóa
+                        | Xóa
           //- +pagination()

@@ -5,8 +5,17 @@ import slugify from "slugify";
 import Block from "../../models/block.model";
 
 export const list = async (req: Request, res: Response) => {
+  const recordList = await Block
+    .find({
+      deleted: false
+    })
+    .sort({
+      createdAt: "desc"
+    });
+
   res.render("admin/pages/block-list", {
-    pageTitle: "Quản lý block"
+    pageTitle: "Quản lý block",
+    recordList: recordList
   });
 }
 
