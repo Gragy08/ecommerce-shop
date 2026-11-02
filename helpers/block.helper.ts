@@ -12,7 +12,8 @@ export const renderHTML = (req: Request, res: Response, blockList: any) => {
     try {
       const html = pug.renderFile(blockPath, {
         categoryProductList: res.locals.categoryProductList,
-        domainCDN: domainCDN
+        domainCDN: domainCDN,
+        blockData: block.data
       });
       blocksHtml.push(html);
     } catch (error) {
