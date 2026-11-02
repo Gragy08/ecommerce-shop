@@ -4,7 +4,7 @@ import pug from "pug";
 import { domainCDN } from "../configs/variable.config";
 import Template from "../models/template.model";
 import Block from "../models/block.model";
-import { getProductByCategory } from "./product.helper";
+import { getBlogByCategory, getProductByCategory } from "./product.helper";
 
 export const renderHTML = async (req: Request, res: Response, blockList: any) => {
   const blocksHtml: string[] = [];
@@ -33,12 +33,20 @@ export const renderHTML = async (req: Request, res: Response, blockList: any) =>
       }
       // Hết Lấy ra dữ liệu theo tab
 
+      // Lấy ra bài viết
+      let blogList: any[] = [];
+      if (block.data?.getByCategory?.type === "blog") {
+        blogList = await getBlogByCategory(block.data.getByCategory);
+      }
+      // Hết Lấy ra bài viết
+
       const html = pug.renderFile(blockPath, {
         categoryProductList: res.locals.categoryProductList,
         domainCDN: domainCDN,
         blockData: block.data,
         blockProductList: productList,
-        blockTabList: tabList
+        blockTabList: tabList,
+        blockBlogList: blogList
       });
       blocksHtml.push(html);
     } catch (error) {
