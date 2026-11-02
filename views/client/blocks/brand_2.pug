@@ -8,113 +8,24 @@ section(class="brand_2 mt_85")
       .col-xl-6.col-sm-9
         div(class="section_heading_2 section_heading")
           h3
-            | Our Top
-            span Brands
+            | #{blockData.title.normal}
+            span #{blockData.title.highlight}
       .col-xl-6.col-sm-3
         div(class="view_all_btn_area")
           a(
-            href="brand.html" 
+            href=blockData.linkViewAll
             class="view_all_btn"
-            ) View all
+            ) #{blockData.viewAll}
     .row(class="mt_40")
       .col-12
         ul
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand1.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand2.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand3.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand3.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand4.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand5.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand6.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand7.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand8.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand9.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand10.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand1.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand2.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand3.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand4.png"
-                )
-          li.wow.fadeInUp
-            a(href="shop.html")
-              img.img-fluid(
-                alt="Brand" 
-                src="/client/assets/images/brand5.png"
-                )
+          each item in blockData.brands
+            li.wow.fadeInUp
+              a(href=item.link)
+                img.img-fluid(
+                  alt=item.name
+                  src=item.image
+                  )
 //
   =========================
     BRAND 2 END
