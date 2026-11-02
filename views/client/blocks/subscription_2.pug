@@ -2,28 +2,36 @@
   ========================
     SUBSCRIPTION 2 START
     ==========================
-section(
-  style="background: url(/client/assets/images/subscribe_2_bg.jpg);" 
-  class="subscription_2 mt_50 xs_mt_60"
-  )
-  .container
-    .row.justify-content-center
-      .col-xxl-6.col-lg-8.wow.fadeInUp
-        div(class="subscription_2_text")
-          h2
-            | Get Upto
-            span 70%
-            | Off Discount Coupon
-          p by Subscribe our Newsletter
-          form(action="#")
-            input(
-              placeholder="Your email" 
-              type="text"
-              )
-            button(
-              class="common_btn" 
-              type="submit"
-              ) Subscribe
+if blockData
+  section(
+    style=`background: url(${blockData.background});`
+    class="subscription_2 mt_50 xs_mt_60"
+    )
+    .container
+      .row.justify-content-center
+        .col-xxl-6.col-lg-8.wow.fadeInUp
+          div(class="subscription_2_text")
+            if blockData.title
+              h2
+                if blockData.title.normal1
+                  | #{blockData.title.normal1} 
+                if blockData.title.highlight
+                  span #{blockData.title.highlight}
+                if blockData.title.normal2
+                  |  #{blockData.title.normal2}
+            if blockData.description
+              p #{blockData.description}
+            if blockData.form
+              form(action=blockData.form.action || "#")
+                input(
+                  placeholder=blockData.form.placeholder
+                  type="email"
+                  name="email"
+                  )
+                button(
+                  class="common_btn"
+                  type="submit"
+                  ) #{blockData.form.buttonText}
 //
   ========================
     SUBSCRIPTION 2 END
