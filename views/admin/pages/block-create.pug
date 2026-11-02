@@ -26,5 +26,9 @@ block main
               select.form-select(id="status" name="status")
                 option(value="active") Hoạt động
                 option(value="inactive") Tạm dừng
+          .col-md-12
+            .mb-3
+              label.form-label(for="data") Dữ liệu block (Dữ liệu dạng JSON)
+              div(json-editor style="height: 500px")
         button.btn.btn-primary(type="submit") Tạo mới
         a.btn.btn-danger.ms-1(href=`/${pathAdmin}/block/list`) Hủy

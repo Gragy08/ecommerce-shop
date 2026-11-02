@@ -39,5 +39,9 @@ block main
                   value="inactive"
                   selected=(blockDetail.status == "inactive")
                   ) Tạm dừng
+          .col-md-12
+            .mb-3
+              label.form-label(for="data") Dữ liệu block (Dữ liệu dạng JSON)
+              div(json-editor style="height: 500px" data=blockDetail.data)
         button.btn.btn-primary(type="submit") Cập nhật
         a.btn.btn-danger.ms-1(href=`/${pathAdmin}/block/list`) Hủy

@@ -48,6 +48,23 @@ const drawNotify = (type, message) => {
   }));
 }
 
+// Khởi tạo JSON Editor
+const jsonEditor = document.querySelector("[json-editor]");
+if(jsonEditor) {
+  const editor = new JSONEditor(jsonEditor, {
+    mode: "tree",
+    modes: ["text", "tree"],
+  })
+
+  // Dữ liệu mặc định
+  const data = jsonEditor.getAttribute("data");
+  editor.set(data ? JSON.parse(data) : {});
+
+  // Lưu editor vào đối tượng window để dùng khi submit
+  window.blockJsonEditor = editor;
+}
+// Hết Khởi tạo JSON Editor
+
 // articleCreateCategoryForm
 const articleCreateCategoryForm = document.querySelector("#articleCreateCategoryForm");
 if(articleCreateCategoryForm) {
@@ -2454,10 +2471,21 @@ if(blockCreateForm) {
       const fileName = event.target.fileName.value;
       const status = event.target.status.value;
 
+      // Trường data
+      let dataObject = {};
+      try {
+        dataObject = window.blockJsonEditor.get();
+      } catch (error) {
+        notyf.error("Dữ liệu JSON không hợp lệ!");
+        return;
+      }
+      // Hết Trường data
+
       const dataFinal = {
         name: name,
         fileName: fileName,
-        status: status
+        status: status,
+        data: dataObject
       };
       
       fetch(`/${pathAdmin}/block/create`, {
@@ -2508,10 +2536,21 @@ if(blockEditForm) {
       const fileName = event.target.fileName.value;
       const status = event.target.status.value;
 
+      // Trường data
+      let dataObject = {};
+      try {
+        dataObject = window.blockJsonEditor.get();
+      } catch (error) {
+        notyf.error("Dữ liệu JSON không hợp lệ!");
+        return;
+      }
+      // Hết Trường data
+
       const dataFinal = {
         name: name,
         fileName: fileName,
-        status: status
+        status: status,
+        data: dataObject
       };
       
       fetch(`/${pathAdmin}/block/edit/${id}`, {
