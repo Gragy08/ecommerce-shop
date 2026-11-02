@@ -258,6 +258,15 @@
                 li.nav-item
                   a.nav-link(href=`/${pathAdmin}/setting/general`) Cài đặt chung
                 // end nav-item
+                li.nav-item
+                  a.nav-link(
+                    href="javascript:;"
+                    button-api
+                    data-method="PATCH"
+                    data-api=`/${pathAdmin}/setting/remove-cache`
+                  )
+                    | Xóa bộ nhớ đệm
+                // end nav-item
     // end startbar-collapse
   // end startbar-menu
 // end startbar

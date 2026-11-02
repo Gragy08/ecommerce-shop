@@ -14,6 +14,7 @@ import * as categoryMiddleware from "../../middlewares/client/category.middlewar
 import * as attributeMiddleware from "../../middlewares/client/attribute.middleware";
 import * as authMiddleware from "../../middlewares/client/auth.middleware";
 import * as seoMiddleware from "../../middlewares/client/seo.middleware";
+import * as settingMiddleware from "../../middlewares/client/setting.middleware";
 
 const router = Router();
 
@@ -24,6 +25,8 @@ router.use(attributeMiddleware.getAttributeProduct);
 router.use(authMiddleware.verifyToken);
 
 router.use(seoMiddleware.canonical);
+
+router.use(settingMiddleware.assetVersion);
 
 router.use('/', homeRoutes);
 

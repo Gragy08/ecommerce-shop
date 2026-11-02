@@ -187,3 +187,28 @@ export const generalPatch = async (req: RequestAccount, res: Response) => {
     message: "Cập nhật thành công!"
   })
 }
+
+export const removeCachePatch = async (req: RequestAccount, res: Response) => {
+  const key = "assetVersion";
+
+  await Setting.findOneAndUpdate(
+    {
+      key: key
+    },
+    {
+      key: key,
+      data: {
+        assetVersion: Date.now()
+      },
+      updatedBy: req.adminId
+    },
+    {
+      upsert: true, // nếu không tìm thấy bản ghi sẽ tạo bản ghi mới.
+    }
+  );
+  
+  res.json({
+    code: "success",
+    message: "Đã xóa bộ nhớ đệm!"
+  })
+}
