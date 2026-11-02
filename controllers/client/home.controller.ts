@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { getGeneral } from '../../configs/setting.config';
 import Product from '../../models/product.model';
 import Blog from '../../models/blog.model';
+import { pathAdmin } from '../../configs/variable.config';
 
 export const home = (req: Request, res: Response) => {
   res.render("client/pages/home", {
@@ -81,4 +82,19 @@ export const sitemap = async (req: Request, res: Response) => {
     console.log(error);
     res.send("Lỗi khi tạo sitemap cho trang web.");
   }
+};
+
+export const robots = async (req: Request, res: Response) => {
+  const content = `
+    User-agent: *
+    Disallow: /${pathAdmin}/
+  `;
+
+  /*
+    User-agent: * nghĩa là áp dụng cho tất cả bot tìm kiếm
+    Disallow: /admin/ nghĩa là không cho bot crawl bất kỳ URL nào bắt đầu bằng /admin/
+  */
+
+  res.type('text/plain');
+  res.send(content);
 };
