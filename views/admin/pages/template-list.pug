@@ -1,0 +1,57 @@
+extends ../layouts/default.pug
+//- include ../mixins/pagination.pug
+//- include ../mixins/form-search.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            .col-auto
+              a.btn.btn-primary(
+                href=`/${pathAdmin}/template/create`
+                )
+                i.fa-solid.fa-plus.me-1
+                | Tạo template
+        .card-body.pt-0
+          .row
+            .col-lg-6
+              //- +form-search()
+          .table-responsive
+            table.table.table-striped.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Tên giao diện
+                  th Đường dẫn
+                  th Trạng thái
+                  th.text-end Hành động
+              tbody
+                tr
+                  td 1
+                  td Trang chủ
+                  td /
+                  td
+                    span(class="badge bg-success") Hoạt động
+                    //- if (item.status == "active")
+                    //-   span(class="badge bg-success") Hoạt động
+                    //- else if (item.status == "inactive")
+                    //-   span(class="badge bg-danger") Tạm dừng
+                  td.text-end
+                    a(
+                      href=`/${pathAdmin}/template/edit/:id` 
+                      class="btn btn-sm btn-warning text-white"
+                      )
+                      | Sửa
+                    a(
+                      href="javascript:;"
+                      button-api
+                      data-method="DELETE"
+                      data-api=`/${pathAdmin}/template/delete/:id`
+                      class="btn btn-sm btn-danger text-white ms-1"
+                    )
+                      | Xóa
+          //- +pagination()
