@@ -6,88 +6,88 @@ section(class="best_selling_product_2 mt_95")
   .container
     .row
       .col-xl-6.col-sm-9
-        div(class="section_heading_2 section_heading")
-          h3
-            | Our
-            span Best
-            | Selling Products
+        if blockData && blockData.title
+          div(class="section_heading_2 section_heading")
+            h3
+              if blockData.title.normal1
+                | #{blockData.title.normal1} 
+              if blockData.title.highlight
+                span #{blockData.title.highlight}
+              if blockData.title.normal2
+                |  #{blockData.title.normal2}
       .col-xl-6.col-sm-3
-        div(class="view_all_btn_area")
-          a(
-            href="shop.html" 
-            class="view_all_btn"
-            ) View all
+        if blockData && blockData.linkViewAll
+          div(class="view_all_btn_area")
+            a(
+              href=blockData.linkViewAll
+              class="view_all_btn"
+              ) #{blockData.viewAll}
     .row(class="mt_15")
       .col-xl-7
-        .row
-          .col-xl-4.col-sm-6.col-md-4.wow.fadeInUp
-            div(class="best_selling_product_item")
-              img.img-fluid.w-100(
-                alt="best sell" 
-                src="/client/assets/images/best_sell_pro_img_1.jpg"
-                )
-              .text
-                a.title(href="shop_details.html") Men's trendy casual shoes
-                p.price
-                  | $89.00
-                  del $12.00
-                a(
-                  href="shop_details.html" 
-                  class="buy_btn"
-                  )
-                  | buy now
-                  i.far.fa-arrow-up
-          .col-xl-4.col-sm-6.col-md-4.wow.fadeInUp
-            div(class="best_selling_product_item")
-              img.img-fluid.w-100(
-                alt="best sell" 
-                src="/client/assets/images/best_sell_pro_img_2.jpg"
-                )
-              .text
-                a.title(href="shop_details.html") Kid's Western Party Dress
-                p.price
-                  | $75.00
-                  del $99.00
-                a(
-                  href="shop_details.html" 
-                  class="buy_btn"
-                  )
-                  | buy now
-                  i.far.fa-arrow-up
-          .col-xl-4.col-sm-6.col-md-4.wow.fadeInUp
-            div(class="best_selling_product_item")
-              img.img-fluid.w-100(
-                alt="best sell" 
-                src="/client/assets/images/best_sell_pro_img_3.jpg"
-                )
-              .text
-                a.title(href="shop_details.html") Men's Casual Winter Jacket
-                p.price
-                  | $60.00
-                  del $65.00
-                a(
-                  href="shop_details.html" 
-                  class="buy_btn"
-                  )
-                  | buy now
-                  i.far.fa-arrow-up
-      .col-xl-5.wow.fadeInRight
-        div(class="best_selling_product_item_large")
-          img.img-fluid.w-100(
-            alt="best sell" 
-            src="/client/assets/images/best_sell_pro_img_4.jpg"
-            )
-          .text
-            a.title(href="shop_details.html") Best Sales Discount And Offers
-            p.price
-              | $89.00
-              del $12.00
-            a(
-              href="shop_details.html" 
-              class="common_btn"
+        if blockProductList && blockProductList.length
+          .row
+            each item in blockProductList.slice(0, 3)
+              .col-xl-4.col-sm-6.col-md-4.wow.fadeInUp
+                div(class="best_selling_product_item")
+                  img.img-fluid.w-100(
+                    alt=item.name
+                    src=`${domainCDN}${item.images[0]}`
+                    )
+                  .text
+                    a.title(href=`/product/detail/${item.slug}`) #{item.name}
+                    p.price
+                      if item.priceNew
+                        | #{item.priceNew.toLocaleString("vi-VN")}đ
+                      if item.priceOld
+                        del #{item.priceOld.toLocaleString("vi-VN")}đ
+                    a(
+                      href=`/product/detail/${item.slug}`
+                      class="buy_btn"
+                      )
+                      | #{blockData.buttonText || "Mua ngay"}
+                      i.far.fa-arrow-up
+      if blockData && blockData.banner
+        .col-xl-5.wow.fadeInRight
+          div(class="best_selling_product_item_large")
+            img.img-fluid.w-100(
+              alt=blockData.banner.title
+              src=blockData.banner.image
               )
-              | buy now
-              i.fas.fa-long-arrow-right
+            .text
+              a.title(href=blockData.banner.button ? blockData.banner.button.link : "#") #{blockData.banner.title}
+              p.price
+                if blockData.banner.priceNew
+                  | #{Number(blockData.banner.priceNew).toLocaleString("vi-VN")}đ
+                if blockData.banner.priceOld
+                  del #{Number(blockData.banner.priceOld).toLocaleString("vi-VN")}đ
+              if blockData.banner.button
+                a(
+                  href=blockData.banner.button.link
+                  class="common_btn"
+                  )
+                  | #{blockData.banner.button.text}
+                  i.fas.fa-long-arrow-right
+      else if blockProductList && blockProductList.length > 3
+        - const largeItem = blockProductList[3];
+        .col-xl-5.wow.fadeInRight
+          div(class="best_selling_product_item_large")
+            img.img-fluid.w-100(
+              alt=largeItem.name
+              src=`${domainCDN}${largeItem.images[0]}`
+              )
+            .text
+              a.title(href=`/product/detail/${largeItem.slug}`) #{largeItem.name}
+              p.price
+                if largeItem.priceNew
+                  | #{largeItem.priceNew.toLocaleString("vi-VN")}đ
+                if largeItem.priceOld
+                  del #{largeItem.priceOld.toLocaleString("vi-VN")}đ
+              a(
+                href=`/product/detail/${largeItem.slug}`
+                class="common_btn"
+                )
+                | #{blockData.buttonText || "Mua ngay"}
+                i.fas.fa-long-arrow-right
 //
   ================================
     BEST SELLING PRODUCT 2 END
