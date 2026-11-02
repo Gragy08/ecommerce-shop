@@ -6,6 +6,7 @@ import { pathAdmin } from '../../configs/variable.config';
 import Blog from '../../models/blog.model';
 import { logAdminAction } from '../../helpers/log.helper';
 import { RequestAccount } from '../../interfaces/request.interface';
+import { pingGoogleSitemap } from '../../helpers/ping-google.helper';
 
 export const category = async (req: Request, res: Response) => {
   // const recordList: any = await CategoryBlog.find({
@@ -313,6 +314,9 @@ export const createPost = async (req: RequestAccount, res: Response) => {
 
     // req có adminId vì đã đi qua Middleware xác thực và thêm adminId vào req
     logAdminAction(req, `Đã tạo bài viết: ${req.body.name} (Id: ${newRecord._id})`);
+
+    // Ping Google
+    await pingGoogleSitemap();
 
     res.json({
       code: "success",
