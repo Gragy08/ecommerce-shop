@@ -1,7 +1,84 @@
 import { Request, Response } from 'express';
+import { getGeneral } from '../../configs/setting.config';
+import Product from '../../models/product.model';
+import Blog from '../../models/blog.model';
 
 export const home = (req: Request, res: Response) => {
   res.render("client/pages/home", {
     pageTitle: "Trang chủ"
   });
 }
+
+export const sitemap = async (req: Request, res: Response) => {
+  try {
+    const settingGeneral = await getGeneral();
+    const domain = settingGeneral.domainWebsite;
+
+    let urls: string[] = [];
+
+    /*
+      url: Đại diện cho 1 trang muốn Google index
+      loc (location): Là URL đầy đủ của trang
+      lastmod: Lần cập nhật gần nhất
+      changefreq: Tần suất thay đổi (always: liên tục, hourly: giờ, daily: ngày, weekly: tuần, monthly: tháng, yearly: năm)
+      priority: Mức độ quan trọng (mức độ ưu tiên của URL này so với các URL khác trong site)
+    */
+
+    // Trang chủ
+    urls.push(`
+      <url>
+        <loc>${domain}/</loc>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+      </url>
+    `);
+
+    // Sản phẩm
+    const productList = await Product.find({
+      deleted: false,
+      status: "active"
+    }).select("slug updatedAt");
+
+    productList.forEach(item => {
+      urls.push(`
+        <url>
+          <loc>${domain}/product/detail/${item.slug}</loc>
+          <lastmod>${item.updatedAt.toISOString()}</lastmod>
+          <changefreq>weekly</changefreq>
+          <priority>0.8</priority>
+        </url>
+      `);
+    });
+
+    // Bài viết
+    const blogList = await Blog.find({
+      deleted: false,
+      status: "published"
+    }).select("slug updatedAt");
+
+    blogList.forEach(item => {
+      urls.push(`
+        <url>
+          <loc>${domain}/article/detail/${item.slug}</loc>
+          <lastmod>${item.updatedAt.toISOString()}</lastmod>
+          <changefreq>weekly</changefreq>
+          <priority>0.7</priority>
+        </url>
+      `);
+    });
+
+    // XML sitemap
+    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        ${urls.join("")}
+      </urlset>
+    `;
+
+    res.header("Content-Type", "application/xml");
+    res.send(sitemapXml);
+
+  } catch (error) {
+    console.log(error);
+    res.send("Lỗi khi tạo sitemap cho trang web.");
+  }
+};
