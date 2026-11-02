@@ -1,0 +1,17 @@
+#chat-button 💬
+#chat-popup.hidden
+  .chat-header
+    span 💬 Chat với chúng tôi
+    button#chat-close ✕
+  #chat-body.chat-body
+    .message.user
+      .bubble Xin chào, tôi cần tư vấn!
+    .message.admin
+      .bubble Xin chào 👋 Tôi có thể giúp gì cho bạn?
+  #chat-typing.chat-typing Admin đang nhập...
+  .chat-footer
+    input#chat-input(
+      placeholder="Nhập tin nhắn..." 
+      type="text"
+      )
+    button#chat-send Gửi
