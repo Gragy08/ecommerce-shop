@@ -2535,3 +2535,96 @@ if(blockEditForm) {
   ;
 }
 // End Block Edit Form
+
+// Block Drag and Drop
+const blockSource = document.querySelector("#blockSource");
+const blockTarget = document.querySelector("#blockTarget");
+if(blockSource && blockTarget) {
+  new Sortable(blockSource, {
+    group: {
+      name: 'blocks',
+      pull: 'clone',
+      put: false
+    },
+    animation: 150,
+    sort: false
+  });
+
+  new Sortable(blockTarget, {
+    group: 'blocks',
+    animation: 150,
+    onAdd: (event) => {
+      const item = event.item;
+
+      const buttonRemove = item.querySelector(".button-remove");
+      buttonRemove.classList.remove("d-none");
+      buttonRemove.addEventListener("click", () => {
+        item.remove(); // Xóa phần tử
+      })
+    }
+  });
+}
+// End Block Drag and Drop
+
+// Template Create Form
+const templateCreateForm = document.querySelector("#templateCreateForm");
+if(templateCreateForm) {
+  const validation = new JustValidate('#templateCreateForm');
+
+  validation
+    .addField('#name', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên giao diện!'
+      }
+    ])
+    .addField('#slug', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập đường dẫn áp dụng giao diện!'
+      }
+    ])
+    .onSuccess((event) => {
+      const name = event.target.name.value;
+      const slug = event.target.slug.value;
+      const status = event.target.status.value;
+      const blocks = [];
+
+      const blockItems = document.querySelectorAll("#blockTarget .list-group-item");
+      blockItems.forEach((item, index) => {
+        const blockId = item.getAttribute("data-id");
+        blocks.push({
+          blockId: blockId,
+          position: index
+        });
+      });
+
+      const dataFinal = {
+        name: name,
+        slug: slug,
+        blocks: blocks,
+        status: status
+      };
+      
+      fetch(`/${pathAdmin}/template/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify("success", data.message);
+            location.reload();
+          }
+        })
+    })
+  ;
+}
+// End Template Create Form
