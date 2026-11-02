@@ -33,15 +33,32 @@ $(function () {
 
 
     //=======Simply Countdown======   
-    var d = new Date(),
-        countUpDate = new Date();
-    d.setDate(d.getDate() + 365);
-    simplyCountdown('.simply-countdown-one', {
-        year: d.getFullYear(),
-        month: d.getMonth() + 1,
-        day: d.getDate(),
-        enableUtc: true
-    });
+    // var d = new Date(),
+    //     countUpDate = new Date();
+    // d.setDate(d.getDate() + 365);
+    // simplyCountdown('.simply-countdown-one', {
+    //     year: d.getFullYear(),
+    //     month: d.getMonth() + 1,
+    //     day: d.getDate(),
+    //     enableUtc: true
+    // });
+
+
+    const simplyCountdownOne = document.querySelector('.simply-countdown-one');
+    if(simplyCountdownOne) {
+        const endTime = simplyCountdownOne.getAttribute("data-end-time");
+        if (!endTime) return;
+        const endDate = new Date(endTime);
+        simplyCountdown('.simply-countdown-one', {
+            year: endDate.getFullYear(),
+            month: endDate.getMonth() + 1,
+            day: endDate.getDate(),
+            hours: endDate.getHours(),
+            minutes: endDate.getMinutes(),
+            seconds: endDate.getSeconds(),
+            enableUtc: true
+        });
+    }
 
 
     //======countUp js=========   
