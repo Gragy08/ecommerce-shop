@@ -1,0 +1,164 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      h4.card-title.mb-2 #{pageTitle}
+      .chat-box-left
+        .chat-body-left.px-3.py-2
+          .row
+            .col
+              .p-2.border-dashed.border-theme-color.rounded.mb-2
+                a(href="#")
+                  .d-flex.align-items-start
+                    .position-relative
+                      img.thumb-lg.rounded-circle(
+                        alt="" 
+                        src="/admin/assets/images/users/avatar-1.jpg"
+                        )
+                      span.position-absolute.bottom-0.end-0
+                        i.fa-solid.fa-circle.text-success.fs-10.border-2.border-theme-color
+                    .flex-grow-1.ms-2.text-truncate.align-self-center
+                      h6.my-0.fw-medium.text-dark.fs-14
+                        | Lê Văn A
+                        small.float-end.text-muted.fs-11 5 phút trước
+                      div.text-muted.mb-0 Cho tôi hỏi...
+                        span.badge.float-end.rounded.text-white.bg-success 3
+              .p-2.border-dashed.border-theme-color.rounded.mb-2
+                a(href="#")
+                  .d-flex.align-items-start
+                    .position-relative
+                      img.thumb-lg.rounded-circle(
+                        alt="" 
+                        src="/admin/assets/images/users/avatar-3.jpg"
+                        )
+                      span.position-absolute.bottom-0.end-0
+                        i.fa-solid.fa-circle.text-secondary.fs-10.border-2.border-theme-color
+                    .flex-grow-1.ms-2.text-truncate.align-self-center
+                      h6.my-0.fw-medium.text-dark.fs-14
+                        | Lê Văn B
+                        small.float-end.text-muted.fs-11 Hôm qua
+                      p.text-muted.mb-0 Cảm ơn!
+      .chat-box-right
+        .p-3.d-flex.justify-content-between.card-bg.rounded
+          a.d-flex.align-self-center(href="#")
+            .flex-shrink-0
+              img.rounded-circle.thumb-lg(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-1.jpg"
+                )
+            // media-left
+            .flex-grow-1.ms-2.align-self-center
+              div
+                h6.my-0.fw-medium.text-dark.fs-14 Lê Văn A
+                p.text-success.mb-0 Đang online
+            // end media-body
+          // end media
+          .d-none.d-sm-inline-block.align-self-center
+            a.me-2.text-muted(
+              data-bs-custom-class="tooltip-primary" 
+              data-bs-title="Xóa đoạn chat" 
+              data-bs-placement="top" 
+              data-bs-toggle="tooltip" 
+              href="#"
+              )
+              i.iconoir-trash.fs-22
+        // end chat-header
+        .chat-body(data-simplebar="")
+          .chat-detail
+            .d-flex
+              img.rounded-circle.thumb-md(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-1.jpg"
+                )
+              .ms-1.chat-box.w-100
+                .user-chat
+                  p Good Morning !
+                  p There are many variations of passages of Lorem Ipsum available.
+                .chat-time yesterday
+              // end media-body
+            // end media
+            .d-flex.flex-row-reverse
+              img.rounded-circle.thumb-md(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-3.jpg"
+                )
+              .me-1.chat-box.w-100.reverse
+                .user-chat
+                  p Hi,
+                  p Can be verified on any platform using docker?
+                .chat-time 12:35pm
+              // end media-body
+            // end media
+            .d-flex
+              img.rounded-circle.thumb-md(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-1.jpg"
+                )
+              .ms-1.chat-box.w-100
+                .user-chat
+                  p Have a nice day !
+                  p Command was run with root privileges. I'm sure about that.
+                  p ok
+                .chat-time 11:10pm
+              // end media-body
+            // end media
+            .d-flex.flex-row-reverse
+              img.rounded-circle.thumb-md(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-3.jpg"
+                )
+              .me-1.chat-box.w-100.reverse
+                .user-chat
+                  p
+                    | Thanks for your message David. I thought I'm alone with this issue. Please, 👍 the issue to support it :)
+                .chat-time 10:10pm
+              // end media-body
+            // end media
+            .d-flex
+              img.rounded-circle.thumb-md(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-1.jpg"
+                )
+              .ms-1.chat-box.w-100
+                .user-chat
+                  p Sorry, I just back !
+                  p It seems like you are from Mac OS world. There is no /Users/ folder on linux 😄
+                .chat-time 11:15am
+              // end media-body
+            // end media
+            .d-flex.flex-row-reverse
+              img.rounded-circle.thumb-md(
+                alt="user" 
+                src="/admin/assets/images/users/avatar-3.jpg"
+                )
+              .me-1.chat-box.w-100.reverse
+                .user-chat
+                  p Good Morning !
+                  p There are many variations of passages of Lorem Ipsum available.
+                .chat-time 9:02am
+              // end media-body
+            // end media
+          // end chat-detail
+        // end chat-body
+        .chat-footer
+          .row
+            .col-12.col-md-8
+              input.form-control(
+                placeholder="Nội dung tin nhắn..." 
+                type="text"
+                )
+            // col-8
+            .col-4.text-end
+              .d-none.d-sm-inline-block.chat-features
+                a(href="#")
+                  i.iconoir-camera
+                a(href="#")
+                  i.iconoir-attachment
+                a.text-primary(href="#")
+                  i.iconoir-send-solid
+            // end col
+          // end row
+        // end chat-footer
+      // end chat-box-right
+    // end col
