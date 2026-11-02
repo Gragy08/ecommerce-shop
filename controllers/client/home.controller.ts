@@ -3,10 +3,20 @@ import { getGeneral } from '../../configs/setting.config';
 import Product from '../../models/product.model';
 import Blog from '../../models/blog.model';
 import { pathAdmin } from '../../configs/variable.config';
+import Block from '../../models/block.model';
+import { renderHTML } from '../../helpers/block.helper';
 
-export const home = (req: Request, res: Response) => {
+export const home = async (req: Request, res: Response) => {
+  const blockList = await Block.find({
+    deleted: false,
+    status: "active"
+  });
+
+  const blocksHtml = renderHTML(req, res, blockList);
+
   res.render("client/pages/home", {
-    pageTitle: "Trang chủ"
+    pageTitle: "Trang chủ",
+    blocksHtml: blocksHtml
   });
 }
 

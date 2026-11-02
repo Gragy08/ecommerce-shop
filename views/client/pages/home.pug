@@ -1,15 +1,5 @@
 extends ../layouts/default.pug
 
 block main
-  include ../blocks/banner_2.pug
-  include ../blocks/features.pug
-  include ../blocks/flash_sell_2.pug
-  include ../blocks/category_2.pug
-  include ../blocks/special_product_2.pug
-  include ../blocks/trending_product_2.pug
-  include ../blocks/best_selling_product_2.pug
-  include ../blocks/new_arrival_2.pug
-  include ../blocks/favourite_product_2.pug
-  include ../blocks/brand_2.pug
-  include ../blocks/blog_2.pug
-  include ../blocks/subscription_2.pug
+  each html in blocksHtml
+    != html
