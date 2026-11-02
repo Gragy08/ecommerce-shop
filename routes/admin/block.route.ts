@@ -5,4 +5,8 @@ const router = Router();
 
 router.get('/list', blockController.list);
 
+router.get('/create', blockController.create);
+
+router.post('/create', blockController.createPost);
+
 export default router;

@@ -2429,3 +2429,56 @@ if (productEditSeoForm) {
     });
 }
 // End Product Edit SEO Form
+
+
+// Block Create Form
+const blockCreateForm = document.querySelector("#blockCreateForm");
+if(blockCreateForm) {
+  const validation = new JustValidate('#blockCreateForm');
+
+  validation
+    .addField('#name', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên block!'
+      }
+    ])
+    .addField('#fileName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng chọn file giao diện!'
+      }
+    ])
+    .onSuccess((event) => {
+      const name = event.target.name.value;
+      const fileName = event.target.fileName.value;
+      const status = event.target.status.value;
+
+      const dataFinal = {
+        name: name,
+        fileName: fileName,
+        status: status
+      };
+      
+      fetch(`/${pathAdmin}/block/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            drawNotify("success", data.message);
+            location.reload();
+          }
+        })
+    })
+  ;
+}
+// End Block Create Form
