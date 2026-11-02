@@ -9,4 +9,8 @@ router.get('/create', templateController.create);
 
 router.post('/create', templateController.createPost);
 
+router.get('/edit/:id', templateController.edit);
+
+router.patch('/edit/:id', templateController.editPatch);
+
 export default router;

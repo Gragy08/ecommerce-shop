@@ -1,0 +1,64 @@
+extends ../layouts/default.pug
+
+block main
+  .card
+    .card-header
+      .row.align-items-center
+        .col
+          h4.card-title #{pageTitle}
+    .card-body.pt-0
+      form(id="templateEditForm")
+        .row
+          .col-md-12.d-none
+            .mb-3
+              label.form-label(for="name") Id *
+              input.form-control(id="id" type="text" name="id" value=templateDetail.id)
+          .col-md-12
+            .mb-3
+              label.form-label(for="name") Tên giao diện *
+              input.form-control(id="name" type="text" name="name" value=templateDetail.name)
+          .col-md-6
+            .mb-3
+              label.form-label(for="slug") Đường dẫn áp dụng *
+              input.form-control(id="slug" type="text" name="slug" value=templateDetail.slug)
+          .col-md-6
+            .mb-3
+              label.form-label(for="status") Trạng thái
+              select.form-select(id="status" name="status")
+                option(
+                  value="active"
+                  selected=(templateDetail.status == "active")
+                  ) Hoạt động
+                option(
+                  value="inactive"
+                  selected=(templateDetail.status == "inactive")
+                  ) Tạm dừng
+          .col-md-8
+            .mb-3
+              label.form-label Sắp xếp khối giao diện
+              ul(
+                class="list-group list-group-flush"
+                style="height: 500px; overflow-x: hidden; overflow-y: auto; border: 1px solid #ddd;"
+                id="blockTarget"
+              )
+                each block in templateDetail.blocks
+                  li.list-group-item(data-id=block.blockId)
+                    i.fa-solid.fa-arrows-up-down-left-right.text-info.me-2.cursor-pointer.fs-18
+                    | #{block.name} (#{block.fileName})
+                    i.fa-regular.fa-trash-can.text-danger.float-end.cursor-pointer.fs-18.button-remove
+          .col-md-4
+            .mb-3
+              label.form-label Danh sách khối giao diện
+              .card-body.p-0
+                ul(
+                  class="list-group list-group-flush"
+                  style="height: 500px; overflow-x: hidden; overflow-y: auto; border: 1px solid #ddd;"
+                  id="blockSource"
+                )
+                  each block in blockList
+                    li.list-group-item(data-id=block.id)
+                      i.fa-solid.fa-arrows-up-down-left-right.text-info.me-2.cursor-pointer.fs-18
+                      | #{block.name} (#{block.fileName})
+                      i.fa-regular.fa-trash-can.text-danger.float-end.cursor-pointer.fs-18.d-none.button-remove
+        button.btn.btn-primary(type="submit") Cập nhật
+        a.btn.btn-danger.ms-1(href=`/${pathAdmin}/template/list`) Hủy

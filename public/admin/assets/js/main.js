@@ -2563,6 +2563,14 @@ if(blockSource && blockTarget) {
       })
     }
   });
+
+  // Xóa được các item mặc định
+  document.querySelectorAll("#blockTarget .list-group-item").forEach(item => {
+    const buttonRemove = item.querySelector(".button-remove");
+    buttonRemove.addEventListener("click", () => {
+      item.remove();
+    })
+  });
 }
 // End Block Drag and Drop
 
@@ -2628,3 +2636,66 @@ if(templateCreateForm) {
   ;
 }
 // End Template Create Form
+
+// Template Edit Form
+const templateEditForm = document.querySelector("#templateEditForm");
+if(templateEditForm) {
+  const validation = new JustValidate('#templateEditForm');
+
+  validation
+    .addField('#name', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên giao diện!'
+      }
+    ])
+    .addField('#slug', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập đường dẫn áp dụng giao diện!'
+      }
+    ])
+    .onSuccess((event) => {
+      const id = event.target.id.value;
+      const name = event.target.name.value;
+      const slug = event.target.slug.value;
+      const status = event.target.status.value;
+      const blocks = [];
+
+      const blockItems = document.querySelectorAll("#blockTarget .list-group-item");
+      blockItems.forEach((item, index) => {
+        const blockId = item.getAttribute("data-id");
+        blocks.push({
+          blockId: blockId,
+          position: index
+        });
+      });
+
+      const dataFinal = {
+        name: name,
+        slug: slug,
+        blocks: blocks,
+        status: status
+      };
+      
+      fetch(`/${pathAdmin}/template/edit/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataFinal)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.code == "error") {
+            notyf.error(data.message);
+          }
+
+          if(data.code == "success") {
+            notyf.success(data.message);
+          }
+        })
+    })
+  ;
+}
+// End Template Edit Form
