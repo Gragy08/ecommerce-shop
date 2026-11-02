@@ -2745,3 +2745,16 @@ if(listInputFilterRating.length > 0) {
   }
 }
 // End filterRating
+
+// Khởi tạo tính năng dịch
+const gtranslateWrapper = document.querySelector(".gtranslate_wrapper");
+if(gtranslateWrapper) {
+  window.gtranslateSettings = {
+    "default_language":"vi",
+    "native_language_names":true,
+    "wrapper_selector":".gtranslate_wrapper",
+    "flag_size":24,
+    "switcher_horizontal_position":"inline"
+  }
+}
+// Hết Khởi tạo tính năng dịch

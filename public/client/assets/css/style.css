@@ -12294,3 +12294,40 @@ footer {
     font-weight: 500;
 }
 /* End .header_2 form */
+
+/* .gtranslate_wrapper */
+.gtranslate_wrapper {
+    position: relative;
+}
+
+.gtranslate_wrapper img {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.gtranslate_wrapper .gt_switcher .gt_selected a {
+    border: 0 !important;
+    background: var(--lightBg2);
+    height: 40px;
+    padding: 0 10px !important;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--colorBlack) !important;
+}
+
+.gtranslate_wrapper .gt_option {
+    position: absolute !important;
+    top: 100%;
+    left: 0;
+}
+
+.gtranslate_wrapper .gt_option a {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--colorBlack) !important;
+}
+/* End .gtranslate_wrapper */
