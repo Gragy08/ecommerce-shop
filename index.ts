@@ -10,10 +10,17 @@ import session from "express-session";
 import passport from "passport";
 import { configureGooglePassport } from './configs/googleOauth.config';
 import { configureFacebookPassport } from './configs/facebookOauth.config';
+import { Server } from 'socket.io';
+import { createServer } from 'node:http';
+import { initSocket } from './sockets/index.socket';
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 app.set("trust proxy", 1);
+
+// Khởi tạo SocketIO bên Server
+const server = createServer(app);
+const io = new Server(server);
 
 // Kết nối đến cơ sở dữ liệu
 connectDB();
@@ -72,6 +79,9 @@ configureFacebookPassport(passport);
 app.use(`/${pathAdmin}`, adminRoutes);
 app.use("/", clientRoutes);
 
-app.listen(port, "127.0.0.1", () => {
+// Khởi tạo Socket bên Server
+initSocket(io);
+
+server.listen(port, "127.0.0.1", () => {
   console.log(`Website đang chạy trên cổng ${port}`);
 });

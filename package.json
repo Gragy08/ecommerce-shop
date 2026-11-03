@@ -40,7 +40,8 @@
     "passport-google-oauth20": "^2.0.0",
     "pug": "^3.0.3",
     "puppeteer": "^25.12.0",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "socket.io": "^4.8.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
