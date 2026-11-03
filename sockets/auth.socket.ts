@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import * as cookie from 'cookie';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { pathAdmin } from '../configs/variable.config';
 
 export const authSocket = (socket: Socket, next: any) => {
   try {
@@ -12,13 +13,19 @@ export const authSocket = (socket: Socket, next: any) => {
       let role: string = "";
       let roomId: string = "";
 
-      if(cookieParsed.tokenAdmin) {
+      const isAdminPage = socket.handshake.headers.referer?.includes(`/${pathAdmin}/`) || Boolean(socket.handshake.auth?.roomId);
+
+      if(isAdminPage && cookieParsed.tokenAdmin) {
         token = cookieParsed.tokenAdmin;
         role = "admin";
-        roomId = `${socket.handshake.auth.roomId}`;
+        roomId = socket.handshake.auth?.roomId || "";
       } else if(cookieParsed.tokenUser) {
         token = cookieParsed.tokenUser;
         role = "user";
+      } else if(cookieParsed.tokenAdmin) {
+        token = cookieParsed.tokenAdmin;
+        role = "admin";
+        roomId = socket.handshake.auth?.roomId || "";
       }
 
       if(token && role) {
@@ -37,5 +44,6 @@ export const authSocket = (socket: Socket, next: any) => {
     next();
   } catch (error) {
     console.log(error);
+    next();
   }
 }

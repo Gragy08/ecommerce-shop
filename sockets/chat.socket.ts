@@ -25,11 +25,14 @@ export const chatSocket = async (io: Server, socket: Socket) => {
       });
     }
   } else if(account.role === 'admin') {
+    if(!account.roomId) return;
     chatRoom = await ChatRoom.findOne({
-      adminId: `{process.env.SUPER_ADMIN_ID}`,
+      adminId: `${process.env.SUPER_ADMIN_ID}`,
       _id: account.roomId
     });
   }
+
+  if(!chatRoom) return;
 
   // Vào phòng chat
   socket.join(chatRoom.id);

@@ -1,6 +1,3 @@
-// Khởi tạo SocketIO bên Admin
-const socket = io();
-
 // Logic nhắn tin của Admin
 const formChat = document.querySelector("[form-chat]");
 if(formChat) {
