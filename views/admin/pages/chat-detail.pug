@@ -5,7 +5,7 @@ block main
     .col-12
       h4.card-title.mb-2 #{pageTitle}
       include ../partials/chat-box-left.pug
-      .chat-box-right
+      .chat-box-right(chat-room-id=chatRoomDetail.id)
         .p-3.d-flex.justify-content-between.card-bg.rounded
           a.d-flex.align-self-center(href="#")
             .flex-shrink-0
