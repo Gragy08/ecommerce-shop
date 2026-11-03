@@ -9,6 +9,13 @@ if(formChat) {
   const chatRoomId = document.querySelector("[chat-room-id]").getAttribute("chat-room-id");
   const chatDetail = document.querySelector(".chat-detail");
 
+  // Khởi tạo SocketIO bên Admin
+  const socket = io({
+    auth: {
+      roomId: chatRoomId
+    }
+  });
+
   buttonSend.addEventListener("click", () => {
     const content = inputContent.value.trim();
     if(content) {

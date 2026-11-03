@@ -26,9 +26,13 @@ export const chatSocket = async (io: Server, socket: Socket) => {
     }
   } else if(account.role === 'admin') {
     chatRoom = await ChatRoom.findOne({
-      adminId: account.id
+      adminId: `{process.env.SUPER_ADMIN_ID}`,
+      _id: account.roomId
     });
   }
+
+  // Vào phòng chat
+  socket.join(chatRoom.id);
 
   // Lắng nghe sự kiện CLIENT_SEND_MESSAGE
   socket.on('CLIENT_SEND_MESSAGE', async (data) => {
@@ -63,7 +67,7 @@ export const chatSocket = async (io: Server, socket: Socket) => {
     }
 
     // Phản hồi về cho tất cả mọi người
-    io.emit('SERVER_SEND_MESSAGE', {
+    io.to(chatRoom.id).emit('SERVER_SEND_MESSAGE', {
       ...message
     });
   });

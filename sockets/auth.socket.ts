@@ -10,10 +10,12 @@ export const authSocket = (socket: Socket, next: any) => {
       
       let token: string = "";
       let role: string = "";
+      let roomId: string = "";
 
       if(cookieParsed.tokenAdmin) {
         token = cookieParsed.tokenAdmin;
         role = "admin";
+        roomId = `${socket.handshake.auth.roomId}`;
       } else if(cookieParsed.tokenUser) {
         token = cookieParsed.tokenUser;
         role = "user";
@@ -26,7 +28,8 @@ export const authSocket = (socket: Socket, next: any) => {
           socket.data.account = {
             id: decoded.id,
             email: decoded.email,
-            role: role
+            role: role,
+            roomId: roomId
           };
         }
       }
