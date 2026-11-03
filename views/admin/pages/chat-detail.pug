@@ -40,12 +40,13 @@ block main
                     .chat-box.w-100.reverse
                       .user-chat(title=item.createdAtFormat)
                         p #{item.content}
-        .chat-footer
+        .chat-footer(form-chat)
           .row
             .col-12.col-md-8
               input.form-control(
                 placeholder="Nội dung tin nhắn..." 
                 type="text"
+                input-content
                 )
             .col-4.text-end
               .d-none.d-sm-inline-block.chat-features
@@ -53,5 +54,5 @@ block main
                   i.iconoir-camera
                 a(href="#")
                   i.iconoir-attachment
-                a.text-primary(href="#")
+                a.text-primary(href="javascript:;" button-send)
                   i.iconoir-send-solid
