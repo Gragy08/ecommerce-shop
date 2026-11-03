@@ -4,41 +4,7 @@ block main
   .row
     .col-12
       h4.card-title.mb-2 #{pageTitle}
-      .chat-box-left
-        .chat-body-left.px-3.py-2
-          .row
-            .col
-              .p-2.border-dashed.border-theme-color.rounded.mb-2
-                a(href="#")
-                  .d-flex.align-items-start
-                    .position-relative
-                      img.thumb-lg.rounded-circle(
-                        alt="" 
-                        src="/admin/assets/images/users/avatar-1.jpg"
-                        )
-                      span.position-absolute.bottom-0.end-0
-                        i.fa-solid.fa-circle.text-success.fs-10.border-2.border-theme-color
-                    .flex-grow-1.ms-2.text-truncate.align-self-center
-                      h6.my-0.fw-medium.text-dark.fs-14
-                        | Lê Văn A
-                        small.float-end.text-muted.fs-11 5 phút trước
-                      div.text-muted.mb-0 Cho tôi hỏi...
-                        span.badge.float-end.rounded.text-white.bg-success 3
-              .p-2.border-dashed.border-theme-color.rounded.mb-2
-                a(href="#")
-                  .d-flex.align-items-start
-                    .position-relative
-                      img.thumb-lg.rounded-circle(
-                        alt="" 
-                        src="/admin/assets/images/users/avatar-3.jpg"
-                        )
-                      span.position-absolute.bottom-0.end-0
-                        i.fa-solid.fa-circle.text-secondary.fs-10.border-2.border-theme-color
-                    .flex-grow-1.ms-2.text-truncate.align-self-center
-                      h6.my-0.fw-medium.text-dark.fs-14
-                        | Lê Văn B
-                        small.float-end.text-muted.fs-11 Hôm qua
-                      p.text-muted.mb-0 Cảm ơn!
+      include ../partials/chat-box-left.pug
       .chat-box-right
         .p-3.d-flex.justify-content-between.card-bg.rounded
           a.d-flex.align-self-center(href="#")

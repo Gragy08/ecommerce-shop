@@ -1,0 +1,23 @@
+.chat-box-left
+  .chat-body-left.px-3.py-2
+    .row
+      .col
+        each item in chatRoomList
+          .p-2.border-dashed.border-theme-color.rounded.mb-2
+            a(href=`/${pathAdmin}/chat/detail/${item.id}`)
+              .d-flex.align-items-start
+                .position-relative
+                  img.thumb-lg.rounded-circle(
+                    alt=item.infoUser.fullName
+                    src=`${domainCDN}${item.infoUser.avatar}`
+                    )
+                  span.position-absolute.bottom-0.end-0
+                    i.fa-solid.fa-circle.text-success.fs-10.border-2.border-theme-color
+                .flex-grow-1.ms-2.text-truncate.align-self-center
+                  h6.my-0.fw-medium.text-dark.fs-14
+                    | #{item.infoUser.fullName}
+                    if (item.lastMessage)
+                      small.float-end.text-muted.fs-11 #{item.lastMessage.createdAtFormat}
+                  if (item.lastMessage)
+                    div.text-muted.mb-0 #{item.lastMessage.content}
+                      span.badge.float-end.rounded.text-white.bg-success #{item.unreadCount.admin}

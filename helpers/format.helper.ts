@@ -8,3 +8,21 @@ export const formatFileSize = (bytes: number): string => {
   // Nếu >= 1MB thì hiển thị đơn bị MB
   return (bytes / 1048576).toFixed(2) + " MB";
 };
+
+export function timeAgo(date: Date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const intervals: any = {
+    năm: 31536000,
+    tháng: 2592000,
+    ngày: 86400,
+    giờ: 3600,
+    phút: 60,
+  };
+  for (const key in intervals) {
+    const value = Math.floor(seconds / intervals[key]);
+    if (value >= 1) {
+      return `${value} ${key} trước`;
+    }
+  }
+  return "Vừa xong";
+}

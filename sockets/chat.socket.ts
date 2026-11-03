@@ -16,7 +16,7 @@ export const chatSocket = async (io: Server, socket: Socket) => {
       // Tạo phòng chat cho user
       chatRoom = await ChatRoom.create({
         userId: account.id,
-        adminId: '68eba4ee912050f4c59f2455',
+        adminId: `${process.env.SUPER_ADMIN_ID}`,
         unreadCount: {
           user: 0,
           admin: 0

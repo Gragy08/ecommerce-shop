@@ -19,6 +19,7 @@ export const verifyToken = async (req: RequestAccount, res: Response, next: Next
 
     if(decoded.id === process.env.SUPER_ADMIN_ID && decoded.email === process.env.SUPER_ADMIN_EMAIL) {
       res.locals.accountAdmin = {
+        id: process.env.SUPER_ADMIN_ID,
         fullName: "SuperAdmin",
         email: process.env.SUPER_ADMIN_EMAIL,
         avatar: "/admin/assets/images/users/avatar-1.jpg",
@@ -44,6 +45,7 @@ export const verifyToken = async (req: RequestAccount, res: Response, next: Next
       }
 
       res.locals.accountAdmin = {
+        id: existAccount.id,
         fullName: existAccount.fullName,
         email: existAccount.email,
         avatar: existAccount.avatar,
