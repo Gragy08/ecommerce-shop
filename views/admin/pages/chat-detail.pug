@@ -1,0 +1,57 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      h4.card-title.mb-2 #{pageTitle}
+      include ../partials/chat-box-left.pug
+      .chat-box-right
+        .p-3.d-flex.justify-content-between.card-bg.rounded
+          a.d-flex.align-self-center(href="#")
+            .flex-shrink-0
+              img.rounded-circle.thumb-lg(
+                alt=infoUser.fullName
+                src=`${domainCDN}${infoUser.avatar}`
+                )
+            .flex-grow-1.ms-2.align-self-center
+              div
+                h6.my-0.fw-medium.text-dark.fs-14 #{infoUser.fullName}
+                p.text-success.mb-0 Đang online
+          .d-none.d-sm-inline-block.align-self-center
+            a.me-2.text-muted(
+              data-bs-custom-class="tooltip-primary" 
+              data-bs-title="Xóa đoạn chat" 
+              data-bs-placement="top" 
+              data-bs-toggle="tooltip" 
+              href="#"
+              )
+              i.iconoir-trash.fs-22
+        .chat-body(data-simplebar="")
+          .chat-detail
+            if (chatMessages)
+              each item in chatMessages
+                if (item.senderRole === 'user')
+                  .d-flex
+                    .chat-box.w-100
+                      .user-chat(title=item.createdAtFormat)
+                        p #{item.content}
+                else if (item.senderRole === 'admin')
+                  .d-flex.flex-row-reverse
+                    .chat-box.w-100.reverse
+                      .user-chat(title=item.createdAtFormat)
+                        p #{item.content}
+        .chat-footer
+          .row
+            .col-12.col-md-8
+              input.form-control(
+                placeholder="Nội dung tin nhắn..." 
+                type="text"
+                )
+            .col-4.text-end
+              .d-none.d-sm-inline-block.chat-features
+                a(href="#")
+                  i.iconoir-camera
+                a(href="#")
+                  i.iconoir-attachment
+                a.text-primary(href="#")
+                  i.iconoir-send-solid

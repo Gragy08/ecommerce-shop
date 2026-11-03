@@ -3,7 +3,7 @@
     .row
       .col
         each item in chatRoomList
-          .p-2.border-dashed.border-theme-color.rounded.mb-2
+          .p-2.border-dashed.border-theme-color.rounded.mb-2(class=`${chatRoomDetail && item.id === chatRoomDetail.id ? 'bg-light' : ''}`)
             a(href=`/${pathAdmin}/chat/detail/${item.id}`)
               .d-flex.align-items-start
                 .position-relative

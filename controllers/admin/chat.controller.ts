@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { getChatRoomList } from '../../helpers/chat.helper';
 import ChatRoom from '../../models/chat-room.model';
 import AccountUser from '../../models/account-user.model';
 import ChatMessage from '../../models/chat-message.model';
@@ -6,38 +7,57 @@ import { timeAgo } from '../../helpers/format.helper';
 
 export const myChatList = async (req: Request, res: Response) => {
   // Danh sách phòng chat
-  const chatRoomList: any = await ChatRoom.find({
-    adminId: res.locals.accountAdmin.id
-  });
-
-  for (const item of chatRoomList) {
-    // Lấy thông tin user
-    const infoUser = await AccountUser.findOne({
-      _id: item.userId
-    });
-
-    item.infoUser = {
-      fullName: infoUser?.fullName,
-      avatar: infoUser?.avatar
-    };
-
-    // Lấy tin nhắn gần nhất
-    const lastMesssage = await ChatMessage
-      .findOne({
-        roomId: item.id
-      })
-      .sort({
-        createdAt: "desc"
-      });
-
-    if (lastMesssage) {
-      item.lastMessage = lastMesssage;
-      item.lastMessage.createdAtFormat = timeAgo(item.lastMessage.createdAt);
-    }
-  }
-
+  const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id);
+  
   res.render("admin/pages/my-chat-list", {
     pageTitle: "Danh sách tin nhắn của bạn",
     chatRoomList: chatRoomList
   });
+}
+
+export const detail = async (req: Request, res: Response) => {
+  try {
+    // Danh sách phòng chat
+    const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id);
+
+    // Chi tiết phòng chat
+    const id = req.params.id;
+    const chatRoomDetail = await ChatRoom.findOne({
+      _id: id
+    });
+
+    if(!chatRoomDetail) {
+      res.redirect('/admin/dashboard');
+      return;
+    }
+
+    // Thông tin người dùng
+    const infoUser = await AccountUser.findOne({
+      _id: chatRoomDetail.userId
+    });
+
+    if(!infoUser) {
+      res.redirect('/admin/dashboard');
+      return;
+    }
+
+    // Danh sách tin nhắn
+    const chatMessages: any = await ChatMessage.find({
+      roomId: id
+    });
+
+    for (const item of chatMessages) {
+      item.createdAtFormat = timeAgo(item.createdAt);
+    }
+
+    res.render("admin/pages/chat-detail", {
+      pageTitle: "Chi tiết tin nhắn",
+      chatRoomList: chatRoomList,
+      chatRoomDetail: chatRoomDetail,
+      infoUser: infoUser,
+      chatMessages: chatMessages
+    });
+  } catch (error) {
+    res.redirect('/admin/dashboard');
+  }
 }
