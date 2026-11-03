@@ -5,10 +5,10 @@ if (accountUser)
       span 💬 Chat với chúng tôi
       button#chat-close ✕
     #chat-body.chat-body
-      .message.user
-        .bubble Xin chào, tôi cần tư vấn!
-      .message.admin
-        .bubble Xin chào 👋 Tôi có thể giúp gì cho bạn?
+      if (chatMessages)
+        each item in chatMessages
+          div(class=`message ${item.senderRole}` title=item.createdAtFormat)
+            .bubble #{item.content}
     #chat-typing.chat-typing Admin đang nhập...
     .chat-footer
       input#chat-input(

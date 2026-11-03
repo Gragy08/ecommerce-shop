@@ -15,6 +15,7 @@ import * as attributeMiddleware from "../../middlewares/client/attribute.middlew
 import * as authMiddleware from "../../middlewares/client/auth.middleware";
 import * as seoMiddleware from "../../middlewares/client/seo.middleware";
 import * as settingMiddleware from "../../middlewares/client/setting.middleware";
+import * as chatMiddleware from "../../middlewares/client/chat.middleware";
 
 const router = Router();
 
@@ -27,6 +28,8 @@ router.use(authMiddleware.verifyToken);
 router.use(seoMiddleware.canonical);
 
 router.use(settingMiddleware.assetVersion);
+
+router.use(chatMiddleware.getChatMessage);
 
 router.use('/', homeRoutes);
 
