@@ -6,6 +6,7 @@ const chatButton = document.querySelector("#chat-button");
 if(chatButton) {
   const chatPopup = document.querySelector("#chat-popup");
   const chatClose = document.querySelector("#chat-close");
+  const chatBody = document.querySelector("#chat-body");
 
   // Đóng/mở chat
   chatButton.addEventListener("click", () => {
@@ -32,6 +33,12 @@ if(chatButton) {
 
   // Nhận tin nhắn từ server
   socket.on("SERVER_SEND_MESSAGE", (data) => {
-    console.log(data);
+    const elementMessage = document.createElement("div");
+    elementMessage.classList.add("message");
+    elementMessage.classList.add(data.senderRole);
+    elementMessage.innerHTML = `
+      <div class="bubble">${data.content}</div>
+    `;
+    chatBody.appendChild(elementMessage);
   });
 }

@@ -63,6 +63,8 @@ export const chatSocket = async (io: Server, socket: Socket) => {
     }
 
     // Phản hồi về cho tất cả mọi người
-    io.emit('SERVER_SEND_MESSAGE', data);
+    io.emit('SERVER_SEND_MESSAGE', {
+      ...message
+    });
   });
 }
