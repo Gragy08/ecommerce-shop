@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import ChatRoom from "../models/chat-room.model";
+import ChatMessage from "../models/chat-message.model";
 
 export const chatSocket = async (io: Server, socket: Socket) => {
   const account = socket.data.account;
@@ -26,7 +27,29 @@ export const chatSocket = async (io: Server, socket: Socket) => {
   }
 
   // Lắng nghe sự kiện CLIENT_SEND_MESSAGE
-  socket.on('CLIENT_SEND_MESSAGE', (data) => {
+  socket.on('CLIENT_SEND_MESSAGE', async (data) => {
+    // Lưu tin nhắn vào CSDL
+    const message = {
+      roomId: chatRoom.id,
+      senderId: account.id,
+      senderRole: account.role,
+      content: data.content,
+      files: [],
+    }
+    const newMessage = new ChatMessage(message);
+    await newMessage.save();
+
+    // Cập nhật số tin nhắn chưa đọc
+    if(account.role === 'user') {
+      await ChatRoom.updateOne({
+        _id: chatRoom.id
+      }, {
+        $inc: {
+          'unreadCount.admin': 1
+        }
+      })
+    }
+
     // Phản hồi về cho tất cả mọi người
     io.emit('SERVER_SEND_MESSAGE', data);
   });
