@@ -11,6 +11,10 @@ if(chatButton) {
   // Đóng/mở chat
   chatButton.addEventListener("click", () => {
     chatPopup.classList.toggle("hidden");
+    // Khi mở chat scroll xuống tin nhắn mới nhất
+    if(!chatPopup.classList.contains("hidden")) {
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
   });
 
   // Đóng chat
@@ -31,14 +35,32 @@ if(chatButton) {
     }
   });
 
-  // Nhận tin nhắn từ server
-  socket.on("SERVER_SEND_MESSAGE", (data) => {
+  // Hàm hiển thị tin nhăn
+  const appendMessage = (item) => {
     const elementMessage = document.createElement("div");
     elementMessage.classList.add("message");
-    elementMessage.classList.add(data.senderRole);
+    elementMessage.classList.add(item.senderRole);
+    elementMessage.setAttribute("id", item._id);
     elementMessage.innerHTML = `
-      <div class="bubble">${data.content}</div>
+      <div class="bubble">${item.content}</div>
     `;
     chatBody.appendChild(elementMessage);
+  }
+
+  // Nhận tin nhắn từ server
+  socket.on("SERVER_SEND_MESSAGE", (data) => {
+    appendMessage(data);
+    chatBody.scrollTop = chatBody.scrollHeight;
   });
+
+  // Load 20 tin nhắn gần nhất
+  const loadInitialMessages = async () => {
+    const res = await fetch(`/chat/messages?limit=20`);
+    const data = await res.json();
+    
+    for (const item of data.messages) {
+      appendMessage(item);
+    }
+  }
+  loadInitialMessages();
 }
