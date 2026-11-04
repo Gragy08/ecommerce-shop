@@ -13,6 +13,7 @@ import { configureFacebookPassport } from './configs/facebookOauth.config';
 import { Server } from 'socket.io';
 import { createServer } from 'node:http';
 import { initSocket } from './sockets/index.socket';
+import { startJobs } from './jobs/index.job';
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -81,6 +82,9 @@ app.use("/", clientRoutes);
 
 // Khởi tạo Socket bên Server
 initSocket(io);
+
+// Gọi job
+startJobs();
 
 server.listen(port, "127.0.0.1", () => {
   console.log(`Website đang chạy trên cổng ${port}`);
