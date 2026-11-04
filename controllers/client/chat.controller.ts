@@ -28,12 +28,20 @@ export const messages = async (req: Request, res: Response) => {
   }
 
   // Danh sách tin nhắn
-  const { limit = 20 } = req.query;
+  const { limit = 20, lastMessageId } = req.query;
+
+  const find: any = {
+    roomId: chatRoom?.id
+  };
+
+  if(lastMessageId) {
+    find._id = {
+      $lt: lastMessageId
+    };
+  }
 
   const chatMessages: any = await ChatMessage
-    .find({
-      roomId: chatRoom?.id
-    })
+    .find(find)
     .sort({
       createdAt: "desc" // mới nhất trước
     })
@@ -47,6 +55,6 @@ export const messages = async (req: Request, res: Response) => {
   res.json({
     code: "success",
     message: "Thành công!",
-    messages: chatMessages.reverse()
+    messages: lastMessageId ? chatMessages : chatMessages.reverse()
   })
 }

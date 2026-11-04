@@ -36,7 +36,7 @@ if(chatButton) {
   });
 
   // Hàm hiển thị tin nhăn
-  const appendMessage = (item) => {
+  const appendMessage = (item, isPrepend = false) => {
     const elementMessage = document.createElement("div");
     elementMessage.classList.add("message");
     elementMessage.classList.add(item.senderRole);
@@ -44,7 +44,12 @@ if(chatButton) {
     elementMessage.innerHTML = `
       <div class="bubble">${item.content}</div>
     `;
-    chatBody.appendChild(elementMessage);
+    // chatBody.appendChild(elementMessage);
+    if (isPrepend) {
+      chatBody.prepend(elementMessage);
+    } else {
+      chatBody.appendChild(elementMessage);
+    }
   }
 
   // Nhận tin nhắn từ server
@@ -63,4 +68,40 @@ if(chatButton) {
     }
   }
   loadInitialMessages();
+
+  // Khi scorll lên load thêm những tin nhắn cũ
+  let isLoading = false;
+  let hasMore = true;
+
+  chatbody.addEventListener("scroll", async () => {
+    if (chatBody.scrollTop === 0 && !isLoading && hasMore) {
+      isLoading = true;
+
+
+      const lastMessage = chatBody.querySelector(".message");
+      const lastMessageId = lastMessage.getAttribute("id");
+
+      if (!lastMessageId) return;
+
+      const res = await fetch(`/chat/messages?lastMessageId=${lastMessageId}&limit=20`);
+      const data = await res.json();
+
+      if (data.messages.length === 0) {
+        hasMore = false;
+      } else {
+        const oldHeight = chatBody.scrollHeight;
+
+        data.messages.forEach(item => {
+          appendMessage(item, true);
+        });
+
+        const newHeight = chatBody.scrollHeight;
+
+        // Giữ nguyên vị trí scroll
+        chatBody.scrollTop = newHeight - oldHeight;
+      }
+
+      isLoading = false;
+    }
+  });
 }
