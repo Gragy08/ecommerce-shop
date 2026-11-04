@@ -75,6 +75,19 @@ export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: an
 
   // Lắng nghe sự kiện CLIENT_SEND_MESSAGE
   socket.on('CLIENT_SEND_MESSAGE', async (data) => {
+    // Kiểm tra trạng thái phòng chat
+    const chatRoomDetail = await ChatRoom.findOne({
+      _id: chatRoom.id
+    })
+
+    if(chatRoomDetail?.status === 'locked') {
+      socket.emit('SERVER_SEND_STATUS', {
+        code: 'error',
+        message: 'Phòng chat bị khóa!'
+      })
+      return;
+    }
+
     // Lưu tin nhắn vào CSDL
     const message = {
       roomId: chatRoom.id,

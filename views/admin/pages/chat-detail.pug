@@ -18,6 +18,26 @@ block main
                 h6.my-0.fw-medium.text-dark.fs-14 #{infoUser.fullName}
                 p.text-success.mb-0 Đang online
           .d-none.d-sm-inline-block.align-self-center
+            if (chatRoomDetail.status === 'open')
+              a.me-2.text-muted(
+                data-bs-custom-class="tooltip-primary"
+                data-bs-title="Đang mở. Khóa lại!" 
+                data-bs-placement="top"
+                data-bs-toggle="tooltip"
+                href="javascript:;"
+                button-lock="locked"
+                )
+                i.iconoir-lock.fs-22
+            if (chatRoomDetail.status === 'locked')
+              a.me-2.text-muted(
+                data-bs-custom-class="tooltip-primary"
+                data-bs-title="Đang khóa. Mở lại!" 
+                data-bs-placement="top"
+                data-bs-toggle="tooltip"
+                href="javascript:;"
+                button-lock="open"
+                )
+                i.iconoir-lock-slash.fs-22
             a.me-2.text-muted(
               data-bs-custom-class="tooltip-primary" 
               data-bs-title="Xóa đoạn chat" 

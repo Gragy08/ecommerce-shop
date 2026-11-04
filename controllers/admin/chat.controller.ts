@@ -208,3 +208,40 @@ export const uploadPost = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const changeStatusPatch = async (req: Request, res: Response) => {
+  try {
+    const adminId = res.locals.accountAdmin.id;
+    const { roomId, status } = req.body;
+
+    const chatRoomDetail = await ChatRoom.findOne({
+      adminId: adminId,
+      _id: roomId
+    });
+
+    if(!chatRoomDetail) {
+      res.json({
+        code: "error",
+        message: "Không tìm thấy phòng chat!"
+      })
+      return;
+    }
+
+    await ChatRoom.updateOne({
+      _id: roomId
+    }, {
+      status: status
+    })
+    
+    res.json({
+      code: "success",
+      message: "Đã đổi trạng thái!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}

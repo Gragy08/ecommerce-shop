@@ -254,4 +254,34 @@ if(formChat) {
 
     chatFile.value = ""; // Xóa file khỏi input
   });
+
+  // Đổi trạng thái phòng chat
+  const buttonLock = document.querySelector("[button-lock]");
+  buttonLock.addEventListener("click", () => {
+    const status = buttonLock.getAttribute("button-lock");
+    
+    const dataFinal = {
+      status: status,
+      roomId: chatRoomId
+    };
+
+    fetch(`/${pathAdmin}/chat/change-status`, {
+      method: "PATCH",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dataFinal),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if(data.code == "error") {
+          notyf.error(data.message);
+        }
+
+        if(data.code == "success") {
+          drawNotify("success", data.message);
+          window.location.reload();
+        }
+      })
+  });
 }
