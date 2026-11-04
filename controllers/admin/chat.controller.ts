@@ -6,8 +6,9 @@ import ChatMessage from '../../models/chat-message.model';
 import { timeAgo } from '../../helpers/format.helper';
 
 export const myChatList = async (req: Request, res: Response) => {
+  const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
   // Danh sách phòng chat
-  const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id);
+  const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id, isSuperAdmin);
   
   res.render("admin/pages/my-chat-list", {
     pageTitle: "Danh sách tin nhắn của bạn",
@@ -17,14 +18,18 @@ export const myChatList = async (req: Request, res: Response) => {
 
 export const detail = async (req: Request, res: Response) => {
   try {
+    const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
     // Danh sách phòng chat
-    const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id);
+    const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id, isSuperAdmin);
 
     // Chi tiết phòng chat
     const id = req.params.id;
-    const chatRoomDetail = await ChatRoom.findOne({
-      _id: id
-    });
+    const findRoom: any = { _id: id };
+    if (!isSuperAdmin) {
+      findRoom.adminId = res.locals.accountAdmin.id;
+    }
+
+    const chatRoomDetail = await ChatRoom.findOne(findRoom);
 
     if(!chatRoomDetail) {
       res.redirect('/admin/dashboard');
@@ -64,6 +69,7 @@ export const detail = async (req: Request, res: Response) => {
 
 export const messages = async (req: Request, res: Response) => {
   const adminId = res.locals.accountAdmin.id;
+  const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
   const { limit = 20, roomId, lastMessageId } = req.query;
 
   if(!adminId) {
@@ -75,10 +81,12 @@ export const messages = async (req: Request, res: Response) => {
   }
 
   // Lấy thông tin phòng chat
-  const chatRoom = await ChatRoom.findOne({
-    adminId: adminId,
-    _id: roomId
-  });
+  const findRoom: any = { _id: roomId };
+  if (!isSuperAdmin) {
+    findRoom.adminId = adminId;
+  }
+
+  const chatRoom = await ChatRoom.findOne(findRoom);
 
   if(!chatRoom) {
     res.json({

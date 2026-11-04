@@ -3,10 +3,13 @@ import ChatMessage from "../models/chat-message.model";
 import ChatRoom from "../models/chat-room.model";
 import { timeAgo } from "./format.helper";
 
-export const getChatRoomList = async (adminId: string) => {
-  const chatRoomList: any = await ChatRoom.find({
-    adminId: adminId
-  });
+export const getChatRoomList = async (adminId: string, isSuperAdmin: boolean = false) => {
+  const find: any = {};
+  if (!isSuperAdmin) {
+    find.adminId = adminId;
+  }
+
+  const chatRoomList: any = await ChatRoom.find(find);
 
   for (const item of chatRoomList) {
     // Lấy thông tin user

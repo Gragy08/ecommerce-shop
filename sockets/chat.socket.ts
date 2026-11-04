@@ -1,8 +1,9 @@
 import { Server, Socket } from "socket.io";
 import ChatRoom from "../models/chat-room.model";
 import ChatMessage from "../models/chat-message.model";
+import AccountAdmin from "../models/account-admin.model";
 
-export const chatSocket = async (io: Server, socket: Socket) => {
+export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: any) => {
   const account = socket.data.account;
   if(!account) return;
 
@@ -13,10 +14,42 @@ export const chatSocket = async (io: Server, socket: Socket) => {
       userId: account.id
     });
     if(!chatRoom) {
+      // Id của admin được chọn
+      let selectedAdminId: any = "";
+      
+      // Danh sách id admin online
+      const listIdAdminOnline = Array.from(listAdminOnline.keys());
+
+      // Nếu có admin online
+      if (listIdAdminOnline.length > 0) {
+        // Lấy admin online đầu tiên
+        selectedAdminId = listIdAdminOnline[0];
+        // Đến số lượng phòng chat của admin đầu tiên
+        let minRoom = await ChatRoom.countDocuments({
+          adminId: selectedAdminId
+        });
+        // Lặp qua từng admin để tìm ra admin có số lượng phòng chat nhỏ nhất
+        for (const adminId of listIdAdminOnline) {
+          const totalRooms = await ChatRoom.countDocuments({
+            adminId: adminId || ""
+          });
+          // Nếu số lượng phòng chat của admin nhỏ hơn minRoom thì chọn admin này
+          if (totalRooms < minRoom) {
+            minRoom = totalRooms;
+            selectedAdminId = adminId;
+          }
+        }
+      } else { // Nếu không thì lấy admin bất kỳ
+        const randomAdmin = await AccountAdmin.findOne().select("_id");
+        if (randomAdmin) {
+          selectedAdminId = randomAdmin.id;
+        }
+      }
+
       // Tạo phòng chat cho user
       chatRoom = await ChatRoom.create({
         userId: account.id,
-        adminId: `${process.env.SUPER_ADMIN_ID}`,
+        adminId: selectedAdminId,
         unreadCount: {
           user: 0,
           admin: 0
@@ -26,10 +59,13 @@ export const chatSocket = async (io: Server, socket: Socket) => {
     }
   } else if(account.role === 'admin') {
     if(!account.roomId) return;
-    chatRoom = await ChatRoom.findOne({
-      adminId: `${process.env.SUPER_ADMIN_ID}`,
-      _id: account.roomId
-    });
+    const isSuperAdmin = account.id === process.env.SUPER_ADMIN_ID;
+    const findRoom: any = { _id: account.roomId };
+    if (!isSuperAdmin) {
+      findRoom.adminId = account.id;
+    }
+
+    chatRoom = await ChatRoom.findOne(findRoom);
   }
 
   if(!chatRoom) return;

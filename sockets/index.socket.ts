@@ -37,6 +37,6 @@ export const initSocket = (io: Server) => {
     });
 
     // Chat Socket
-    chatSocket(io, socket);
+    chatSocket(io, socket, listAdminOnline);
   });
 }
