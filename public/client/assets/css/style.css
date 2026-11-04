@@ -12465,3 +12465,19 @@ footer {
   cursor: pointer;
 }
 /* End CHAT */
+
+#chat-button .chat-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: red;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+}

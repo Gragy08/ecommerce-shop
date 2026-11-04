@@ -30,7 +30,7 @@ router.use(seoMiddleware.canonical);
 
 router.use(settingMiddleware.assetVersion);
 
-router.use(chatMiddleware.getChatMessage);
+router.use(chatMiddleware.getChatMessageTotal);
 
 router.use('/', homeRoutes);
 

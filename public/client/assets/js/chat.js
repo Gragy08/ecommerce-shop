@@ -7,6 +7,7 @@ if(chatButton) {
   const chatPopup = document.querySelector("#chat-popup");
   const chatClose = document.querySelector("#chat-close");
   const chatBody = document.querySelector("#chat-body");
+  const chatCount = chatButton.querySelector(".chat-count");
 
   // Đóng/mở chat
   chatButton.addEventListener("click", () => {
@@ -14,6 +15,12 @@ if(chatButton) {
     // Khi mở chat scroll xuống tin nhắn mới nhất
     if(!chatPopup.classList.contains("hidden")) {
       chatBody.scrollTop = chatBody.scrollHeight;
+
+      // Gửi lên server biết chat đang mở
+      socket.emit("CLIENT_OPEN_CHAT", {
+        isOpen: true
+      });
+      chatCount.innerHTML = "0";
     }
   });
 
@@ -56,6 +63,16 @@ if(chatButton) {
   socket.on("SERVER_SEND_MESSAGE", (data) => {
     appendMessage(data);
     chatBody.scrollTop = chatBody.scrollHeight;
+
+    // Nếu chat đang đóng, tăng số lượng tin nhắn chưa đọc
+    if(chatPopup.classList.contains("hidden")) {
+      chatCount.innerHTML = parseInt(chatCount.innerHTML) + 1;
+    } else {
+      socket.emit("CLIENT_OPEN_CHAT", {
+        isOpen: true
+      });
+      chatCount.innerHTML = "0";
+    }
   });
 
   // Load 20 tin nhắn gần nhất
