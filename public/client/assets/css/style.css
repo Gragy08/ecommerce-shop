@@ -12565,3 +12565,41 @@ footer {
   font-weight: bold;
   overflow: hidden;
 }
+
+.chat-rate {
+  padding:10px;
+  border-top:1px solid #eee;
+  background:#fff;
+}
+
+.chat-rate .rate-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.chat-rate .rate-stars span {
+  font-size: 20px;
+  color: #ccc;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.chat-rate .rate-stars .star.active {
+  color:#ffc107;
+}
+
+.chat-rate textarea {
+  width: 100%;
+  height: 60px;
+  font-size: 13px;
+}
+
+.chat-rate .button-submit {
+  background: #8BC34A;
+  color: white;
+  font-size: 14px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-weight: 500;
+}

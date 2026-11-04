@@ -126,3 +126,46 @@ export const uploadPost = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const ratePost = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.accountUser.id;
+    const { stars, comment } = req.body;
+
+    const chatRoom = await ChatRoom.findOne({
+      userId: userId,
+      status: "open"
+    });
+
+    if(!chatRoom) {
+      res.json({
+        code: "error",
+        message: "Không tìm thấy phòng chat!"
+      })
+      return;
+    }
+
+    await ChatRoom.updateOne({
+      _id: chatRoom.id
+    }, {
+      $push: {
+        rating: {
+          stars: stars,
+          comment: comment,
+          ratedAt: new Date()
+        }
+      }
+    });
+    
+    res.json({
+      code: "success",
+      message: "Cảm ơn bạn đã gửi đánh giá!"
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}

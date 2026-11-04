@@ -248,3 +248,69 @@ socket.on("SERVER_SEND_STATUS", (data) => {
     notyf.error(message);
   }
 });
+
+// Đánh giá
+const buttonRate = document.querySelector("#button-rate");
+if(buttonRate) {
+  const chatRate = document.querySelector("#chat-rate");
+  const buttonRateClose = document.querySelector("#button-rate-close");
+  const starList = document.querySelectorAll("#rate-stars .star");
+  const rateContent = document.querySelector("#rate-content");
+  const rateSubmit = document.querySelector("#rate-submit");
+
+  // Đóng/mở đánh giá
+  buttonRate.addEventListener("click", () => {
+    chatRate.classList.remove("d-none");
+  });
+
+  buttonRateClose.addEventListener("click", () => {
+    chatRate.classList.add("d-none");
+  });
+
+  // Chọn số sao
+  starList.forEach((star, index) => {
+    star.addEventListener("click", () => {
+      starList.forEach(s => s.classList.remove("active"));
+      for(let i = 0; i <= index; i++){
+        starList[i].classList.add("active");
+      }
+    });
+  });
+
+  // Gửi đánh giá
+  rateSubmit.addEventListener("click", () => {
+    const totalStar = document.querySelectorAll("#rate-stars .star.active").length;
+    const comment = rateContent.value.trim();
+
+    if(totalStar <= 0) {
+      notyf.error("Vui lý nhập số sao đánh giá!");
+      return;
+    }
+
+    const dataFinal = {
+      stars: totalStar,
+      comment: comment
+    };
+
+    fetch(`/chat/rate`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dataFinal),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if(data.code == "error") {
+          notyf.error(data.message);
+        }
+
+        if(data.code == "success") {
+          notyf.success(data.message);
+          chatRate.classList.add("d-none");
+          starList.forEach(s => s.classList.remove("active"));
+          rateContent.value = "";
+        }
+      })
+  });
+}

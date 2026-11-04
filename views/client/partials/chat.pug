@@ -5,12 +5,26 @@ if (accountUser)
   #chat-popup.hidden
     .chat-header
       span 💬 Chat với chúng tôi
-      button#chat-close ✕
+      .d-flex.gap-2
+        button#button-rate(title="Viết đánh giá") 🌟
+        button#chat-close ✕
     #chat-body.chat-body
       //- if (chatMessages)
       //-   each item in chatMessages
       //-     div(class=`message ${item.senderRole}` title=item.createdAtFormat)
       //-       .bubble #{item.content}
+    #chat-rate.chat-rate.d-none
+      .d-flex.align-items-center.justify-content-between
+        .rate-title Đánh giá đoạn chat
+        button#button-rate-close.bg-white ✕
+      .rate-stars#rate-stars
+        span.star(data-value="1") ★
+        span.star(data-value="2") ★
+        span.star(data-value="3") ★
+        span.star(data-value="4") ★
+        span.star(data-value="5") ★
+      textarea#rate-content(placeholder="Nhập đánh giá của bạn...")
+      button.button-submit#rate-submit Gửi đánh giá
     #chat-typing.chat-typing Admin đang nhập...
     #chat-preview.chat-preview.d-none
     .chat-footer
