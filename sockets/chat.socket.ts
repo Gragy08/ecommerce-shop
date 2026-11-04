@@ -111,4 +111,9 @@ export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: an
       ...message
     });
   });
+
+  // Lắng nghe sự kiện ADMIN_TYPING
+  socket.on("ADMIN_TYPING", (data) => {
+    socket.to(chatRoom.id).emit("SERVER_SEND_ADMIN_TYPING", data);
+  });
 }

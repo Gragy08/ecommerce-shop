@@ -123,4 +123,26 @@ if(formChat) {
       }
     });
   });
+
+  // Gửi tín hiệu đang gõ
+  let typingTimeout;
+  let isTyping = false; // Để biết đang gõ hay không
+
+  inputContent.addEventListener("keyup", () => {
+    if (!isTyping) {
+      isTyping = true;
+      socket.emit("ADMIN_TYPING", {
+        isTyping: true
+      });
+    }
+
+    clearTimeout(typingTimeout); // Khi vẫn đang gõ thì không chạy vào setTimeout
+
+    typingTimeout = setTimeout(() => {
+      isTyping = false;
+      socket.emit("ADMIN_TYPING", {
+        isTyping: false
+      });
+    }, 2000);
+  });
 }
