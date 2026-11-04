@@ -194,3 +194,32 @@
   align-items: center;
   justify-content: center;
 }
+
+.chat-box {
+  position: relative;
+}
+
+.chat-box:hover {
+  background: #eaeaea;
+  border-radius: 8px;
+}
+
+.chat-box .delete-message {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-box:hover .delete-message {
+  display: flex;
+}
