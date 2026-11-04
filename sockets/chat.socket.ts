@@ -81,7 +81,7 @@ export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: an
       senderId: account.id,
       senderRole: account.role,
       content: data.content,
-      files: [],
+      files: data.files,
     }
     const newMessage = new ChatMessage(message);
     await newMessage.save();

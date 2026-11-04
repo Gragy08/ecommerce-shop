@@ -33,10 +33,38 @@ if(formChat) {
       elementMessage.classList.add("flex-row-reverse");
     }
     elementMessage.setAttribute("id", item._id);
+    let html = "";
+    // Hiển thị content
+    if (item.content) {
+      html += `
+        <p>${item.content}</p>
+      `;
+    }
+    // Hiển thị files
+    if (item.files && item.files.length > 0) {
+      html += `<div class="chat-files">`;
+      item.files.forEach(file => {
+        const ext = file.split(".").pop().toLowerCase();
+        if (["jpg","jpeg","png","gif","webp"].includes(ext)) {
+          html += `
+            <a href="${domainCDN}${file}" target="_blank">
+              <img src="${domainCDN}${file}" class="chat-image">
+            </a>
+          `;
+        } else {
+          html += `
+            <a href="${domainCDN}${file}" target="_blank">
+              📄 File đính kèm
+            </a>
+          `;
+        }
+      });
+      html += `</div>`;
+    }
     elementMessage.innerHTML = `
       <div class="chat-box w-100 ${item.senderRole === 'admin' ? 'reverse' : ''}">
         <div class="user-chat" title="${item.createdAtFormat}">
-          <p>${item.content}</p>
+          ${html}
         </div>
       </div>
     `;

@@ -12,9 +12,13 @@ if (accountUser)
       //-     div(class=`message ${item.senderRole}` title=item.createdAtFormat)
       //-       .bubble #{item.content}
     #chat-typing.chat-typing Admin đang nhập...
+    #chat-preview.chat-preview.d-none
     .chat-footer
       input#chat-input(
         placeholder="Nhập tin nhắn..." 
         type="text"
         )
+      input#chat-file(type="file" multiple hidden)
+      button.bg-warning#chat-attach
+        <i class="fas fa-file-upload"></i>
       button#chat-send Gửi

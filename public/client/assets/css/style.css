@@ -12481,3 +12481,87 @@ footer {
   font-size: 12px;
   font-weight: 600;
 }
+
+.chat-preview {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  max-height: 100px;
+}
+
+.preview-item {
+  position: relative;
+  width: 80px;
+}
+
+.preview-item img {
+  width: 100%;
+  border-radius: 8px;
+  max-height: 92px;
+}
+
+.preview-item .preview-file {
+  background: #f1f1f1;
+  padding: 10px;
+  border-radius: 8px;
+  word-break: break-word;
+  font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* tối đa 3 dòng */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.preview-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message {
+  flex-wrap: wrap;
+}
+
+.message-files {
+  margin-top: 5px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.message.user .message-files {
+  justify-content: flex-end;
+}
+
+.chat-image {
+  width: 100% !important;
+  object-fit: contain !important;
+}
+
+.message-files a {
+  width: 110px !important;
+  border-radius: 8px;
+  cursor: pointer;
+  object-fit: contain !important;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  font-weight: bold;
+  overflow: hidden;
+}

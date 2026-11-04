@@ -114,3 +114,30 @@
 .chat-box-right .chat-body {
   overflow-y: auto;
 }
+
+.chat-files {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat-files .chat-image {
+  width: 100% !important;
+  object-fit: contain !important;
+}
+
+.chat-files a {
+  width: 110px !important;
+  border-radius: 8px;
+  cursor: pointer;
+  object-fit: contain !important;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  font-weight: bold;
+  overflow: hidden;
+}
