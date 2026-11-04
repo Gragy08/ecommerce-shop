@@ -20,7 +20,7 @@ export const detail = async (req: Request, res: Response) => {
   try {
     const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
     // Danh sách phòng chat
-    const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id, isSuperAdmin);
+    // const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id, isSuperAdmin);
 
     // Chi tiết phòng chat
     const id = req.params.id;
@@ -54,6 +54,19 @@ export const detail = async (req: Request, res: Response) => {
     for (const item of chatMessages) {
       item.createdAtFormat = timeAgo(item.createdAt);
     }
+
+    // Cập nhật số tin nhắn chưa đọc = 0
+    const updateQuery: any = { _id: id };
+    if (!isSuperAdmin) {
+      updateQuery.adminId = res.locals.accountAdmin.id;
+    }
+
+    await ChatRoom.updateOne(updateQuery, {
+      "unreadCount.admin": 0
+    });
+
+    // Danh sách phòng chat
+    const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id, isSuperAdmin);
 
     res.render("admin/pages/chat-detail", {
       pageTitle: "Chi tiết tin nhắn",
