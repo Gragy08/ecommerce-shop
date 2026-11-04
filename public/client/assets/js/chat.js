@@ -80,6 +80,10 @@ if(chatButton) {
     //   <div class="bubble">${item.content}</div>
     // `;
     let html = "";
+    // Thêm nút xóa
+    if (item.senderRole == "user") {
+      html += `<span class="delete-message" data-id="${item._id}" title="Xóa tin nhắn">✕</span>`;
+    }
     // Hiển thị content
     if (item.content) {
       html += `
@@ -237,6 +241,18 @@ if(chatButton) {
 
     chatFile.value = ""; // Xóa file khỏi input
   });
+
+  // Xóa tin nhắn
+  chatBody.addEventListener("click", (event) => {
+    if (event.target.classList.contains("delete-message")) {
+      const isConfirm = confirm("Bạn có chắc muốn xóa tin nhắn này?");
+      if (!isConfirm) return;
+      const messageId = event.target.getAttribute("data-id");
+      socket.emit("CLIENT_DELETE_MESSAGE", {
+        messageId: messageId
+      });
+    }
+  });
 }
 
 // Lắng nghe sự kiện SERVER_SEND_STATUS
@@ -314,3 +330,12 @@ if(buttonRate) {
       })
   });
 }
+
+// Lắng nghe sự kiện SERVER_DELETE_MESSAGE
+socket.on("SERVER_DELETE_MESSAGE", (data) => {
+  const { messageId } = data;
+  const messageItem = document.querySelector(`#chat-body .message[id="${messageId}"]`);
+  if(messageItem) {
+    messageItem.remove();
+  }
+});

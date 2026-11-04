@@ -2,6 +2,9 @@ import { Server, Socket } from "socket.io";
 import ChatRoom from "../models/chat-room.model";
 import ChatMessage from "../models/chat-message.model";
 import AccountAdmin from "../models/account-admin.model";
+import axios from "axios";
+import { domainCDN } from "../configs/variable.config";
+import FormData from 'form-data';
 
 export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: any) => {
   const account = socket.data.account;
@@ -139,5 +142,45 @@ export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: an
         "unreadCount.user": 0
       });
     }
+  });
+
+  // Lắng nghe sự kiện CLIENT_DELETE_MESSAGE
+  socket.on('CLIENT_DELETE_MESSAGE', async (data) => {
+    const { messageId } = data;
+
+    const existMessage = await ChatMessage.findOne({
+      _id: messageId,
+      senderId: account.id
+    });
+    if(!existMessage) return;
+
+    // Xóa các file trong tin nhắn
+    if(existMessage.files.length > 0) {
+      for (const file of existMessage.files) {
+        const lastSlashIndex = file.lastIndexOf("/");
+        const folder = file.substring(0, lastSlashIndex);
+        const fileName = file.substring(lastSlashIndex + 1);
+        const formDataDelete = new FormData();
+        formDataDelete.append("folder", folder);
+        formDataDelete.append("fileName", fileName);
+
+        axios.patch(`${domainCDN}/file-manager/delete-file`, formDataDelete, {
+          headers: {
+            ...formDataDelete.getHeaders(),
+            Authorization: `Bearer ${process.env.FILE_MANAGER_SECRET}`
+          }
+        });
+      }
+    }
+
+    // Xóa tin nhắn
+    await ChatMessage.deleteOne({
+      _id: messageId
+    });
+
+    // Phản hồi về cho đúng phòng chat
+    io.to(chatRoom.id).emit('SERVER_DELETE_MESSAGE', {
+      messageId: messageId
+    });
   });
 }

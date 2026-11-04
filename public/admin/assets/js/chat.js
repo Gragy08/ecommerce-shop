@@ -284,4 +284,13 @@ if(formChat) {
         }
       })
   });
+
+  // Lắng nghe sự kiện SERVER_DELETE_MESSAGE
+  socket.on("SERVER_DELETE_MESSAGE", (data) => {
+    const { messageId } = data;
+    const messageItem = document.querySelector(`.chat-detail [id="${messageId}"]`);
+    if(messageItem) {
+      messageItem.remove();
+    }
+  });
 }
