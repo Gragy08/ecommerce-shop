@@ -61,3 +61,59 @@ export const detail = async (req: Request, res: Response) => {
     res.redirect('/admin/dashboard');
   }
 }
+
+export const messages = async (req: Request, res: Response) => {
+  const adminId = res.locals.accountAdmin.id;
+  const { limit = 20, roomId, lastMessageId } = req.query;
+
+  if(!adminId) {
+    res.json({
+      code: "error",
+      message: "Thất bại!"
+    })
+    return;
+  }
+
+  // Lấy thông tin phòng chat
+  const chatRoom = await ChatRoom.findOne({
+    adminId: adminId,
+    _id: roomId
+  });
+
+  if(!chatRoom) {
+    res.json({
+      code: "error",
+      message: "Thất bại!"
+    })
+    return;
+  }
+
+  // Danh sách tin nhắn
+  const find: any = {
+    roomId: chatRoom?.id
+  };
+
+  if(lastMessageId) {
+    find._id = {
+      $lt: lastMessageId
+    };
+  }
+
+  const chatMessages: any = await ChatMessage
+    .find(find)
+    .sort({
+      createdAt: "desc" // mới nhất trước
+    })
+    .limit(parseInt(`${limit}`))
+    .lean();
+
+  for (const item of chatMessages) {
+    item.createdAtFormat = timeAgo(item.createdAt);
+  }
+  
+  res.json({
+    code: "success",
+    message: "Thành công!",
+    messages: lastMessageId ? chatMessages : chatMessages.reverse()
+  })
+}

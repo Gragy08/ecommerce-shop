@@ -26,20 +26,20 @@ block main
               href="#"
               )
               i.iconoir-trash.fs-22
-        .chat-body(data-simplebar="")
+        .chat-body
           .chat-detail
-            if (chatMessages)
-              each item in chatMessages
-                if (item.senderRole === 'user')
-                  .d-flex
-                    .chat-box.w-100
-                      .user-chat(title=item.createdAtFormat)
-                        p #{item.content}
-                else if (item.senderRole === 'admin')
-                  .d-flex.flex-row-reverse
-                    .chat-box.w-100.reverse
-                      .user-chat(title=item.createdAtFormat)
-                        p #{item.content}
+            //- if (chatMessages)
+            //-   each item in chatMessages
+            //-     if (item.senderRole === 'user')
+            //-       .d-flex
+            //-         .chat-box.w-100
+            //-           .user-chat(title=item.createdAtFormat)
+            //-             p #{item.content}
+            //-     else if (item.senderRole === 'admin')
+            //-       .d-flex.flex-row-reverse
+            //-         .chat-box.w-100.reverse
+            //-           .user-chat(title=item.createdAtFormat)
+            //-             p #{item.content}
         .chat-footer(form-chat)
           .row
             .col-12.col-md-8

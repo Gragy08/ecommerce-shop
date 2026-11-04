@@ -7,4 +7,6 @@ router.get('/list/my-chat', chatController.myChatList);
 
 router.get('/detail/:id', chatController.detail);
 
+router.get('/messages', chatController.messages);
+
 export default router;
