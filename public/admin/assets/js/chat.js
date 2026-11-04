@@ -101,4 +101,26 @@ if(formChat) {
       isLoading = false;
     }
   }); 
+
+  // Lắng nghe sự kiện USER_STATUS_ONLINE
+  socket.on("USER_STATUS_ONLINE", (data) => {
+    const elementUserOnlineBoxLeft = document.querySelector(`.chat-body-left [user-id="${data.id}"] [user-status]`);
+    if(elementUserOnlineBoxLeft) {
+      if(data.status == "online") {
+      elementUserOnlineBoxLeft.classList.remove("d-none");
+      } else if (data.status == "offline") {
+        elementUserOnlineBoxLeft.classList.add("d-none");
+      }
+    }
+  });
+
+  // Danh sách user đang online
+  socket.on("LIST_USER_ONLINE", (data) => {
+    data.listUserOnline.forEach(id => {
+      const elementUserOnlineBoxLeft = document.querySelector(`.chat-body-left [user-id="${id}"] [user-status]`);
+      if(elementUserOnlineBoxLeft) {
+        elementUserOnlineBoxLeft.classList.remove("d-none");
+      }
+    });
+  });
 }
