@@ -4,6 +4,9 @@ import ChatRoom from '../../models/chat-room.model';
 import AccountUser from '../../models/account-user.model';
 import ChatMessage from '../../models/chat-message.model';
 import { timeAgo } from '../../helpers/format.helper';
+import FormData from 'form-data';
+import axios from 'axios';
+import { domainCDN } from '../../configs/variable.config';
 
 export const myChatList = async (req: Request, res: Response) => {
   const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
@@ -137,4 +140,71 @@ export const messages = async (req: Request, res: Response) => {
     message: "Thành công!",
     messages: lastMessageId ? chatMessages : chatMessages.reverse()
   })
+}
+
+export const uploadPost = async (req: Request, res: Response) => {
+  try {
+    const adminId = res.locals.accountAdmin.id;
+    const roomId = req.body.roomId;
+    const files = req.files as Express.Multer.File[];
+
+    if(!files || !files.length) {
+      res.json({
+        code: "error",
+        message: "Vui lòng gửi kèm file!"
+      })
+      return;
+    }
+
+    const chatRoomDetail = await ChatRoom.findOne({
+      adminId: adminId,
+      _id: roomId
+    });
+
+    if(!chatRoomDetail) {
+      res.json({
+        code: "error",
+        message: "Không tìm thấy phòng chat!"
+      })
+      return;
+    }
+
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype
+      });
+    })
+    formData.append('folderPath', `chats/${chatRoomDetail.userId}`);
+
+    const response = await axios.post(`${domainCDN}/file-manager/upload`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        Authorization: `Bearer ${process.env.FILE_MANAGER_SECRET}`
+      } // cần thiết để gửi đúng multipart/form-data
+    });
+
+    if(response.data.code == "error") {
+      res.json({
+        code: "error",
+        message: "Lỗi upload!"
+      })
+      return;
+    }
+    
+    const saveLinks = response.data.saveLinks;
+    const fileUrls = saveLinks.map((item: any) => `${item.folder}/${item.filename}`);
+    res.json({
+      code: "success",
+      message: "Upload thành công!",
+      fileUrls: fileUrls
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
 }

@@ -40,6 +40,7 @@ block main
             //-         .chat-box.w-100.reverse
             //-           .user-chat(title=item.createdAtFormat)
             //-             p #{item.content}
+        #chat-preview.chat-preview.d-none
         .chat-footer(form-chat)
           .row
             .col-12.col-md-8
@@ -50,9 +51,8 @@ block main
                 )
             .col-4.text-end
               .d-none.d-sm-inline-block.chat-features
-                a(href="#")
-                  i.iconoir-camera
-                a(href="#")
+                input#chat-file(type="file" multiple hidden)
+                a(href="javascript:;" id="chat-attach")
                   i.iconoir-attachment
                 a.text-primary(href="javascript:;" button-send)
                   i.iconoir-send-solid

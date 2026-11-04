@@ -141,3 +141,56 @@
   font-weight: bold;
   overflow: hidden;
 }
+
+.chat-preview {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  max-height: 100px;
+  position: absolute;
+  bottom: 68px;
+  width: 100%;
+  background: white;
+}
+
+.preview-item {
+  position: relative;
+  width: 80px;
+}
+
+.preview-item img {
+  width: 100%;
+  border-radius: 8px;
+  max-height: 92px;
+}
+
+.preview-item .preview-file-item {
+  background: #f1f1f1;
+  padding: 10px;
+  border-radius: 8px;
+  word-break: break-word;
+  font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* tối đa 3 dòng */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 84px;
+}
+
+.preview-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

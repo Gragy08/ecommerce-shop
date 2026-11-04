@@ -6,6 +6,10 @@ if(formChat) {
   const chatRoomId = document.querySelector("[chat-room-id]").getAttribute("chat-room-id");
   const chatDetail = document.querySelector(".chat-detail");
   const chatBody = document.querySelector(".chat-body");
+  const chatFile = document.querySelector("#chat-file");
+  const chatAttach = document.querySelector("#chat-attach");
+  const chatPreview = document.querySelector("#chat-preview");
+  let selectedFiles = [];
 
   // Khởi tạo SocketIO bên Admin
   const socket = io({
@@ -14,14 +18,39 @@ if(formChat) {
     }
   });
 
-  buttonSend.addEventListener("click", () => {
+  buttonSend.addEventListener("click", async () => {
+    // Gửi files lên backend để lấy link file
+    let fileUrls = [];
+    if (selectedFiles.length > 0) {
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append("files", file);
+      });
+      formData.append("roomId", chatRoomId);
+
+      const res = await fetch(`/${pathAdmin}/chat/upload`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+
+      if (data.code === "success") {
+        fileUrls = data.fileUrls;
+      }
+    }
+
     const content = inputContent.value.trim();
-    if(content) {
+
+    if(content || fileUrls.length > 0) {
       // Gửi tin nhắn lên cho server
       socket.emit("CLIENT_SEND_MESSAGE", {
-        content: content
+        content: content,
+        files: fileUrls
       });
       inputContent.value = "";
+      selectedFiles = [];
+      chatPreview.innerHTML = "";
+      chatPreview.classList.add("d-none");
     }
   })
 
@@ -172,5 +201,57 @@ if(formChat) {
         isTyping: false
       });
     }, 2000);
+  });
+
+  // Click vào nút attach thì mở phần chọn file
+  chatAttach.addEventListener("click", () => {
+    chatFile.click();
+  });
+
+  // Chọn file
+  chatFile.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files); // Danh sách file từ dạng object chuyển thành dạnh mảng
+
+    files.forEach(file => {
+      selectedFiles.push(file);
+
+      const reader = new FileReader(); // Khởi tạo đọc file
+
+      const previewItem = document.createElement("div"); // Tạo phần preview
+      previewItem.classList.add("preview-item"); // Thêm class preview-item cho phần preview
+
+      // Nếu là ảnh thì hiển thị img
+      if (file.type.startsWith("image/")) {
+        reader.onload = (event) => { // Khi đọc file xảy ra sự kiện
+          previewItem.innerHTML = `
+            <img src="${event.target.result}" />
+            <div class="preview-remove">×</div>
+          `;
+        };
+        reader.readAsDataURL(file); // Đọc file với dạng data url
+      } else {
+        // Nếu không phải ảnh
+        previewItem.innerHTML = `
+          <div class="preview-file-item">
+            📄 ${file.name}
+          </div>
+          <div class="preview-remove">×</div>
+        `;
+      }
+
+      // Xử lý xoá file
+      previewItem.addEventListener("click", () => {
+        selectedFiles = selectedFiles.filter(f => f !== file); // Xóa file trong danh sách
+        previewItem.remove(); // Xóa phần preview
+        if(selectedFiles.length === 0) {
+          chatPreview.classList.add("d-none");
+        }
+      });
+
+      chatPreview.appendChild(previewItem); // Chèn item vào giao diện
+      chatPreview.classList.remove("d-none");
+    });
+
+    chatFile.value = ""; // Xóa file khỏi input
   });
 }
