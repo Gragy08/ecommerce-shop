@@ -6,7 +6,7 @@ import ChatMessage from '../../models/chat-message.model';
 import { timeAgo } from '../../helpers/format.helper';
 import FormData from 'form-data';
 import axios from 'axios';
-import { domainCDN } from '../../configs/variable.config';
+import { domainCDN, pathAdmin } from '../../configs/variable.config';
 
 export const myChatList = async (req: Request, res: Response) => {
   const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
@@ -243,5 +243,34 @@ export const changeStatusPatch = async (req: Request, res: Response) => {
       code: "error",
       message: "Dữ liệu không hợp lệ!"
     })
+  }
+}
+
+export const rate = async (req: Request, res: Response) => {
+  try {    
+    // Chi tiết phòng chat
+    const id = req.params.id;
+    const chatRoomDetail = await ChatRoom.findOne({
+      _id: id
+    });
+
+    if(!chatRoomDetail) {
+      res.redirect(`/${pathAdmin}/dashboard`);
+      return;
+    }
+
+    const ratingList = chatRoomDetail.rating.reverse();
+
+    // Danh sách phòng chat
+    const chatRoomList: any = await getChatRoomList(res.locals.accountAdmin.id);
+    
+    res.render("admin/pages/chat-rate", {
+      pageTitle: "Chi tiết tin nhắn",
+      chatRoomList: chatRoomList,
+      chatRoomDetail: chatRoomDetail,
+      ratingList: ratingList
+    });
+  } catch (error) {
+    res.redirect('/admin/dashboard');
   }
 }

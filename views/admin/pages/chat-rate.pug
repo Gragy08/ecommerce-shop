@@ -1,0 +1,29 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      h4.card-title.mb-2 #{pageTitle}
+      include ../partials/chat-box-left.pug
+      .chat-box-right(chat-room-id=chatRoomDetail.id)
+        .p-3.card-bg.rounded
+          h5.mb-3 Danh sách đánh giá
+
+          if ratingList && ratingList.length > 0
+            each item in ratingList
+              .border.rounded.p-2.mb-2
+                .d-flex.justify-content-between.align-items-center
+                  .fs-20
+                    - for (let i = 1; i <= 5; i++)
+                      if i <= item.stars
+                        span.text-warning ★
+                      else
+                        span.text-muted ★
+                  .text-muted
+                    | #{item.ratedAt.toLocaleString("vi-VN")}
+                if item.comment
+                  .mt-2
+                    | #{item.comment}
+          else
+            .alert.alert-info
+              | Chưa có đánh giá nào cho đoạn chat này

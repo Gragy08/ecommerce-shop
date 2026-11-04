@@ -18,6 +18,14 @@ block main
                 h6.my-0.fw-medium.text-dark.fs-14 #{infoUser.fullName}
                 p.text-success.mb-0 Đang online
           .d-none.d-sm-inline-block.align-self-center
+            a.me-2.text-muted(
+              data-bs-custom-class="tooltip-primary"
+              data-bs-title="Xem đánh giá" 
+              data-bs-placement="top"
+              data-bs-toggle="tooltip"
+              href=`/${pathAdmin}/chat/rate/${chatRoomDetail.id}`
+              )
+              i.iconoir-star.fs-22
             if (chatRoomDetail.status === 'open')
               a.me-2.text-muted(
                 data-bs-custom-class="tooltip-primary"
