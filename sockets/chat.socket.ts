@@ -183,4 +183,41 @@ export const chatSocket = async (io: Server, socket: Socket, listAdminOnline: an
       messageId: messageId
     });
   });
+
+  // Lắng nghe sự kiện ADMIN_DELETE_ROOM
+  socket.on('ADMIN_DELETE_ROOM', async (data) => {
+    const { roomId } = data;
+    
+    const existRoom = await ChatRoom.findOne({
+      _id: roomId,
+      adminId: account.id
+    });
+    if(!existRoom) return;
+
+    // Xóa các file liên quan
+    const formData = new FormData();
+    formData.append("folderPath", `/media/chats/${existRoom.userId}`);
+
+    axios.patch(`${domainCDN}/file-manager/folder/delete`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        Authorization: `Bearer ${process.env.FILE_MANAGER_SECRET}`
+      }
+    });
+
+    // Xóa tất cả tin nhắn
+    await ChatMessage.deleteMany({
+      roomId: roomId
+    });
+
+    // Xóa phòng chat
+    await ChatRoom.deleteOne({
+      _id: roomId
+    });
+
+    // Phản hồi về cho đúng phòng chat
+    io.to(chatRoom.id).emit('SERVER_DELETE_ROOM', {
+      roomId: roomId
+    });
+  });
 }

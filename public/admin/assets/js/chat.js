@@ -309,4 +309,22 @@ if(formChat) {
       });
     }
   });
+
+  // Xóa phòng chat
+  const buttonDeleteRoom = document.querySelector("[button-delete-room]");
+  buttonDeleteRoom.addEventListener("click", () => {
+    const isConfirm = confirm("Bạn có chắc muốn xóa phòng chat?");
+    if (!isConfirm) return;
+    socket.emit("ADMIN_DELETE_ROOM", {
+      roomId: chatRoomId
+    });
+  });
+
+  // Lắng nghe sự kiện SERVER_DELETE_ROOM
+  socket.on("SERVER_DELETE_ROOM", (data) => {
+    const { roomId } = data;
+    if(roomId !== chatRoomId) return;
+    drawNotify("success", "Đã xóa phòng chat!");
+    window.location.href = `/${pathAdmin}/chat/list/my-chat`;
+  });
 }
