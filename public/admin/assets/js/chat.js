@@ -401,4 +401,19 @@ if(formChat) {
       }
     });
   }
+
+  // AI Chat Summary
+  const buttonAiChatSummary = document.querySelector("#button-ai-chat-summary");
+  if(buttonAiChatSummary) {
+    buttonAiChatSummary.addEventListener("click", async () => {
+      const res = await fetch(`/${pathAdmin}/chat/summary/${chatRoomId}`);
+      const data = await res.json();
+
+      if(data.code === "success") {
+        const boxContent = chatAiSuggestReply.querySelector(".inner-content");
+        boxContent.innerHTML = data.content;
+        chatAiSuggestReply.classList.remove("d-none");
+      }
+    });
+  }
 }

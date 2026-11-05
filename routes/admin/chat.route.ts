@@ -37,4 +37,6 @@ router.get('/suggest-reply/:id', chatController.suggestReply);
 
 router.post('/edit-reply/:id', chatController.editReplyPost);
 
+router.get('/summary/:id', chatController.summary);
+
 export default router;

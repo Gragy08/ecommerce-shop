@@ -393,6 +393,52 @@ export const editReplyPost = async (req: Request, res: Response) => {
     console.error(error);
     res.json({
       code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
+  }
+}
+
+export const summary = async (req: Request, res: Response) => {
+  try {
+    const roomId = req.params.id;
+
+    const messages = await ChatMessage.find({
+      roomId: roomId
+    })
+    .sort({
+      createdAt: "desc"
+    })
+    .limit(10)
+    .lean();
+
+    const string = messages
+      .reverse()
+      .map(item => {
+        return `${item.senderRole === "user" ? "Khách hàng" : "Admin"}: ${item.content}`;
+      })
+      .join("\n");
+
+    const prompt = `
+      Bạn là nhân viên chăm sóc khách hàng.
+
+      Đây là đoạn hội thoại giữa khách hàng và admin:
+
+      ${string}
+
+      Hãy tóm tắt lại đoạn hội thoại giữa khách hàng và admin để thật ngắn gọn, súc tích.
+    `;
+
+    const content = await aiGenerateAnswer(prompt);
+    
+    res.json({
+      code: "success",
+      message: "Thành công!",
+      content: content
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
       message: error instanceof Error ? error.message : "Không thể lấy gợi ý từ AI lúc này!"
     });
   }
