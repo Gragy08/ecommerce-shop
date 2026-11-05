@@ -327,4 +327,38 @@ if(formChat) {
     drawNotify("success", "Đã xóa phòng chat!");
     window.location.href = `/${pathAdmin}/chat/list/my-chat`;
   });
+
+  // AI Suggest Reply
+  const buttonAiSuggestReply = document.querySelector("#button-ai-suggest-reply");
+  const chatAiSuggestReply = document.querySelector("#chat-ai-suggest-reply");
+  if(buttonAiSuggestReply && chatAiSuggestReply) {
+    const boxContent = chatAiSuggestReply.querySelector(".inner-content");
+
+    buttonAiSuggestReply.addEventListener("click", async () => {
+      // Hiển thị trạng thái đang tải
+      boxContent.innerHTML = `<span class="text-muted">🤖 Đang tạo gợi ý trả lời từ AI...</span>`;
+      chatAiSuggestReply.classList.remove("d-none");
+
+      try {
+        const res = await fetch(`/${pathAdmin}/chat/suggest-reply/${chatRoomId}`);
+        const data = await res.json();
+        if(data.code === "success") {
+          boxContent.innerHTML = data.content.replace(/\n/g, "<br>");
+        } else {
+          boxContent.innerHTML = `<span class="text-danger">⚠️ ${data.message}</span>`;
+        }
+      } catch (error) {
+        boxContent.innerHTML = `<span class="text-danger">⚠️ Có lỗi xảy ra khi lấy gợi ý!</span>`;
+      }
+    });
+
+    // Đóng gợi ý
+    const buttonCloseAiSuggestReply = chatAiSuggestReply.querySelector(".inner-close");
+    if(buttonCloseAiSuggestReply) {
+      buttonCloseAiSuggestReply.addEventListener("click", () => {
+        chatAiSuggestReply.classList.add("d-none");
+        boxContent.innerHTML = "";
+      });
+    }
+  }
 }

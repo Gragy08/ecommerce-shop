@@ -69,6 +69,9 @@ block main
             //-         .chat-box.w-100.reverse
             //-           .user-chat(title=item.createdAtFormat)
             //-             p #{item.content}
+        #chat-ai-suggest-reply.chat-ai-suggest-reply.d-none
+          .inner-content
+          .inner-close ✕
         #chat-preview.chat-preview.d-none
         .chat-footer(form-chat)
           .row
@@ -81,6 +84,15 @@ block main
             .col-4.text-end
               .d-none.d-sm-inline-block.chat-features
                 input#chat-file(type="file" multiple hidden)
+                a(
+                  data-bs-custom-class="tooltip-primary" 
+                  data-bs-title="Gợi ý trả lời" 
+                  data-bs-placement="top" 
+                  data-bs-toggle="tooltip" 
+                  href="javascript:;"
+                  id="button-ai-suggest-reply"
+                  )
+                  i.iconoir-suggestion.fs-22
                 a(href="javascript:;" id="chat-attach")
                   i.iconoir-attachment
                 a.text-primary(href="javascript:;" button-send)

@@ -223,3 +223,38 @@
 .chat-box:hover .delete-message {
   display: flex;
 }
+
+.chat-ai-suggest-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  max-height: 300px;
+  position: absolute;
+  bottom: 68px;
+  width: 100%;
+  background: #e9ffea;
+  border-radius: 6px;
+}
+
+.chat-ai-suggest-reply .inner-content {
+  white-space: break-spaces;
+}
+
+.chat-ai-suggest-reply .inner-close {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
