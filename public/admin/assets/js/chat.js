@@ -361,4 +361,44 @@ if(formChat) {
       });
     }
   }
+
+  // AI Edit Reply
+  const buttonAiEditReply = document.querySelector("#button-ai-edit-reply");
+  if(buttonAiEditReply && chatAiSuggestReply) {
+    buttonAiEditReply.addEventListener("click", async () => {
+      const boxContent = chatAiSuggestReply.querySelector(".inner-content");
+      const content = inputContent.value.trim();
+
+      chatAiSuggestReply.classList.remove("d-none");
+
+      if(!content) {
+        boxContent.innerHTML = `<span class="text-danger">⚠️ Vui lòng nhập nội dung câu trả lời cần AI sửa!</span>`;
+        return;
+      }
+
+      // Hiển thị trạng thái đang tải
+      boxContent.innerHTML = `<span class="text-muted">🤖 Đang sửa câu trả lời bằng AI...</span>`;
+
+      try {
+        const res = await fetch(`/${pathAdmin}/chat/edit-reply/${chatRoomId}`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: content
+          })
+        });
+        const data = await res.json();
+
+        if(data.code === "success") {
+          boxContent.innerHTML = data.content.replace(/\n/g, "<br>");
+        } else {
+          boxContent.innerHTML = `<span class="text-danger">⚠️ ${data.message}</span>`;
+        }
+      } catch (error) {
+        boxContent.innerHTML = `<span class="text-danger">⚠️ Có lỗi xảy ra khi sửa câu trả lời!</span>`;
+      }
+    });
+  }
 }

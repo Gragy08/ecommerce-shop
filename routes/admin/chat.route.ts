@@ -35,4 +35,6 @@ router.get('/rate/:id', chatController.rate);
 
 router.get('/suggest-reply/:id', chatController.suggestReply);
 
+router.post('/edit-reply/:id', chatController.editReplyPost);
+
 export default router;

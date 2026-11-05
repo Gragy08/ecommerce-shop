@@ -7,6 +7,7 @@ import { timeAgo } from '../../helpers/format.helper';
 import FormData from 'form-data';
 import axios from 'axios';
 import { domainCDN, pathAdmin } from '../../configs/variable.config';
+import { aiGenerateAnswer } from '../../helpers/ai.helper';
 
 export const myChatList = async (req: Request, res: Response) => {
   const isSuperAdmin = res.locals.accountAdmin?.isSuperAdmin || false;
@@ -306,35 +307,82 @@ export const suggestReply = async (req: Request, res: Response) => {
       Viết bằng tiếng Việt.
     `;
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      })
+    // const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+    //   },
+    //   body: JSON.stringify({
+    //     model: "openai/gpt-oss-120b",
+    //     messages: [
+    //       {
+    //         role: "user",
+    //         content: prompt
+    //       }
+    //     ]
+    //   })
+      const content = await aiGenerateAnswer(prompt);
+
+    res.json({
+      code: "success",
+      message: "Thành công!",
+      content: content
     });
 
-    const data = await response.json();
+    // const data = await response.json();
+    } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: error instanceof Error ? error.message : "Không thể lấy gợi ý từ AI lúc này!"
+    })
+  }
+}
 
-    if (!response.ok || !data.choices || !data.choices.length) {
-      console.error("Lỗi từ Groq API:", data);
+export const editReplyPost = async (req: Request, res: Response) => {
+  try {
+    const roomId = req.params.id;
+    const { content: contentChat } = req.body;
+
+    if (!contentChat || !`${contentChat}`.trim()) {
       res.json({
         code: "error",
-        message: data.error?.message || "Không thể lấy gợi ý từ AI lúc này!"
+        message: "Vui lòng nhập nội dung câu trả lời cần AI sửa!"
       });
       return;
     }
 
-    const content = data.choices[0]?.message?.content || "";
+    const messages = await ChatMessage.find({
+      roomId: roomId
+    })
+    .sort({
+      createdAt: "desc"
+    })
+    .limit(10)
+    .lean();
+
+    const string = messages
+      .reverse()
+      .map(item => {
+        return `${item.senderRole === "user" ? "Khách hàng" : "Admin"}: ${item.content}`;
+      })
+      .join("\n");
+
+    const prompt = `
+      Bạn là nhân viên chăm sóc khách hàng.
+
+      Đây là đoạn hội thoại giữa khách hàng và admin:
+
+      ${string}
+
+      Đây là câu trả lời admin đang soạn: ${contentChat}
+
+      Hãy sửa câu trả lời của admin đang soạn và gợi ý 3 câu trả lời hay hơn.
+      Viết bằng tiếng Việt.
+    `;
+
+    const content = await aiGenerateAnswer(prompt);
 
     res.json({
       code: "success",
@@ -345,7 +393,7 @@ export const suggestReply = async (req: Request, res: Response) => {
     console.error(error);
     res.json({
       code: "error",
-      message: "Lỗi kết nối đến dịch vụ AI. Vui lòng kiểm tra lại kết nối mạng!"
+      message: error instanceof Error ? error.message : "Không thể lấy gợi ý từ AI lúc này!"
     });
   }
 }

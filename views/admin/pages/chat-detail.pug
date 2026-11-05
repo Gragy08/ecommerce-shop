@@ -74,16 +74,25 @@ block main
           .inner-close ✕
         #chat-preview.chat-preview.d-none
         .chat-footer(form-chat)
-          .row
-            .col-12.col-md-8
+          .d-flex.align-items-center
+            div(style="flex: 1;")
               input.form-control(
                 placeholder="Nội dung tin nhắn..." 
                 type="text"
                 input-content
                 )
-            .col-4.text-end
+            div
               .d-none.d-sm-inline-block.chat-features
                 input#chat-file(type="file" multiple hidden)
+                a(
+                  data-bs-custom-class="tooltip-primary" 
+                  data-bs-title="Sửa câu trả lời" 
+                  data-bs-placement="top" 
+                  data-bs-toggle="tooltip" 
+                  href="javascript:;"
+                  id="button-ai-edit-reply"
+                  )
+                  i.iconoir-page-edit.fs-22
                 a(
                   data-bs-custom-class="tooltip-primary" 
                   data-bs-title="Gợi ý trả lời" 
