@@ -416,4 +416,19 @@ if(formChat) {
       }
     });
   }
+
+  // AI Phân tích cảm xúc khách hàng
+  const buttonAiCustomerEmotions = document.querySelector("#button-ai-customer-emotions");
+  if(buttonAiCustomerEmotions) {
+    buttonAiCustomerEmotions.addEventListener("click", async () => {
+      const res = await fetch(`/${pathAdmin}/chat/customer-emotions/${chatRoomId}`);
+      const data = await res.json();
+
+      if(data.code === "success") {
+        const boxContent = chatAiSuggestReply.querySelector(".inner-content");
+        boxContent.innerHTML = data.content;
+        chatAiSuggestReply.classList.remove("d-none");
+      }
+    });
+  }
 }

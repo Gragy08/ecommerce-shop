@@ -39,4 +39,6 @@ router.post('/edit-reply/:id', chatController.editReplyPost);
 
 router.get('/summary/:id', chatController.summary);
 
+router.get('/customer-emotions/:id', chatController.customerEmotions);
+
 export default router;

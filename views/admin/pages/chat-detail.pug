@@ -17,7 +17,16 @@ block main
               div
                 h6.my-0.fw-medium.text-dark.fs-14 #{infoUser.fullName}
                 p.text-success.mb-0 Đang online
-          .d-none.d-sm-inline-block.align-self-
+          .d-none.d-sm-inline-block.align-self-center
+            a.me-2.text-muted(
+              data-bs-custom-class="tooltip-primary" 
+              data-bs-title="Cảm xúc khách hàng" 
+              data-bs-placement="top" 
+              data-bs-toggle="tooltip" 
+              href="javascript:;"
+              id="button-ai-customer-emotions"
+              )
+              i.iconoir-people-tag.fs-22
             a.me-2.text-muted(
               data-bs-custom-class="tooltip-primary" 
               data-bs-title="Tóm tắt đoạn chat" 

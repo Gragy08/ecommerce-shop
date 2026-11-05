@@ -429,7 +429,7 @@ export const summary = async (req: Request, res: Response) => {
     `;
 
     const content = await aiGenerateAnswer(prompt);
-    
+
     res.json({
       code: "success",
       message: "Thành công!",
@@ -441,5 +441,51 @@ export const summary = async (req: Request, res: Response) => {
       code: "error",
       message: error instanceof Error ? error.message : "Không thể lấy gợi ý từ AI lúc này!"
     });
+  }
+}
+
+export const customerEmotions = async (req: Request, res: Response) => {
+  try {
+    const roomId = req.params.id;
+
+    const messages = await ChatMessage.find({
+      roomId: roomId
+    })
+    .sort({
+      createdAt: "desc"
+    })
+    .limit(20)
+    .lean();
+
+    const string = messages
+      .reverse()
+      .map(item => {
+        return `${item.senderRole === "user" ? "Khách hàng" : "Admin"}: ${item.content}`;
+      })
+      .join("\n");
+
+    const prompt = `
+      Bạn là nhân viên chăm sóc khách hàng.
+
+      Đây là đoạn hội thoại giữa khách hàng và admin:
+
+      ${string}
+
+      Hãy phân tích kỹ đoạn hội thoại giữa khách hàng và admin, sau đó phân tích cảm xúc khách hàng. Phản hồi kết quả cảm xúc của khách hàng đang như thế nào, khách hàng này có tiềm năng hay không.
+    `;
+
+    const content = await aiGenerateAnswer(prompt);
+
+    res.json({
+      code: "success",
+      message: "Thành công!",
+      content: content
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      code: "error",
+      message: "Dữ liệu không hợp lệ!"
+    })
   }
 }
