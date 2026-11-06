@@ -47,8 +47,8 @@ export const list = async (req: Request, res: Response) => {
     if(userAddress) {
       try {
         const shopLocation = {
-          latitude: 9.9881201,
-          longitude: 105.0978115
+          latitude: 10.8037448,
+          longitude: 106.6617749
         };
 
         const shopInfoAddress = await getInfoAddress(shopLocation.latitude, shopLocation.longitude);

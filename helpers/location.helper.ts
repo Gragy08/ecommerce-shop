@@ -1,40 +1,87 @@
 import axios from "axios";
 import { getApiShipping } from "../configs/setting.config";
 
+const cache: {
+  cities: any[];
+  districts: Map<string, any[]>;
+  wards: Map<string, any[]>;
+} = {
+  cities: [],
+  districts: new Map(),
+  wards: new Map()
+};
+
+const getCachedCities = async (token: string): Promise<any[]> => {
+  if (cache.cities.length > 0) return cache.cities;
+  const res = await axios.get("https://sandbox.goship.io/api/v2/cities", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  cache.cities = res.data?.data || [];
+  return cache.cities;
+};
+
+const getCachedDistricts = async (cityId: string, token: string): Promise<any[]> => {
+  if (cache.districts.has(cityId)) return cache.districts.get(cityId)!;
+  const res = await axios.get(`https://sandbox.goship.io/api/v2/cities/${cityId}/districts`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const list = res.data?.data || [];
+  cache.districts.set(cityId, list);
+  return list;
+};
+
+const getCachedWards = async (districtId: string, token: string): Promise<any[]> => {
+  if (cache.wards.has(districtId)) return cache.wards.get(districtId)!;
+  const res = await axios.get(`https://sandbox.goship.io/api/v2/districts/${districtId}/wards`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const list = res.data?.data || [];
+  cache.wards.set(districtId, list);
+  return list;
+};
+
+const cleanStr = (str: string) => (str || "").toLowerCase().replace(/^(tỉnh|thành phố|quận|huyện|thị xã|phường|xã|thị trấn)\s+/i, "").trim();
+
 const normalizeAddress = async (city: string, district: string, ward: string) => {
   const apiShipping = await getApiShipping();
+  const token = apiShipping?.tokenGoShip;
+  if (!token) {
+    throw new Error("Chưa cấu hình mã xác thực GoShip.");
+  }
 
   // Thông tin tỉnh/thành
-  const cityRes = await axios.get("https://sandbox.goship.io/api/v2/cities", {
-    headers: {
-      Authorization: `Bearer ${apiShipping.tokenGoShip}`
-    }
-  });
-  const cityInfo = cityRes.data.data.find((item: any) => item.name.toLowerCase().includes(city.toLowerCase()));
+  const cities = await getCachedCities(token);
+  const targetCityClean = cleanStr(city);
+  let cityInfo = cities.find((item: any) => cleanStr(item.name) === targetCityClean);
+  if (!cityInfo) {
+    cityInfo = cities.find((item: any) => item.name.toLowerCase().includes(city.toLowerCase()) || city.toLowerCase().includes(item.name.toLowerCase()));
+  }
   if (!cityInfo) {
     throw new Error(`GoShip không tìm thấy tỉnh/thành: ${city}`);
   }
 
   // Thông tin quận/huyện
-  const districtRes = await axios.get(`https://sandbox.goship.io/api/v2/cities/${cityInfo.id}/districts`, {
-    headers: {
-      Authorization: `Bearer ${apiShipping.tokenGoShip}`
-    }
-  });
-
-  const districtInfo = districtRes.data.data.find((item: any) => item.name.toLowerCase().includes(district.toLowerCase()));
+  const districts = await getCachedDistricts(cityInfo.id, token);
+  const targetDistrictClean = cleanStr(district);
+  let districtInfo = districts.find((item: any) => cleanStr(item.name) === targetDistrictClean);
+  if (!districtInfo) {
+    districtInfo = districts.find((item: any) => item.name.toLowerCase().includes(district.toLowerCase()) || district.toLowerCase().includes(item.name.toLowerCase()));
+  }
   if (!districtInfo) {
     throw new Error(`GoShip không tìm thấy quận/huyện: ${district}`);
   }
 
   // Thông tin phường/xã
-  const wardRes = await axios.get(`https://sandbox.goship.io/api/v2/districts/${districtInfo.id}/wards`, {
-    headers: {
-      Authorization: `Bearer ${apiShipping.tokenGoShip}`
-    }
-  });
-
-  const wardInfo = wardRes.data.data.find((item: any) => item.name.toLowerCase().includes(ward.toLowerCase()));
+  const wards = await getCachedWards(districtInfo.id, token);
+  const targetWardClean = cleanStr(ward);
+  let wardInfo = wards.find((item: any) => cleanStr(item.name) === targetWardClean);
+  if (!wardInfo) {
+    const regex = new RegExp(`(^|\\s)${targetWardClean}(\\s|$)`, "i");
+    wardInfo = wards.find((item: any) => regex.test(cleanStr(item.name)));
+  }
+  if (!wardInfo) {
+    wardInfo = wards.find((item: any) => item.name.toLowerCase().includes(ward.toLowerCase()));
+  }
   if (!wardInfo) {
     throw new Error(`GoShip không tìm thấy phường/xã: ${ward}`);
   }
@@ -46,7 +93,7 @@ const normalizeAddress = async (city: string, district: string, ward: string) =>
   };
 
   return dataFinal;
-}
+};
 
 export const getInfoAddress = async (latitude: number, longitude: number) => {
   const geoRes = await axios.get(`https://mapapis.openmap.vn/v1/geocode/reverse?latlng=${latitude},${longitude}&apikey=${process.env.OPENMAP_API_KEY}`);
@@ -84,4 +131,4 @@ export const getInfoAddress = async (latitude: number, longitude: number) => {
   const result = await normalizeAddress(city, district, ward);
 
   return result;
-}
+};

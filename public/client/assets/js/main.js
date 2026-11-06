@@ -402,16 +402,24 @@ const getUserAddress = () => {
     const dataInfo = inputUserAddressChecked.getAttribute("data-info");
     if(dataInfo) {
       userAddress = JSON.parse(dataInfo);
-    } else {const inputLongitude = document.querySelector(`input[name="longitude"]`);
+    } else {
+      const inputLongitude = document.querySelector(`input[name="longitude"]`);
       const inputLatitude = document.querySelector(`input[name="latitude"]`);
-      const longitude = inputLongitude.value;
-      const latitude = inputLatitude.value;
-      if(longitude && latitude) {
+      if(inputLongitude && inputLatitude && inputLongitude.value && inputLatitude.value) {
         userAddress = {
-          longitude: parseFloat(longitude),
-          latitude: parseFloat(latitude)
+          longitude: parseFloat(inputLongitude.value),
+          latitude: parseFloat(inputLatitude.value)
         };
       }
+    }
+  } else {
+    const inputLongitude = document.querySelector(`input[name="longitude"]`);
+    const inputLatitude = document.querySelector(`input[name="latitude"]`);
+    if(inputLongitude && inputLatitude && inputLongitude.value && inputLatitude.value) {
+      userAddress = {
+        longitude: parseFloat(inputLongitude.value),
+        latitude: parseFloat(inputLatitude.value)
+      };
     }
   }
   return userAddress;
@@ -2197,61 +2205,84 @@ if(boxMap) {
     const lat = coord[1];
     setMarker(lon, lat);
 
-    // Gọi API Nominatim để lấy địa chỉ chi tiết
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+    // Gọi API server proxy OpenMap
+    fetch(`/location/reverse?lat=${lat}&lon=${lon}`)
       .then(res => res.json())
       .then(data => {
-        if(data && data.display_name) {
-          updateAddressInput("address", data.display_name);
+        if(data && data.code === "success" && data.address) {
+          updateAddressInput("address", data.address);
           updateAddressInput("longitude", lon);
           updateAddressInput("latitude", lat);
 
-          // Cap nhat lai gio hang
-          drawCart();
+          const inputNewAddress = document.querySelector(`input[name="userAddress"][value=""]`);
+          if(inputNewAddress && !inputNewAddress.checked) {
+            inputNewAddress.checked = true;
+            inputNewAddress.dispatchEvent(new Event("change"));
+          } else if(typeof drawCart === 'function' && (document.querySelector(".checkout_page") || document.querySelector(".cart_page"))) {
+            drawCart();
+          }
         } else {
-          notyf.error("Không tìm thấy địa chỉ!");
+          notyf.error(data?.message || "Không tìm thấy địa chỉ!");
         }
       })
+      .catch(err => {
+        console.error("Lỗi lấy địa chỉ bản đồ:", err);
+        notyf.error("Không thể kết nối dịch vụ bản đồ!");
+      });
   });
 
   // Tìm kiếm địa điểm
   const searchInput = document.querySelector("#mapSearchInput");
   const searchBtn = document.querySelector("#mapSearchBtn");
-  searchBtn.addEventListener("click", () => {
-    const keyword = searchInput.value;
-    if(!keyword) {
-      notyf.error("Vui lòng nhập địa chỉ tìm kiếm!");
-      return;
-    }
-    
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(keyword)}&countrycodes=vn`)
-      .then(res => res.json())
-      .then(data => {
-        if(data && data.length > 0) {
-          const firstResult = data[0];
-          const lon = parseFloat(firstResult.lon);
-          const lat = parseFloat(firstResult.lat);
-          setMarker(lon, lat);
-          // Di chuyển bản đồ đến đúng vị trí
-          map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: 15 });
+  if(searchBtn && searchInput) {
+    const handleSearch = () => {
+      const keyword = searchInput.value;
+      if(!keyword) {
+        notyf.error("Vui lòng nhập địa chỉ tìm kiếm!");
+        return;
+      }
+      
+      fetch(`/location/search?keyword=${encodeURIComponent(keyword)}`)
+        .then(res => res.json())
+        .then(data => {
+          if(data && data.code === "success" && data.results && data.results.length > 0) {
+            const firstResult = data.results[0];
+            const lon = parseFloat(firstResult.lon);
+            const lat = parseFloat(firstResult.lat);
+            setMarker(lon, lat);
+            // Di chuyển bản đồ đến đúng vị trí
+            map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: 15 });
 
-          // Gán lại địa chỉ vào ô input
-          updateAddressInput("address", firstResult.display_name);
-          updateAddressInput("longitude", lon);
-          updateAddressInput("latitude", lat);
+            // Gán lại địa chỉ vào ô input
+            updateAddressInput("address", firstResult.address);
+            updateAddressInput("longitude", lon);
+            updateAddressInput("latitude", lat);
 
-          const inputNewAddress = document.querySelector(`input[name="userAddress"][value=""]`);
-          if(inputNewAddress) {
-            inputNewAddress.checked = true;
-            inputNewAddress.dispatchEvent(new Event("change"));
+            const inputNewAddress = document.querySelector(`input[name="userAddress"][value=""]`);
+            if(inputNewAddress && !inputNewAddress.checked) {
+              inputNewAddress.checked = true;
+              inputNewAddress.dispatchEvent(new Event("change"));
+            } else if(typeof drawCart === 'function' && (document.querySelector(".checkout_page") || document.querySelector(".cart_page"))) {
+              drawCart();
+            }
           } else {
-            drawCart();
+            notyf.error(data?.message || "Không tìm thấy địa chỉ!");
           }
-        } else {
-          notyf.error("Không tìm thấy địa chỉ!");
-        }
-	  });
-  })
+        })
+        .catch(err => {
+          console.error("Lỗi tìm kiếm bản đồ:", err);
+          notyf.error("Không thể tìm kiếm địa chỉ lúc này!");
+        });
+    };
+
+    searchBtn.addEventListener("click", handleSearch);
+    searchInput.addEventListener("keypress", (e) => {
+      if(e.key === "Enter") {
+        e.preventDefault();
+        handleSearch();
+      }
+    });
+  }
 }
 // End Map
 
@@ -2456,7 +2487,15 @@ if(checkoutPage) {
   const listInputUserAddress = checkoutPage.querySelectorAll(`input[name="userAddress"]`);
 
   const collapseEl = checkoutPage.querySelector("#collapseThree");
-  const collapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+  const collapse = collapseEl ? new bootstrap.Collapse(collapseEl, { toggle: false }) : null;
+
+  if(collapseEl) {
+    collapseEl.addEventListener("shown.bs.collapse", () => {
+      if(map) {
+        map.updateSize();
+      }
+    });
+  }
 
   const selectedAddress = checkoutPage.querySelector(`input[name="userAddress"]:checked`);
   if(!selectedAddress) {
@@ -2464,10 +2503,14 @@ if(checkoutPage) {
       || checkoutPage.querySelector(`input[name="userAddress"][value=""]`);
     if(initialAddress) {
       initialAddress.checked = true;
-      if(!initialAddress.value) {
+      if(!initialAddress.value && collapse) {
         collapse.show();
+        setTimeout(() => { if(map) map.updateSize(); }, 350);
       }
     }
+  } else if(!selectedAddress.value && collapse) {
+    collapse.show();
+    setTimeout(() => { if(map) map.updateSize(); }, 350);
   }
 
   drawCart();
@@ -2482,10 +2525,13 @@ if(checkoutPage) {
           i.checked = false;
         }
       });
-      if(input.value == "") {
-        collapse.show();
-      } else {
-        collapse.hide();
+      if(collapse) {
+        if(input.value == "") {
+          collapse.show();
+          setTimeout(() => { if(map) map.updateSize(); }, 350);
+        } else {
+          collapse.hide();
+        }
       }
       if(map) {
         map.updateSize();

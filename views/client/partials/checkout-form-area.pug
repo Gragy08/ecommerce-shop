@@ -1,10 +1,12 @@
+- const hasSavedAddresses = accountUser && accountUser.addressList && accountUser.addressList.length > 0
 form(class="checkout_form_area" id="checkoutAddressForm")
   #accordionExample.accordion
     .accordion-item.border-0
       .accordion-header
-        .accordion-button.collapsed.p-0(
+        .accordion-button.p-0(
+          class=(hasSavedAddresses ? "collapsed" : "")
           aria-controls="collapseThree" 
-          aria-expanded="false" 
+          aria-expanded=(hasSavedAddresses ? "false" : "true") 
           data-bs-target="#collapseThree" 
           role="tabpanel" 
           data-bs-toggle="collapse"
@@ -14,9 +16,13 @@ form(class="checkout_form_area" id="checkoutAddressForm")
               value="" 
               type="radio"
               name="userAddress"
+              checked=(!hasSavedAddresses)
               )
             label.form-check-label(for="flexCheckDefault") Nhập địa chỉ mới
-      #collapseThree.accordion-collapse.collapse(data-bs-parent="#accordionExample")
+      #collapseThree.accordion-collapse.collapse(
+        class=(hasSavedAddresses ? "" : "show")
+        data-bs-parent="#accordionExample"
+        )
         .accordion-body.p-0
           .row
             .col-md-6
