@@ -2149,7 +2149,9 @@ if(boxMap) {
     target: 'boxMap',
     layers: [
       new ol.layer.Tile({
-        source: new ol.source.OSM()
+        source: new ol.source.XYZ({
+        url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'
+      })
       })
     ],
     view: new ol.View({

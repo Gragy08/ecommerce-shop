@@ -7,3 +7,4 @@ router.get('/search', locationController.search);
 router.get('/reverse', locationController.reverse);
 
 export default router;
+
