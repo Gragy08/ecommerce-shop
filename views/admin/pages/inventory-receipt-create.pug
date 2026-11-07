@@ -28,7 +28,7 @@ block main
                       option(value=sup._id) #{sup.name} - #{sup.phone}
               .col-md-6
                 .mb-3
-                  label.form-label(for="supplierContactName") Người giao hàng / Đại diện *
+                  label.form-label(for="supplierContactName") Nhân viên bên nhà cung cấp
                   input#supplierContactName.form-control(
                     type="text"
                     name="supplierContactName"
@@ -45,7 +45,7 @@ block main
                   input#invoiceNumber.form-control(type="text" name="invoiceNumber")
               .col-md-4
                 .mb-3
-                  label.form-label(for="note") Ghi chú nội bộ
+                  label.form-label(for="note") Ghi chú
                   input#note.form-control(type="text" name="note")
 
             .row.mt-3
@@ -93,8 +93,7 @@ block main
               .d-flex.gap-2
                 a.btn.btn-danger(href=`/${pathAdmin}/inventory/receipt`) Hủy
                 button.btn.btn-primary(type="submit", disabled=!canCreate)
-                  i.fa-solid.fa-check.me-1
-                  | Tạo phiếu nhập kho
+                  | Tạo mới
 
 block script
   script.

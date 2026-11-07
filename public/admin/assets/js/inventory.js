@@ -339,98 +339,93 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalImeiEl = document.querySelector("#modalImei");
   const modalVariantName = document.querySelector("#modalVariantName");
   const modalImeiBody = document.querySelector("#modalImeiBody");
+  let imeiModalInstance = null;
+
+  const loadImeiModalData = async (variantId) => {
+    if (!modalImeiBody) return;
+    modalImeiBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Đang tải danh sách IMEI...</td></tr>`;
+
+    try {
+      const res = await fetch(`/admin/inventory/items/${variantId}`);
+      const data = await res.json();
+
+      if (data.code === "success" && data.items && data.items.length > 0) {
+        modalImeiBody.innerHTML = data.items
+          .map((item, idx) => {
+            const isSold = item.status === "sold";
+            const statusControl = isSold
+              ? `<span class="badge bg-dark">Đã bán</span>`
+              : `
+                <select class="form-select form-select-sm select-change-status" data-id="${item.id}">
+                  <option value="available" ${item.status === "available" ? "selected" : ""}>Có sẵn</option>
+                  <option value="warranty" ${item.status === "warranty" ? "selected" : ""}>Bảo hành</option>
+                  <option value="damaged" ${item.status === "damaged" ? "selected" : ""}>Hỏng / Lỗi</option>
+                  <option value="liquidated" ${item.status === "liquidated" ? "selected" : ""}>Đã thanh lý</option>
+                </select>
+              `;
+
+            return `
+              <tr>
+                <td class="text-center">${idx + 1}</td>
+                <td>
+                  <a href="/admin/inventory/tracker?keyword=${item.identifier}" target="_blank" class="font-monospace fw-bold text-primary">
+                    ${item.identifier}
+                  </a>
+                </td>
+                <td><span class="badge bg-light text-dark border">${item.receiptCode}</span></td>
+                <td>${item.supplierName}</td>
+                <td>${statusControl}</td>
+              </tr>
+            `;
+          })
+          .join("");
+
+        // Gán sự kiện đổi trạng thái qua select
+        modalImeiBody.querySelectorAll(".select-change-status").forEach((selectEl) => {
+          selectEl.addEventListener("change", async (e) => {
+            const itemId = selectEl.getAttribute("data-id");
+            const toStatus = e.target.value;
+
+            try {
+              const patchRes = await fetch(`/admin/inventory/item/change-status/${itemId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ toStatus, reason: "Điều chỉnh từ quản trị viên" })
+              });
+              const patchData = await patchRes.json();
+
+              if (patchData.code === "success") {
+                if (typeof notyf !== "undefined") notyf.success(patchData.message);
+              } else {
+                if (typeof notyf !== "undefined") notyf.error(patchData.message);
+                loadImeiModalData(variantId);
+              }
+            } catch (err) {
+              if (typeof notyf !== "undefined") notyf.error("Lỗi đổi trạng thái!");
+              loadImeiModalData(variantId);
+            }
+          });
+        });
+      } else {
+        modalImeiBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Không có mã IMEI nào trong kho.</td></tr>`;
+      }
+    } catch (err) {
+      modalImeiBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Lỗi tải dữ liệu IMEI!</td></tr>`;
+    }
+  };
 
   document.querySelectorAll(".btn-view-imei").forEach((btn) => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", () => {
       const variantId = btn.getAttribute("data-variant-id");
       const variantName = btn.getAttribute("data-variant-name");
 
       if (modalVariantName) modalVariantName.textContent = variantName || "";
-      if (modalImeiBody) modalImeiBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Đang tải danh sách IMEI...</td></tr>`;
-
-      const modal = new bootstrap.Modal(modalImeiEl);
-      modal.show();
-
-      try {
-        const res = await fetch(`/admin/inventory/items/${variantId}`);
-        const data = await res.json();
-
-        if (data.code === "success" && data.items && data.items.length > 0) {
-          modalImeiBody.innerHTML = data.items
-            .map((item, idx) => {
-              let statusBadge = "";
-              if (item.status === "available") statusBadge = '<span class="badge bg-success">Có sẵn</span>';
-              else if (item.status === "sold") statusBadge = '<span class="badge bg-dark">Đã bán</span>';
-              else if (item.status === "warranty") statusBadge = '<span class="badge bg-warning">Bảo hành</span>';
-              else if (item.status === "damaged") statusBadge = '<span class="badge bg-danger">Hỏng / Lỗi</span>';
-              else if (item.status === "liquidated") statusBadge = '<span class="badge bg-secondary">Đã thanh lý</span>';
-              else statusBadge = `<span class="badge bg-info">${item.status}</span>`;
-
-              const isAvailable = item.status === "available";
-
-              return `
-                <tr>
-                  <td class="text-center">${idx + 1}</td>
-                  <td>
-                    <a href="/admin/inventory/tracker?keyword=${item.identifier}" target="_blank" class="font-monospace fw-bold text-primary">
-                      ${item.identifier}
-                    </a>
-                  </td>
-                  <td>${statusBadge}</td>
-                  <td><span class="badge bg-light text-dark border">${item.receiptCode}</span></td>
-                  <td>${item.supplierName}</td>
-                  <td class="text-end">
-                    ${
-                      isAvailable
-                        ? `
-                      <button class="btn btn-xs btn-outline-warning btn-change-status me-1" data-id="${item.id}" data-status="damaged" title="Báo máy hỏng/lỗi">Hỏng</button>
-                      <button class="btn btn-xs btn-outline-secondary btn-change-status" data-id="${item.id}" data-status="liquidated" title="Thanh lý máy">Thanh lý</button>
-                    `
-                        : item.status === "damaged"
-                        ? `
-                      <button class="btn btn-xs btn-outline-success btn-change-status" data-id="${item.id}" data-status="available" title="Chuyển lại về có sẵn">Khôi phục</button>
-                    `
-                        : "-"
-                    }
-                  </td>
-                </tr>
-              `;
-            })
-            .join("");
-
-          // Gán sự kiện đổi trạng thái
-          modalImeiBody.querySelectorAll(".btn-change-status").forEach((sBtn) => {
-            sBtn.addEventListener("click", async () => {
-              const itemId = sBtn.getAttribute("data-id");
-              const toStatus = sBtn.getAttribute("data-status");
-
-              if (!confirm("Bạn có chắc chắn muốn chuyển trạng thái cho thiết bị này?")) return;
-
-              try {
-                const patchRes = await fetch(`/admin/inventory/item/change-status/${itemId}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ toStatus, reason: "Điều chỉnh từ quản trị viên" })
-                });
-                const patchData = await patchRes.json();
-
-                if (patchData.code === "success") {
-                  if (typeof notyf !== "undefined") notyf.success(patchData.message);
-                  btn.click(); // Tự động load lại modal
-                } else {
-                  if (typeof notyf !== "undefined") notyf.error(patchData.message);
-                }
-              } catch (err) {
-                if (typeof notyf !== "undefined") notyf.error("Lỗi đổi trạng thái!");
-              }
-            });
-          });
-        } else {
-          modalImeiBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Không có mã IMEI nào trong kho.</td></tr>`;
-        }
-      } catch (err) {
-        modalImeiBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Lỗi tải dữ liệu IMEI!</td></tr>`;
+      if (!imeiModalInstance && modalImeiEl) {
+        imeiModalInstance = new bootstrap.Modal(modalImeiEl);
       }
+      if (imeiModalInstance) imeiModalInstance.show();
+
+      loadImeiModalData(variantId);
     });
   });
 });

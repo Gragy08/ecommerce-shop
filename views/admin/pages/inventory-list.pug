@@ -120,15 +120,14 @@ block main
             table.table.table-bordered.align-middle.mb-0
               thead.table-light
                 tr
-                  th STT
+                  th(style="width: 60px") STT
                   th Mã IMEI
-                  th Trạng thái
                   th Phiếu nhập
                   th Nhà cung cấp
-                  th.text-end Đổi trạng thái
+                  th(style="width: 160px") Trạng thái
               tbody#modalImeiBody
                 tr
-                  td.text-center(colspan="6") Đang tải...
+                  td.text-center(colspan="5") Đang tải...
         .modal-footer
           button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Đóng
 

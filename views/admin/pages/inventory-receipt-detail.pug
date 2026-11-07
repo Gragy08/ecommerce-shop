@@ -13,43 +13,39 @@ block main
                 i.fa-solid.fa-arrow-left.me-1
                 | Quay lại danh sách
         .card-body.pt-0
-          // Thông tin chung của phiếu nhập
-          .row.mb-4.g-3
-            .col-md-3
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Mã phiếu nhập
-                strong.text-primary.fs-16 #{receipt.receiptCode}
-            .col-md-3
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Nhà cung cấp
-                strong.fs-16 #{receipt.supplierId ? receipt.supplierId.name : 'N/A'}
-                if receipt.supplierId && receipt.supplierId.phone
-                  div.small.text-muted SĐT: #{receipt.supplierId.phone}
-            .col-md-3
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Người giao hàng / Đại diện
-                strong.fs-16 #{receipt.supplierContactName || '-'}
-            .col-md-3
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Ngày tạo phiếu
-                strong.fs-16 #{receipt.createdAtFormat}
-                if receipt.createdBy
-                  div.small.text-muted Bởi: #{receipt.createdBy.fullName}
-            .col-md-4
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Hóa đơn chứng từ
-                strong.fs-16 #{receipt.hasInvoice ? `Có hóa đơn (Số: ${receipt.invoiceNumber || 'N/A'})` : 'Không có hóa đơn'}
-            .col-md-4
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Tổng chi phí nhập kho
-                strong.text-danger.fs-18 #{receipt.totalCostFormatted}
-            .col-md-4
-              .p-3.border.rounded.bg-light
-                small.text-muted.d-block Ghi chú nội bộ
-                span #{receipt.note || 'Không có ghi chú'}
+          // Thông tin chung của phiếu nhập (dạng form readonly giống create/edit)
+          .row
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Mã phiếu nhập
+                input.form-control(type="text" value=receipt.receiptCode readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Nhà cung cấp
+                input.form-control(type="text" value=(receipt.supplierId ? `${receipt.supplierId.name} - ${receipt.supplierId.phone || ''}` : 'N/A') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Nhân viên bên nhà cung cấp
+                input.form-control(type="text" value=(receipt.supplierContactName || '') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Ngày tạo phiếu
+                input.form-control(type="text" value=receipt.createdAtFormat readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Hóa đơn chứng từ
+                input.form-control(type="text" value=(receipt.hasInvoice ? `Có hóa đơn (Số: ${receipt.invoiceNumber || ''})` : 'Không có hóa đơn') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Tổng chi phí nhập kho
+                input.form-control.fw-bold.text-danger(type="text" value=receipt.totalCostFormatted readonly)
+            .col-12
+              .mb-4
+                label.form-label Ghi chú
+                input.form-control(type="text" value=(receipt.note || '') readonly)
 
           // Danh sách chi tiết các mặt hàng
-          h5.fw-bold.mb-3 Danh sách sản phẩm nhập
+          label.form-label.fw-bold.mb-2 Danh sách sản phẩm nhập
           .table-responsive
             table.table.table-bordered.align-middle.mb-0
               thead.table-light
