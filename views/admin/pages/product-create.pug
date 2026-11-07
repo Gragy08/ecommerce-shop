@@ -57,6 +57,21 @@ block main
             .mb-3
               label.form-label(for="stock") Còn lại
               input.form-control(id="stock" type="number" name="stock")
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="inventoryType") Kiểu quản lý kho
+              select.form-select(id="inventoryType" name="inventoryType")
+                option(value="quantity") Theo Số lượng (Phụ kiện, linh kiện...)
+                option(value="imei") Theo Mã IMEI (Điện thoại, máy tính bảng...)
+          if (permissions.includes("product-purchase-price"))
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="purchasePrice") Giá vốn nhập hàng
+                input.form-control(id="purchasePrice" type="number" name="purchasePrice")
+          .col-md-6.col-lg-6
+            .mb-3
+              label.form-label(for="warrantyMonths") Thời gian bảo hành (tháng)
+              input.form-control(id="warrantyMonths" type="number" name="warrantyMonths" value="12")
           .col-md-12.col-lg-12
             .mb-3
               label.form-label Danh sách thuộc tính

@@ -12,11 +12,27 @@ const schema = new mongoose.Schema(
     priceWholeSale: Number,
     priceOld: Number,
     priceNew: Number,
+    purchasePrice: {
+      type: Number,
+      default: 0
+    },
     discount: {
       type: Number,
       default: 0
     },
-    stock: Number,
+    stock: {
+      type: Number,
+      default: 0
+    },
+    inventoryType: {
+      type: String,
+      enum: ["imei", "quantity"],
+      default: "quantity"
+    },
+    warrantyMonths: {
+      type: Number,
+      default: 12
+    },
     attributes: Array,
     variants: Array,
     description: String,

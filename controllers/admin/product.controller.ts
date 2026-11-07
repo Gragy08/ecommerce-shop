@@ -10,6 +10,7 @@ import { Parser } from 'json2csv';
 import Papa from 'papaparse';
 import { generateRandomString } from '../../helpers/generate.helper';
 import { pingGoogleSitemap } from '../../helpers/ping-google.helper';
+import { syncProductVariants } from '../../helpers/variant.helper';
 
 
 export const category = async (req: Request, res: Response) => {
@@ -295,6 +296,15 @@ export const createPost = async (req: Request, res: Response) => {
     if(req.body.stock) {
       req.body.stock = parseInt(req.body.stock);
     }
+    if(req.body.purchasePrice) {
+      req.body.purchasePrice = parseInt(req.body.purchasePrice) || 0;
+    }
+    if(req.body.warrantyMonths) {
+      req.body.warrantyMonths = parseInt(req.body.warrantyMonths) || 12;
+    }
+    if(!req.body.inventoryType) {
+      req.body.inventoryType = "quantity";
+    }
 
     req.body.attributes = JSON.parse(req.body.attributes);
 
@@ -325,6 +335,11 @@ export const createPost = async (req: Request, res: Response) => {
 
     const newRecord = new Product(req.body);
     await newRecord.save();
+
+    if(Array.isArray(newRecord.variants) && newRecord.variants.length > 0) {
+      const syncedVariants = await syncProductVariants(newRecord.id, newRecord.variants);
+      await Product.updateOne({ _id: newRecord.id }, { variants: syncedVariants });
+    }
 
     logAdminAction(req, `Đã tạo sản phẩm: ${req.body.name} (Id: ${newRecord.id})`);
 
@@ -529,10 +544,19 @@ export const editPatch = async (req: Request, res: Response) => {
     if(req.body.stock) {
       req.body.stock = parseInt(req.body.stock);
     }
+    if(req.body.purchasePrice !== undefined) {
+      req.body.purchasePrice = parseInt(req.body.purchasePrice) || 0;
+    }
+    if(req.body.warrantyMonths !== undefined) {
+      req.body.warrantyMonths = parseInt(req.body.warrantyMonths) || 12;
+    }
 
     req.body.attributes = JSON.parse(req.body.attributes);
 
     req.body.variants = JSON.parse(req.body.variants);
+    if(Array.isArray(req.body.variants) && req.body.variants.length > 0) {
+      req.body.variants = await syncProductVariants(id, req.body.variants);
+    }
 
     req.body.tags = JSON.parse(req.body.tags);
 

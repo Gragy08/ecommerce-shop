@@ -28,6 +28,10 @@ export const permissionList = [
     name: "Xóa sản phẩm"
   },
   {
+    id: "product-purchase-price",
+    name: "Xem giá vốn nhập hàng"
+  },
+  {
     id: "article-role",
     name: "Quản lý bài viết"
   },
@@ -151,6 +155,103 @@ export const permissionList = [
     id: "file-manager",
     name: "Quản lý file"
   },
+  // Quản lý Nhà cung cấp
+  {
+    id: "supplier-role",
+    name: "Quản lý nhà cung cấp"
+  },
+  {
+    id: "supplier-list",
+    name: "Danh sách nhà cung cấp"
+  },
+  {
+    id: "supplier-create",
+    name: "Tạo nhà cung cấp"
+  },
+  {
+    id: "supplier-edit",
+    name: "Sửa nhà cung cấp"
+  },
+  {
+    id: "supplier-delete",
+    name: "Xóa nhà cung cấp"
+  },
+  // Quản lý Kho hàng & Phiếu nhập (IMEI / Số lượng)
+  {
+    id: "inventory-role",
+    name: "Quản lý kho hàng"
+  },
+  {
+    id: "inventory-list",
+    name: "Danh sách tồn kho"
+  },
+  {
+    id: "inventory-tracker",
+    name: "Tra cứu vòng đời IMEI"
+  },
+  {
+    id: "stock-receipt-list",
+    name: "Danh sách phiếu nhập kho"
+  },
+  {
+    id: "stock-receipt-create",
+    name: "Tạo phiếu nhập kho"
+  },
+  {
+    id: "stock-receipt-edit",
+    name: "Chi tiết / Sửa phiếu nhập"
+  },
+  {
+    id: "stock-receipt-delete",
+    name: "Hủy phiếu nhập kho"
+  },
+  // Bán hàng tại quầy (POS)
+  {
+    id: "order-pos",
+    name: "Bán hàng tại quầy (POS)"
+  },
+  // Quản lý Khách hàng CRM
+  {
+    id: "customer-role",
+    name: "Quản lý khách hàng"
+  },
+  {
+    id: "customer-list",
+    name: "Danh sách khách hàng"
+  },
+  {
+    id: "customer-create",
+    name: "Tạo khách hàng"
+  },
+  {
+    id: "customer-edit",
+    name: "Sửa hồ sơ khách hàng"
+  },
+  {
+    id: "customer-delete",
+    name: "Xóa khách hàng"
+  },
+  // Quản lý Bảo hành - Sửa chữa
+  {
+    id: "warranty-role",
+    name: "Quản lý bảo hành - sửa chữa"
+  },
+  {
+    id: "warranty-list",
+    name: "Danh sách phiếu bảo hành"
+  },
+  {
+    id: "warranty-create",
+    name: "Tiếp nhận bảo hành"
+  },
+  {
+    id: "warranty-edit",
+    name: "Cập nhật tiến độ bảo hành"
+  },
+  {
+    id: "warranty-delete",
+    name: "Xóa phiếu bảo hành"
+  }
 ];
 
 export const pointConfig = {

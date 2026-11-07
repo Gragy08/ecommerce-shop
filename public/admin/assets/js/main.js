@@ -1406,6 +1406,12 @@ if(productCreateForm) {
       formData.append("priceOld", priceOld);
       formData.append("priceNew", priceNew);
       formData.append("stock", stock);
+      const inventoryType = event.target.inventoryType ? event.target.inventoryType.value : "quantity";
+      const purchasePrice = event.target.purchasePrice ? event.target.purchasePrice.value : 0;
+      const warrantyMonths = event.target.warrantyMonths ? event.target.warrantyMonths.value : 12;
+      formData.append("inventoryType", inventoryType);
+      formData.append("purchasePrice", purchasePrice);
+      formData.append("warrantyMonths", warrantyMonths);
       formData.append("attributes", JSON.stringify(attributes));
       formData.append("variants", JSON.stringify(variants));
       formData.append("tags", JSON.stringify(tags));
@@ -1530,6 +1536,12 @@ if(productEditForm) {
       formData.append("priceOld", priceOld);
       formData.append("priceNew", priceNew);
       formData.append("stock", stock);
+      const inventoryType = event.target.inventoryType ? event.target.inventoryType.value : "quantity";
+      const purchasePrice = event.target.purchasePrice ? event.target.purchasePrice.value : 0;
+      const warrantyMonths = event.target.warrantyMonths ? event.target.warrantyMonths.value : 12;
+      formData.append("inventoryType", inventoryType);
+      formData.append("purchasePrice", purchasePrice);
+      formData.append("warrantyMonths", warrantyMonths);
       formData.append("attributes", JSON.stringify(attributes));
       formData.append("variants", JSON.stringify(variants));
       formData.append("tags", JSON.stringify(tags));
