@@ -2751,3 +2751,94 @@ if(templateEditForm) {
   ;
 }
 // End Template Edit Form
+
+// Supplier Create Form
+const supplierCreateForm = document.querySelector("#supplierCreateForm");
+if (supplierCreateForm) {
+  const validation = new JustValidate('#supplierCreateForm');
+
+  validation
+    .addField('#name', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên nhà cung cấp!'
+      }
+    ])
+    .addField('#phone', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập số điện thoại!'
+      }
+    ])
+    .onSuccess(async (event) => {
+      const formData = new FormData(event.target);
+      const dataFinal = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(`/${pathAdmin}/supplier/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(dataFinal)
+        });
+        const data = await response.json();
+
+        if (data.code === "error") {
+          notyf.error(data.message);
+        } else if (data.code === "success") {
+          drawNotify("success", data.message);
+          window.location.href = `/${pathAdmin}/supplier/list`;
+        }
+      } catch (err) {
+        notyf.error("Lỗi kết nối máy chủ!");
+      }
+    });
+}
+// End Supplier Create Form
+
+// Supplier Edit Form
+const supplierEditForm = document.querySelector("#supplierEditForm");
+if (supplierEditForm) {
+  const validation = new JustValidate('#supplierEditForm');
+  const id = supplierEditForm.getAttribute("data-id");
+
+  validation
+    .addField('#name', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập tên nhà cung cấp!'
+      }
+    ])
+    .addField('#phone', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập số điện thoại!'
+      }
+    ])
+    .onSuccess(async (event) => {
+      const formData = new FormData(event.target);
+      const dataFinal = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(`/${pathAdmin}/supplier/edit/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(dataFinal)
+        });
+        const data = await response.json();
+
+        if (data.code === "error") {
+          notyf.error(data.message);
+        } else if (data.code === "success") {
+          drawNotify("success", data.message);
+          window.location.href = `/${pathAdmin}/supplier/list`;
+        }
+      } catch (err) {
+        notyf.error("Lỗi kết nối máy chủ!");
+      }
+    });
+}
+// End Supplier Edit Form

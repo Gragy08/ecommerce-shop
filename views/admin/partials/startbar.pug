@@ -79,6 +79,25 @@
                   li.nav-item
                     a.nav-link(href=`/${pathAdmin}/product/attribute`) Thuộc tính sản phẩm
                   // end nav-item
+          if (permissions.includes("supplier-role"))
+            li.nav-item
+              a.nav-link(
+                aria-controls="sidebarSupplier" 
+                aria-expanded="false" 
+                role="button" 
+                data-bs-toggle="collapse" 
+                href="#sidebarSupplier"
+                )
+                i.iconoir-community.menu-icon
+                span Nhà cung cấp
+              #sidebarSupplier.collapse
+                ul.nav.flex-column
+                  if (permissions.includes("supplier-create"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/supplier/create`) Tạo nhà cung cấp
+                  if (permissions.includes("supplier-list"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/supplier/list`) Danh sách nhà cung cấp
           if (permissions.includes("article-role"))
             li.nav-item
               a.nav-link(
