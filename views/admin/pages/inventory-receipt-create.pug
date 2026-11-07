@@ -1,0 +1,102 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            .col-auto
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/inventory/receipt`)
+                i.fa-solid.fa-arrow-left.me-1
+                | Quay lại danh sách
+        .card-body.pt-0
+          if !canCreate
+            .alert.alert-warning
+              strong Chưa đủ điều kiện nhập kho: 
+              | Cần có ít nhất một nhà cung cấp hoạt động và một sản phẩm/biến thể hoạt động.
+          form#receiptCreateForm
+            .row
+              .col-md-6
+                .mb-3
+                  label.form-label(for="supplierId") Nhà cung cấp *
+                  select#supplierId.form-select(name="supplierId" required)
+                    option(value="") -- Chọn nhà cung cấp --
+                    each sup in suppliers
+                      option(value=sup._id) #{sup.name} - #{sup.phone}
+              .col-md-6
+                .mb-3
+                  label.form-label(for="supplierContactName") Người giao hàng / Đại diện *
+                  input#supplierContactName.form-control(
+                    type="text"
+                    name="supplierContactName"
+                    required
+                  )
+              .col-md-4
+                .mb-3
+                  .form-check.form-switch.pt-2
+                    input#hasInvoice.form-check-input(type="checkbox" name="hasInvoice")
+                    label.form-check-label.fw-semibold(for="hasInvoice") Có hóa đơn chứng từ
+              .col-md-4#invoiceNumberGroup(style="display: none;")
+                .mb-3
+                  label.form-label(for="invoiceNumber") Số hóa đơn
+                  input#invoiceNumber.form-control(type="text" name="invoiceNumber")
+              .col-md-4
+                .mb-3
+                  label.form-label(for="note") Ghi chú nội bộ
+                  input#note.form-control(type="text" name="note")
+
+            .row.mt-3
+              .col-12
+                .d-flex.justify-content-between.align-items-center.mb-2
+                  label.form-label.fw-bold.mb-0 Danh sách sản phẩm nhập kho *
+                  button#btnAddReceiptLine.btn.btn-sm.btn-outline-primary(type="button")
+                    i.fa-solid.fa-plus.me-1
+                    | Thêm dòng sản phẩm
+                .table-responsive(style="min-height: 200px;")
+                  table#tableReceiptLines.table.table-bordered.align-middle.mb-0
+                    thead.table-light
+                      tr
+                        th(style="min-width: 300px") Tìm & chọn biến thể sản phẩm *
+                        th(style="min-width: 260px") Danh sách mã IMEI (mỗi mã 1 dòng)
+                        th(style="width: 100px") Số lượng
+                        th(style="width: 160px") Giá nhập (VNĐ)
+                        th(style="width: 160px") Thành tiền
+                        th(style="width: 50px")
+                    tbody
+                      tr.receipt-line
+                        td
+                          .variant-search-wrap.position-relative
+                            input.form-control.variant-search-input(
+                              type="text"
+                              autocomplete="off"
+                            )
+                            input.variant-id-input(type="hidden" name="variantId")
+                        td
+                          textarea.form-control.variant-identifiers(rows="2" disabled)
+                        td
+                          input.form-control.variant-quantity(type="number" min="1" value="1" disabled)
+                        td
+                          input.form-control.variant-price(type="number" min="0" value="0")
+                        td
+                          input.form-control.variant-total(type="text" readonly value="0 đ")
+                        td.text-center
+                          button.btn.btn-sm.btn-outline-danger.btn-remove-line(type="button")
+                            i.fa-solid.fa-times
+
+            .d-flex.justify-content-between.align-items-center.mt-4
+              div
+                span.fw-bold.fs-16 Tổng tiền phiếu nhập: 
+                span#totalReceiptCostText.fw-bold.text-danger.fs-18 0 đ
+              .d-flex.gap-2
+                a.btn.btn-danger(href=`/${pathAdmin}/inventory/receipt`) Hủy
+                button.btn.btn-primary(type="submit", disabled=!canCreate)
+                  i.fa-solid.fa-check.me-1
+                  | Tạo phiếu nhập kho
+
+block script
+  script.
+    window.variantList = !{JSON.stringify(variantClientData || [])};
+  script(src="/admin/assets/js/inventory.js")

@@ -92,9 +92,18 @@
                 span Tồn kho
               #sidebarInventory.collapse
                 ul.nav.flex-column
+                  if (permissions.includes("inventory-list"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/inventory/list`) Danh sách tồn kho
+                  if (permissions.includes("stock-receipt-list"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/inventory/receipt`) Phiếu nhập kho
                   if (permissions.includes("supplier-list"))
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/supplier/list`) Nhà cung cấp
+                  if (permissions.includes("inventory-tracker"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/inventory/tracker`) Tra cứu IMEI
           if (permissions.includes("article-role"))
             li.nav-item
               a.nav-link(

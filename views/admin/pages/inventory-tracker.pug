@@ -1,0 +1,144 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            .col-auto
+              a.btn.btn-outline-primary(href=`/${pathAdmin}/inventory/list`)
+                i.fa-solid.fa-warehouse.me-1
+                | Danh sách tồn kho
+        .card-body.pt-0
+          // Form tra cứu IMEI
+          form.row.g-2.mb-4(method="GET" action=`/${pathAdmin}/inventory/tracker`)
+            .col-md-8.col-lg-6
+              .input-group
+                span.input-group-text
+                  i.fa-solid.fa-barcode
+                input.form-control(
+                  type="text"
+                  name="keyword"
+                  value=keyword
+                  autofocus
+                  required
+                )
+                button.btn.btn-primary(type="submit")
+                  i.fa-solid.fa-magnifying-glass.me-1
+                  | Tra cứu
+
+          if keyword && !item
+            .alert.alert-warning.mt-3
+              i.fa-solid.fa-triangle-exclamation.me-2
+              | Không tìm thấy thiết bị nào với mã IMEI: 
+              strong #{keyword}
+
+          if item
+            // Hồ sơ thiết bị tìm thấy
+            .row.g-3
+              .col-md-6
+                .card.border.h-100
+                  .card-header.bg-light
+                    h6.card-title.mb-0 Thông tin thiết bị
+                  .card-body
+                    .d-flex.align-items-center.mb-3
+                      if item.productId && item.productId.images && item.productId.images[0]
+                        img.rounded.me-3(src=item.productId.images[0] width="64" height="64" style="object-fit: cover;")
+                      div
+                        h5.text-primary.mb-1 #{item.productId ? item.productId.name : 'N/A'}
+                        if item.variantId && item.variantId.sku
+                          span.badge.bg-primary-subtle.text-primary.me-2 #{item.variantId.sku}
+                        if item.variantId && item.variantId.attributeValue
+                          small.text-muted #{item.variantId.attributeValue.map(a => a.value).filter(Boolean).join(' - ')}
+                    table.table.table-sm.mb-0
+                      tr
+                        td.text-muted Mã IMEI:
+                        td
+                          strong.font-monospace.fs-16 #{item.identifier}
+                      tr
+                        td.text-muted Trạng thái hiện tại:
+                        td
+                          if item.status === "available"
+                            span.badge.bg-success Có sẵn trong kho
+                          else if item.status === "sold"
+                            span.badge.bg-dark Đã bán
+                          else if item.status === "warranty"
+                            span.badge.bg-warning Đang bảo hành
+                          else if item.status === "damaged"
+                            span.badge.bg-danger Hỏng / Lỗi
+                          else if item.status === "liquidated"
+                            span.badge.bg-secondary Đã thanh lý
+                          else
+                            span.badge.bg-info #{item.status}
+                      tr
+                        td.text-muted Giá vốn nhập:
+                        td.fw-bold.text-danger #{item.purchasePriceFormatted}
+                      tr
+                        td.text-muted Ngày nhập kho:
+                        td #{item.receivedAtFormat}
+
+              .col-md-6
+                .card.border.h-100
+                  .card-header.bg-light
+                    h6.card-title.mb-0 Thông tin nguồn gốc nhập kho
+                  .card-body
+                    if item.receiptId
+                      table.table.table-sm.mb-0
+                        tr
+                          td.text-muted Mã phiếu nhập:
+                          td
+                            a.fw-bold.text-primary(href=`/${pathAdmin}/inventory/receipt/detail/${item.receiptId._id}`)
+                              | #{item.receiptId.receiptCode}
+                        tr
+                          td.text-muted Nhà cung cấp:
+                          td.fw-semibold #{item.receiptId.supplierId ? item.receiptId.supplierId.name : 'N/A'}
+                        tr
+                          td.text-muted SĐT nhà cung cấp:
+                          td #{item.receiptId.supplierId ? item.receiptId.supplierId.phone : '-'}
+                        tr
+                          td.text-muted Người giao hàng:
+                          td #{item.receiptId.supplierContactName || '-'}
+                        tr
+                          td.text-muted Hóa đơn NCC:
+                          td #{item.receiptId.hasInvoice ? item.receiptId.invoiceNumber || 'Có' : 'Không có'}
+                        tr
+                          td.text-muted Người tạo phiếu:
+                          td #{item.receiptId.createdBy ? item.receiptId.createdBy.fullName : 'Admin'}
+                    else
+                      p.text-muted.mb-0 Không có thông tin phiếu nhập liên kết.
+
+              // Lịch sử luân chuyển trạng thái
+              .col-12.mt-4
+                .card.border
+                  .card-header.bg-light
+                    h6.card-title.mb-0 Lịch sử vòng đời & Luân chuyển trạng thái
+                  .card-body
+                    if item.statusLogs && item.statusLogs.length > 0
+                      .table-responsive
+                        table.table.table-striped.align-middle.mb-0
+                          thead.table-light
+                            tr
+                              th STT
+                              th Thời gian
+                              th Từ trạng thái
+                              th Đến trạng thái
+                              th Lý do
+                              th Ghi chú
+                              th Người thực hiện
+                          tbody
+                            each log, index in item.statusLogs
+                              tr
+                                td #{index + 1}
+                                td #{log.updatedAtFormat}
+                                td
+                                  span.badge.bg-light.text-dark #{log.fromStatus || 'Khởi tạo'}
+                                td
+                                  span.badge.bg-primary #{log.toStatus}
+                                td #{log.reason || '-'}
+                                td #{log.note || '-'}
+                                td #{log.updatedBy ? log.updatedBy.fullName : 'Hệ thống'}
+                    else
+                      p.text-muted.mb-0 Thiết bị chưa có lịch sử thay đổi trạng thái nào sau khi nhập kho.

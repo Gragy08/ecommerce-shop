@@ -1,0 +1,66 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+include ../mixins/form-search.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            if (permissions.includes("stock-receipt-create"))
+              .col-auto
+                a.btn.btn-primary(href=`/${pathAdmin}/inventory/receipt/create`)
+                  i.fa-solid.fa-plus.me-1
+                  | Nhập kho
+        .card-body.pt-0
+          .row
+            .col-lg-6
+              +form-search()
+          .table-responsive
+            table.table.table-striped.align-middle.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Mã phiếu nhập
+                  th Nhà cung cấp
+                  th Người giao hàng
+                  th.text-center Số dòng
+                  th Tổng tiền nhập
+                  th Người tạo
+                  th Ngày tạo
+                  th.text-end Hành động
+              tbody
+                if (receiptList && receiptList.length > 0)
+                  each item, index in receiptList
+                    tr
+                      td #{pagination.skip + index + 1}
+                      td
+                        span.badge.bg-primary-subtle.text-primary.fw-semibold #{item.receiptCode}
+                      td.fw-semibold #{item.supplierId ? item.supplierId.name : 'N/A'}
+                      td #{item.supplierContactName || '-'}
+                      td.text-center #{item.lineCount}
+                      td.fw-bold.text-danger #{item.totalCostFormatted}
+                      td #{item.createdBy ? item.createdBy.fullName : 'Admin'}
+                      td #{item.createdAtFormat}
+                      td.text-end
+                        a.me-2(
+                          href=`/${pathAdmin}/inventory/receipt/detail/${item._id}`
+                          title="Xem chi tiết phiếu nhập"
+                        )
+                          i.las.la-eye.text-secondary.fs-20
+                        if (permissions.includes("stock-receipt-delete"))
+                          a(
+                            href="javascript:;"
+                            button-api
+                            data-method="PATCH"
+                            data-api=`/${pathAdmin}/inventory/receipt/delete/${item._id}`
+                            title="Hủy phiếu nhập kho"
+                          )
+                            i.las.la-trash-alt.text-secondary.fs-20
+                else
+                  tr
+                    td.text-center.text-muted.py-4(colspan="9") Chưa có phiếu nhập kho nào.
+          +pagination()

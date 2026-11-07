@@ -17,6 +17,7 @@ import blockRoutes from "./block.route";
 import templateRoutes from "./template.route";
 import chatRoutes from "./chat.route";
 import supplierRoutes from "./supplier.route";
+import inventoryRoutes from "./inventory.route";
 
 import * as authMiddleware from "../../middlewares/admin/authenticate.middleware";
 
@@ -41,6 +42,7 @@ router.use('/template', authMiddleware.verifyToken, templateRoutes);
 router.use('/chat', authMiddleware.verifyToken, chatRoutes);
 router.use('/supplier', authMiddleware.verifyToken, supplierRoutes);
 router.use('/inventory/supplier', authMiddleware.verifyToken, supplierRoutes);
+router.use('/inventory', authMiddleware.verifyToken, inventoryRoutes);
 
 
 export default router;

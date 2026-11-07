@@ -1,0 +1,97 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            .col-auto
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/inventory/receipt`)
+                i.fa-solid.fa-arrow-left.me-1
+                | Quay lại danh sách
+        .card-body.pt-0
+          // Thông tin chung của phiếu nhập
+          .row.mb-4.g-3
+            .col-md-3
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Mã phiếu nhập
+                strong.text-primary.fs-16 #{receipt.receiptCode}
+            .col-md-3
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Nhà cung cấp
+                strong.fs-16 #{receipt.supplierId ? receipt.supplierId.name : 'N/A'}
+                if receipt.supplierId && receipt.supplierId.phone
+                  div.small.text-muted SĐT: #{receipt.supplierId.phone}
+            .col-md-3
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Người giao hàng / Đại diện
+                strong.fs-16 #{receipt.supplierContactName || '-'}
+            .col-md-3
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Ngày tạo phiếu
+                strong.fs-16 #{receipt.createdAtFormat}
+                if receipt.createdBy
+                  div.small.text-muted Bởi: #{receipt.createdBy.fullName}
+            .col-md-4
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Hóa đơn chứng từ
+                strong.fs-16 #{receipt.hasInvoice ? `Có hóa đơn (Số: ${receipt.invoiceNumber || 'N/A'})` : 'Không có hóa đơn'}
+            .col-md-4
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Tổng chi phí nhập kho
+                strong.text-danger.fs-18 #{receipt.totalCostFormatted}
+            .col-md-4
+              .p-3.border.rounded.bg-light
+                small.text-muted.d-block Ghi chú nội bộ
+                span #{receipt.note || 'Không có ghi chú'}
+
+          // Danh sách chi tiết các mặt hàng
+          h5.fw-bold.mb-3 Danh sách sản phẩm nhập
+          .table-responsive
+            table.table.table-bordered.align-middle.mb-0
+              thead.table-light
+                tr
+                  th(style="width: 50px") STT
+                  th Sản phẩm / Biến thể
+                  th(style="width: 120px") Loại quản lý
+                  th.text-end(style="width: 140px") Đơn giá nhập
+                  th.text-center(style="width: 100px") Số lượng
+                  th.text-end(style="width: 150px") Thành tiền
+                  th Chi tiết mã IMEI đã nhập
+              tbody
+                each item, index in receipt.items
+                  tr
+                    td.text-center #{index + 1}
+                    td
+                      .fw-semibold.text-primary #{item.productId ? item.productId.name : 'N/A'}
+                      if item.attributeLabel
+                        small.text-muted #{item.attributeLabel}
+                      if item.variantId && item.variantId.sku
+                        div
+                          code.text-dark #{item.variantId.sku}
+                    td
+                      if item.trackingType === "imei"
+                        span.badge.bg-primary IMEI
+                      else
+                        span.badge.bg-secondary Số lượng
+                    td.text-end #{item.purchasePriceFormatted}
+                    td.text-center.fw-bold #{item.quantity}
+                    td.text-end.fw-bold.text-danger #{item.totalPriceFormatted}
+                    td
+                      if item.trackingType === "imei" && item.identifiers && item.identifiers.length > 0
+                        .d-flex.flex-wrap.gap-1(style="max-height: 120px; overflow-y: auto;")
+                          each imei in item.identifiers
+                            a.badge.bg-light.text-dark.border.text-decoration-none(
+                              href=`/${pathAdmin}/inventory/tracker?keyword=${imei}`
+                              title="Bấm để tra cứu vòng đời IMEI này"
+                              target="_blank"
+                            )
+                              i.fa-solid.fa-barcode.me-1.text-secondary
+                              | #{imei}
+                      else if item.trackingType === "imei"
+                        span.text-muted Không có mã IMEI
+                      else
+                        span.text-muted Quản lý theo số lượng

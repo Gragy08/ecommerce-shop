@@ -1,0 +1,136 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+include ../mixins/form-search.pug
+
+block main
+  .row
+    .col-12
+      // Thẻ thống kê nhanh
+      .row.mb-3
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-primary-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-boxes.fs-3.text-primary
+                div
+                  h6.text-muted.mb-1 Tổng số SKU biến thể
+                  h4.mb-0 #{stats ? stats.totalSKUs : 0}
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-success-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-check-circle.fs-3.text-success
+                div
+                  h6.text-muted.mb-1 Đang có sẵn để bán
+                  h4.mb-0 #{stats ? stats.totalAvailable : 0}
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-info-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-warehouse.fs-3.text-info
+                div
+                  h6.text-muted.mb-1 Tổng số lượng trong kho
+                  h4.mb-0 #{stats ? stats.totalStock : 0}
+
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            .col-auto.d-flex.gap-2
+              if (permissions.includes("stock-receipt-create"))
+                a.btn.btn-primary(href=`/${pathAdmin}/inventory/receipt/create`)
+                  i.fa-solid.fa-plus.me-1
+                  | Nhập kho
+              if (permissions.includes("inventory-tracker"))
+                a.btn.btn-outline-primary(href=`/${pathAdmin}/inventory/tracker`)
+                  i.fa-solid.fa-barcode.me-1
+                  | Tra cứu IMEI
+        .card-body.pt-0
+          .row
+            .col-lg-6
+              +form-search()
+          .table-responsive
+            table.table.table-striped.align-middle.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Sản phẩm / Biến thể
+                  th Mã SKU
+                  th Loại quản lý
+                  th.text-center Có sẵn
+                  th.text-center Đã bán
+                  th.text-center Khác
+                  th.text-center Tổng tồn
+                  th.text-end Hành động
+              tbody
+                if (inventoryList && inventoryList.length > 0)
+                  each item, index in inventoryList
+                    tr
+                      td #{pagination.skip + index + 1}
+                      td
+                        .fw-semibold.text-primary #{item.productName}
+                        if item.attributeLabel
+                          small.text-muted #{item.attributeLabel}
+                      td
+                        span.badge.bg-primary-subtle.text-primary #{item.sku}
+                      td
+                        if item.inventoryType === "imei"
+                          span.badge.bg-primary IMEI
+                        else
+                          span.badge.bg-secondary Số lượng
+                      td.text-center
+                        span.fw-bold.text-success #{item.availableCount}
+                      td.text-center
+                        span.fw-bold.text-muted #{item.soldCount}
+                      td.text-center
+                        span.fw-bold.text-warning #{item.otherCount}
+                      td.text-center
+                        span.fw-bold.text-dark #{item.totalQuantity}
+                      td.text-end
+                        if item.inventoryType === "imei"
+                          button.btn.btn-sm.btn-outline-primary.btn-view-imei(
+                            type="button"
+                            data-variant-id=item.variantId
+                            data-variant-name=`${item.productName} - ${item.attributeLabel || item.sku}`
+                            title="Quản lý chi tiết danh sách IMEI"
+                          )
+                            i.fa-solid.fa-list-check.me-1
+                            | Danh sách IMEI
+                        else
+                          span.text-muted -
+                else
+                  tr
+                    td.text-center.text-muted.py-4(colspan="9") Chưa có dữ liệu tồn kho nào.
+          +pagination()
+
+  // Modal xem chi tiết & đổi trạng thái IMEI
+  #modalImei.modal.fade(tabindex="-1", aria-hidden="true")
+    .modal-dialog.modal-lg.modal-dialog-centered.modal-dialog-scrollable
+      .modal-content
+        .modal-header
+          h5.modal-title.fw-bold Quản lý IMEI: 
+            span#modalVariantName.text-primary
+          button.btn-close(type="button", data-bs-dismiss="modal", aria-label="Close")
+        .modal-body
+          .table-responsive
+            table.table.table-bordered.align-middle.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Mã IMEI
+                  th Trạng thái
+                  th Phiếu nhập
+                  th Nhà cung cấp
+                  th.text-end Đổi trạng thái
+              tbody#modalImeiBody
+                tr
+                  td.text-center(colspan="6") Đang tải...
+        .modal-footer
+          button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Đóng
+
+block script
+  script(src="/admin/assets/js/inventory.js")
