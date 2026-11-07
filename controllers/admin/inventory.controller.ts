@@ -259,13 +259,14 @@ export const changeItemStatus = async (req: Request, res: Response): Promise<voi
     }
 
     const fromStatus = item.status;
+    const rawAdminId = (req as any).adminId;
     item.status = toStatus;
     item.statusLogs.push({
       fromStatus: fromStatus as any,
       toStatus: toStatus as any,
       reason: reason || "Điều chỉnh tồn kho",
       note: note || "",
-      updatedBy: (req as any).adminId,
+      updatedBy: rawAdminId && mongoose.isValidObjectId(rawAdminId) ? new mongoose.Types.ObjectId(rawAdminId) : undefined,
       updatedAt: new Date()
     } as any);
 
@@ -527,6 +528,15 @@ export const createReceiptPost = async (req: Request, res: Response): Promise<vo
 
     const calculatedTotalCost = receiptItems.reduce((acc, curr) => acc + curr.totalPrice, 0);
     const receiptCode = createReceiptCode();
+    const rawAdminId = (req as any).adminId;
+
+    // Dọn dẹp các IMEI cũ đã bị xóa mềm (nếu từng hủy phiếu trước đó) để tránh đụng unique index
+    if (identifiersInReceipt.size > 0) {
+      await InventoryItem.deleteMany({
+        identifier: { $in: [...identifiersInReceipt] },
+        deleted: true
+      });
+    }
 
     const receipt = await StockReceipt.create({
       receiptCode,
@@ -538,7 +548,7 @@ export const createReceiptPost = async (req: Request, res: Response): Promise<vo
       note: String(req.body.note || "").trim(),
       lineCount: lines.length,
       items: receiptItems,
-      createdBy: (req as any).adminId ? new mongoose.Types.ObjectId((req as any).adminId) : undefined
+      createdBy: rawAdminId && mongoose.isValidObjectId(rawAdminId) ? new mongoose.Types.ObjectId(rawAdminId) : undefined
     });
 
     // Tạo các bản ghi tồn kho
@@ -547,7 +557,17 @@ export const createReceiptPost = async (req: Request, res: Response): Promise<vo
         ...row,
         receiptId: receipt._id,
         status: "available",
-        receivedAt: new Date()
+        receivedAt: new Date(),
+        statusLogs: [
+          {
+            fromStatus: undefined,
+            toStatus: "available",
+            reason: "Nhập kho mới",
+            note: `Nhập theo phiếu ${receiptCode}`,
+            updatedBy: rawAdminId && mongoose.isValidObjectId(rawAdminId) ? new mongoose.Types.ObjectId(rawAdminId) : undefined,
+            updatedAt: new Date()
+          }
+        ]
       }))
     );
 
