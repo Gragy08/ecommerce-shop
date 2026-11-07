@@ -46,7 +46,13 @@ block main
                   .card-body
                     .d-flex.align-items-center.mb-3
                       if item.productId && item.productId.images && item.productId.images[0]
-                        img.rounded.me-3(src=item.productId.images[0] width="64" height="64" style="object-fit: cover;")
+                        img.rounded.me-3(
+                          src=item.productId.images[0]
+                          width="64"
+                          height="64"
+                          style="object-fit: cover;"
+                          onerror="this.style.display='none'"
+                        )
                       div
                         h5.text-primary.mb-1 #{item.productId ? item.productId.name : 'N/A'}
                         if item.variantId && item.variantId.sku
@@ -99,7 +105,7 @@ block main
                           td.text-muted SĐT nhà cung cấp:
                           td #{item.receiptId.supplierId ? item.receiptId.supplierId.phone : '-'}
                         tr
-                          td.text-muted Người giao hàng:
+                          td.text-muted Nhân viên bên nhà cung cấp:
                           td #{item.receiptId.supplierContactName || '-'}
                         tr
                           td.text-muted Hóa đơn NCC:

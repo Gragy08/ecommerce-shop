@@ -740,7 +740,7 @@ export const trackerPage = async (req: Request, res: Response): Promise<void> =>
         .populate("variantId", "sku attributeValue purchasePrice priceNew")
         .populate({
           path: "receiptId",
-          select: "receiptCode supplierId createdAt invoiceNumber createdBy hasInvoice totalCost",
+          select: "receiptCode supplierId supplierContactName createdAt invoiceNumber createdBy hasInvoice totalCost",
           populate: [
             { path: "supplierId", select: "name phone contactPerson" },
             { path: "createdBy", select: "fullName email" }
