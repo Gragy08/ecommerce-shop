@@ -60,7 +60,7 @@ export const list = async (req: Request, res: Response) => {
     }
 
     res.render("admin/pages/supplier-list", {
-      pageTitle: "Quản lý nhà cung cấp",
+      pageTitle: "Danh sách nhà cung cấp",
       recordList: supplierList,
       pagination
     });
@@ -73,7 +73,7 @@ export const list = async (req: Request, res: Response) => {
 // [GET] /admin/supplier/create
 export const create = async (_req: Request, res: Response) => {
   res.render("admin/pages/supplier-create", {
-    pageTitle: "Tạo nhà cung cấp mới"
+    pageTitle: "Tạo nhà cung cấp"
   });
 };
 

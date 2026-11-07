@@ -1,93 +1,44 @@
 extends ../layouts/default.pug
 
 block main
-  .card
-    .card-header
-      .row.align-items-center
-        .col
-          h4.card-title #{pageTitle}
-          p.text-muted.mb-0 Thêm nhà cung cấp mới vào hệ thống quản lý.
-        .col-auto
-          a.btn.btn-outline-secondary(href=`/${pathAdmin}/supplier/list`)
-            i.fa-solid.fa-arrow-left.me-1
-            | Quay lại danh sách
-    .card-body.pt-0
-      form#supplierCreateForm
-        .row
-          .col-md-6
-            .mb-3
-              label.form-label(for="name") Tên nhà cung cấp *
-              input#name.form-control(
-                type="text"
-                name="name"
-                placeholder="Ví dụ: Công ty Cổ phần Bán lẻ Apple Việt Nam"
-                required
-              )
-          .col-md-6
-            .mb-3
-              label.form-label(for="code") Mã nhà cung cấp (Để trống tự động sinh)
-              input#code.form-control(
-                type="text"
-                name="code"
-                placeholder="Ví dụ: NCC-APPLE"
-              )
-          .col-md-6
-            .mb-3
-              label.form-label(for="phone") Số điện thoại *
-              input#phone.form-control(
-                type="text"
-                name="phone"
-                placeholder="Ví dụ: 0987654321"
-                required
-              )
-          .col-md-6
-            .mb-3
-              label.form-label(for="email") Email liên hệ
-              input#email.form-control(
-                type="email"
-                name="email"
-                placeholder="Ví dụ: contact@apple-vn.com"
-              )
-          .col-md-6
-            .mb-3
-              label.form-label(for="taxCode") Mã số thuế
-              input#taxCode.form-control(
-                type="text"
-                name="taxCode"
-                placeholder="Ví dụ: 0312345678"
-              )
-          .col-md-6
-            .mb-3
-              label.form-label(for="contactPerson") Người đại diện / Người liên hệ
-              input#contactPerson.form-control(
-                type="text"
-                name="contactPerson"
-                placeholder="Ví dụ: Nguyễn Văn A - Trưởng phòng kinh doanh"
-              )
-          .col-md-8
-            .mb-3
-              label.form-label(for="address") Địa chỉ
-              input#address.form-control(
-                type="text"
-                name="address"
-                placeholder="Ví dụ: Tầng 10, Tòa nhà Bitexco, Q.1, TP.HCM"
-              )
-          .col-md-4
-            .mb-3
-              label.form-label(for="status") Trạng thái
-              select#status.form-select(name="status")
-                option(value="active" selected) Hoạt động
-                option(value="inactive") Tạm dừng
-          .col-12
-            .mb-3
-              label.form-label(for="notes") Ghi chú nội bộ
-              textarea#notes.form-control(
-                name="notes"
-                rows="3"
-                placeholder="Các điều khoản thanh toán, chính sách đổi trả hoặc thông tin lưu ý..."
-              )
-        .d-flex.justify-content-end.gap-2.mt-3
-          a.btn.btn-light(href=`/${pathAdmin}/supplier/list`) Hủy
-          button.btn.btn-primary(type="submit")
-            i.fa-solid.fa-check.me-1
-            | Tạo nhà cung cấp
+  if permissions.includes('supplier-create')
+    .card
+      .card-header
+        .row.align-items-center
+          .col
+            h4.card-title #{pageTitle}
+      .card-body.pt-0
+        form(id="supplierCreateForm")
+          .row
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="name") Tên nhà cung cấp *
+                input.form-control(id="name" type="text" name="name")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="phone") Số điện thoại *
+                input.form-control(id="phone" type="text" name="phone")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="email") Email
+                input.form-control(id="email" type="email" name="email")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="contactPerson") Người đại diện
+                input.form-control(id="contactPerson" type="text" name="contactPerson")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="address") Địa chỉ
+                input.form-control(id="address" type="text" name="address")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="status") Trạng thái
+                select.form-select(id="status" name="status")
+                  option(value="active") Hoạt động
+                  option(value="inactive") Tạm dừng
+            .col-12
+              .mb-3
+                label.form-label(for="notes") Ghi chú
+                textarea.form-control(id="notes" name="notes" rows="3")
+          button.btn.btn-primary(type="submit") Tạo mới
+          a.btn.btn-danger.ms-1(href=`/${pathAdmin}/supplier/list`) Hủy

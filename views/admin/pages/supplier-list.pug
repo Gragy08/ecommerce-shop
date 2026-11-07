@@ -10,7 +10,6 @@ block main
           .row.align-items-center
             .col
               h4.card-title #{pageTitle}
-              p.text-muted.mb-0 Quản lý thông tin nhà cung cấp và đối tác nhập hàng hóa.
             if (permissions.includes("supplier-create"))
               .col-auto
                 a.btn.btn-primary(
@@ -19,20 +18,14 @@ block main
                   i.fa-solid.fa-plus.me-1
                   | Tạo nhà cung cấp
         .card-body.pt-0
-          .row.mb-3
+          .row
             .col-lg-6
               +form-search()
-            .col-lg-6.d-flex.justify-content-end.gap-2
-              // Lọc trạng thái nhanh
-              a.btn.btn-sm.btn-outline-secondary(href=`/${pathAdmin}/supplier/list`) Tất cả
-              a.btn.btn-sm.btn-outline-success(href=`/${pathAdmin}/supplier/list?status=active`) Đang hoạt động
-              a.btn.btn-sm.btn-outline-danger(href=`/${pathAdmin}/supplier/list?status=inactive`) Tạm dừng
           .table-responsive
-            table.table.table-striped.align-middle.mb-0
+            table.table.table-striped.mb-0
               thead.table-light
                 tr
                   th STT
-                  th Mã NCC
                   th Tên nhà cung cấp
                   th Số điện thoại
                   th Email
@@ -46,9 +39,7 @@ block main
                   each item, index in recordList
                     tr
                       td #{pagination.skip + index + 1}
-                      td
-                        span.badge.bg-primary-subtle.text-primary.fw-semibold #{item.code || '-'}
-                      td.fw-semibold #{item.name}
+                      td #{item.name}
                       td #{item.phone}
                       td #{item.email || '-'}
                       td #{item.address || '-'}
@@ -56,15 +47,12 @@ block main
                       td
                         if (item.status == "active")
                           span.badge.bg-success Hoạt động
-                        else
+                        else if (item.status == "inactive")
                           span.badge.bg-danger Tạm dừng
                       td #{item.createdAtFormat || '-'}
                       td.text-end
                         if (permissions.includes("supplier-edit"))
-                          a.me-2(
-                            href=`/${pathAdmin}/supplier/edit/${item._id}`
-                            title="Chỉnh sửa"
-                          )
+                          a(href=`/${pathAdmin}/supplier/edit/${item._id}`)
                             i.las.la-pen.text-secondary.fs-20
                         if (permissions.includes("supplier-delete"))
                           a(
@@ -72,10 +60,9 @@ block main
                             button-api
                             data-method="PATCH"
                             data-api=`/${pathAdmin}/supplier/delete/${item._id}`
-                            title="Xóa nhà cung cấp"
                           )
                             i.las.la-trash-alt.text-secondary.fs-20
                 else
                   tr
-                    td.text-center.text-muted.py-4(colspan="10") Chưa có nhà cung cấp nào.
+                    td.text-center.text-muted.py-4(colspan="9") Chưa có nhà cung cấp nào.
           +pagination()
