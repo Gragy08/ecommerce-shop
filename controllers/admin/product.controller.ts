@@ -10,7 +10,7 @@ import { Parser } from 'json2csv';
 import Papa from 'papaparse';
 import { generateRandomString } from '../../helpers/generate.helper';
 import { pingGoogleSitemap } from '../../helpers/ping-google.helper';
-import { syncProductVariants } from '../../helpers/variant.helper';
+import { syncProductVariants, resolveUniqueProductSku } from '../../helpers/variant.helper';
 
 
 export const category = async (req: Request, res: Response) => {
@@ -314,7 +314,7 @@ export const createPost = async (req: Request, res: Response) => {
 
     req.body.boughtTogether = JSON.parse(req.body.boughtTogether);
 
-    req.body.sku = generateRandomString(10).toUpperCase();
+    req.body.sku = await resolveUniqueProductSku(req.body.name);
 
     // Thêm SEO mặc định
     req.body.seo = {
@@ -563,7 +563,7 @@ export const editPatch = async (req: Request, res: Response) => {
     req.body.boughtTogether = JSON.parse(req.body.boughtTogether);
 
     if(!productDetail.sku) {
-      req.body.sku = generateRandomString(10).toUpperCase();
+      req.body.sku = await resolveUniqueProductSku(req.body.name, req.params.id);
     }
 
     await Product.updateOne({

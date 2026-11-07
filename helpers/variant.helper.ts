@@ -1,7 +1,93 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 import Product from "../models/product.model";
 import ProductVariant from "../models/product-variant.model";
-import { generateRandomString } from "./generate.helper";
+
+/**
+ * Chuẩn hóa chuỗi thành mã SKU viết hoa không dấu
+ */
+export const toSkuCode = (str: string, removeHyphens: boolean = false): string => {
+  if (!str) return "";
+  return slugify(str, {
+    replacement: removeHyphens ? "" : "-",
+    remove: /[*+~.()'"!:@/\\,]/g,
+    lower: false,
+    locale: "vi"
+  })
+    .replace(/[^a-zA-Z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toUpperCase();
+};
+
+/**
+ * Sinh mã SKU có ý nghĩa cho biến thể từ tên sản phẩm và các giá trị thuộc tính
+ * Ví dụ: iPhone 18 + 128GB + Xanh Blue => IPHONE18-128GB-XANHBLUE
+ */
+export const generateVariantSku = (
+  productName: string,
+  attributeValues: Array<{ value?: string; label?: string; attrId?: string }> = []
+): string => {
+  let base = toSkuCode(productName);
+  base = base.replace(/([A-Z]+)-([0-9]+)/g, "$1$2");
+
+  const parts = attributeValues
+    .map(a => {
+      const code = toSkuCode(a.value || "");
+      return code.replace(/-/g, "");
+    })
+    .filter(Boolean);
+
+  if (parts.length > 0) {
+    return `${base}-${parts.join("-")}`;
+  }
+  return base || "SKU";
+};
+
+/**
+ * Sinh mã SKU duy nhất cho biến thể trong DB, tự thêm hậu tố -01, -02 nếu trùng
+ */
+export const resolveUniqueVariantSku = async (
+  candidateSku: string,
+  currentVariantId?: mongoose.Types.ObjectId | string
+): Promise<string> => {
+  let finalSku = candidateSku;
+  let counter = 1;
+  while (true) {
+    const filter: any = { sku: finalSku };
+    if (currentVariantId && mongoose.Types.ObjectId.isValid(currentVariantId as any)) {
+      filter._id = { $ne: currentVariantId };
+    }
+    const existing = await ProductVariant.findOne(filter);
+    if (!existing) break;
+    finalSku = `${candidateSku}-${String(counter).padStart(2, "0")}`;
+    counter++;
+  }
+  return finalSku;
+};
+
+/**
+ * Sinh mã SKU duy nhất cho sản phẩm cha trong DB
+ */
+export const resolveUniqueProductSku = async (
+  productName: string,
+  currentProductId?: mongoose.Types.ObjectId | string
+): Promise<string> => {
+  let baseSku = toSkuCode(productName).replace(/([A-Z]+)-([0-9]+)/g, "$1$2") || "SP";
+  let finalSku = baseSku;
+  let counter = 1;
+  while (true) {
+    const filter: any = { sku: finalSku, deleted: false };
+    if (currentProductId && mongoose.Types.ObjectId.isValid(currentProductId as any)) {
+      filter._id = { $ne: currentProductId };
+    }
+    const existing = await Product.findOne(filter);
+    if (!existing) break;
+    finalSku = `${baseSku}-${String(counter).padStart(2, "0")}`;
+    counter++;
+  }
+  return finalSku;
+};
 
 /**
  * Đồng bộ danh sách biến thể từ form quản trị vào collection `product-variants`
@@ -65,12 +151,19 @@ export const syncProductVariants = async (productId: string, variantsInput: any[
       variantDoc.stock = stock;
       variantDoc.status = status;
       if (images.length > 0) variantDoc.images = images;
-      if (!variantDoc.sku) {
-        variantDoc.sku = `${product.sku || 'SKU'}-${generateRandomString(4).toUpperCase()}`;
-      }
+      
+      const candidateSku = item.sku && item.sku.trim()
+        ? item.sku.trim().toUpperCase()
+        : (variantDoc.sku || generateVariantSku(product.name || "", attributeValue));
+      variantDoc.sku = await resolveUniqueVariantSku(candidateSku, variantDoc._id);
+
       await variantDoc.save();
     } else {
-      const sku = item.sku || `${product.sku || 'SKU'}-${generateRandomString(4).toUpperCase()}`;
+      const candidateSku = item.sku && item.sku.trim()
+        ? item.sku.trim().toUpperCase()
+        : generateVariantSku(product.name || "", attributeValue);
+      const sku = await resolveUniqueVariantSku(candidateSku);
+
       variantDoc = await ProductVariant.create({
         productId: product._id,
         sku: sku,
