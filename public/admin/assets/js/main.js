@@ -2,10 +2,11 @@
 const initialTinyMCE = () => {
   tinymce.init({
     selector: '[textarea-mce]',
+    license_key: 'gpl',
     plugins: [
       'accordion', 'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'autoresize', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image'
     ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat | image',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat | image',
     init_instance_callback: (editor) => {
       editor.on("OpenWindow", () => {
         const title = document.querySelector(".tox .tox-dialog__title")?.innerHTML;
