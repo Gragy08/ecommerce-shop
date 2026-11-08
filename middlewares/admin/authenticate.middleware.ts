@@ -6,11 +6,28 @@ import Role from "../../models/role.model";
 import { RequestAccount } from "../../interfaces/request.interface";
 
 export const verifyToken = async (req: RequestAccount, res: Response, next: NextFunction) => {
+  const isJsonRequest =
+    req.method !== "GET" ||
+    Boolean(req.headers["content-type"] && req.headers["content-type"].includes("application/json")) ||
+    Boolean(req.headers.accept && req.headers.accept.includes("application/json"));
+
+  const handleUnauthorized = () => {
+    if (isJsonRequest) {
+      res.status(401).json({
+        code: "error",
+        message: "Phiên đăng nhập đã hết hạn! Vui lòng đăng nhập lại.",
+        redirectUrl: `/${pathAdmin}/account/login`
+      });
+      return;
+    }
+    res.redirect(`/${pathAdmin}/account/login`);
+  };
+
   try {
     const token = req.cookies.tokenAdmin;
 
     if(!token) {
-      res.redirect(`/${pathAdmin}/account/login`);
+      handleUnauthorized();
       return;
     }
 
@@ -40,7 +57,7 @@ export const verifyToken = async (req: RequestAccount, res: Response, next: Next
       })
 
       if(!existAccount) {
-        res.redirect(`/${pathAdmin}/account/login`);
+        handleUnauthorized();
         return;
       }
 
@@ -78,7 +95,7 @@ export const verifyToken = async (req: RequestAccount, res: Response, next: Next
     next();
   } catch (error) {
     console.log(error);
-    res.redirect(`/${pathAdmin}/account/login`);
+    handleUnauthorized();
   }
 }
 

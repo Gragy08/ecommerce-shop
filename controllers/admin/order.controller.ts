@@ -473,21 +473,34 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
       const invDoc = await InventoryItem.findOne({
         identifier: imeiEntry.imei,
         deleted: false
-      });
+      })
+        .select("_id status")
+        .lean();
       if (invDoc) {
-        const prevStatus = invDoc.status;
-        invDoc.status = "sold";
-        invDoc.soldOrderId = newOrder._id;
-        invDoc.soldAt = new Date();
-        invDoc.statusLogs.push({
+        const prevStatus = invDoc.status || "available";
+        const logEntry: any = {
           fromStatus: prevStatus,
           toStatus: "sold",
           reason: "Xuất bán tại quầy POS",
           note: `Hóa đơn ${code} - Khách: ${fullName}`,
-          updatedBy: validAdminObjectId,
           updatedAt: new Date()
-        } as any);
-        await invDoc.save();
+        };
+        if (validAdminObjectId) {
+          logEntry.updatedBy = validAdminObjectId;
+        }
+        await InventoryItem.updateOne(
+          { _id: invDoc._id },
+          {
+            $set: {
+              status: "sold",
+              soldOrderId: newOrder._id,
+              soldAt: new Date()
+            },
+            $push: {
+              statusLogs: logEntry
+            }
+          }
+        );
       }
       affectedVariantMap.set(String(imeiEntry.variantId), {
         variantId: imeiEntry.variantId,
@@ -523,8 +536,10 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
         source: "pos"
       });
       if (customer) {
-        newOrder.customerId = customer._id;
-        await newOrder.save();
+        await Order.updateOne(
+          { _id: newOrder._id },
+          { $set: { customerId: customer._id } }
+        );
       }
     }
 
@@ -539,9 +554,14 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
       orderId: newOrder._id,
       orderCode: code
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error createPosPost:", error);
-    res.status(500).json({ code: "error", message: "Lỗi hệ thống khi tạo đơn hàng POS!" });
+    res.status(500).json({
+      code: "error",
+      message: error?.message
+        ? `Lỗi hệ thống khi tạo đơn hàng POS: ${error.message}`
+        : "Lỗi hệ thống khi tạo đơn hàng POS!"
+    });
   }
 };
 

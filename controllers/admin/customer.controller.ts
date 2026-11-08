@@ -39,16 +39,18 @@ export const syncCustomerOrdersByPhone = async (
     const orders = await Order.find({
       $or: orQuery,
       deleted: false
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
     let totalSpent = 0;
     let orderCount = 0;
     let lastOrderAt: Date | undefined = undefined;
+    const orderIdsToLink: any[] = [];
 
     for (const ord of orders) {
       if (!ord.customerId || String(ord.customerId) !== String(customer._id)) {
-        ord.customerId = customer._id;
-        await ord.save();
+        orderIdsToLink.push(ord._id);
       }
 
       if (!["cancelled", "returned"].includes(String(ord.orderStatus))) {
@@ -61,6 +63,13 @@ export const syncCustomerOrdersByPhone = async (
           lastOrderAt = ordCreatedAt;
         }
       }
+    }
+
+    if (orderIdsToLink.length > 0) {
+      await Order.updateMany(
+        { _id: { $in: orderIdsToLink } },
+        { $set: { customerId: customer._id } }
+      );
     }
 
     customer.totalSpent = totalSpent;

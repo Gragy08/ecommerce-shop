@@ -270,7 +270,8 @@
             </td>
             <td class="text-end">${Number(item.unitPrice || 0).toLocaleString("vi-VN")} đ</td>
             <td class="text-center">
-              <input type="number" class="form-control form-control-sm text-center cart-qty-input"
+              <input type="number" class="form-control form-control-sm text-center cart-qty-input mx-auto"
+                style="width: 72px; min-width: 65px;"
                 data-index="${idx}" min="1" max="${item.isCustomItem ? 999 : item.availableStock}" value="${item.quantity}">
             </td>
             <td>${imeiHtml}</td>
@@ -528,7 +529,7 @@
               badgeEl.style.display = "block";
             }
           } else if (badgeEl) {
-            badgeEl.innerHTML = `<span class="badge bg-secondary">Khách hàng mới (sẽ tự lưu vào CRM)</span>`;
+            badgeEl.innerHTML = `<span class="badge bg-secondary">Khách hàng mới</span>`;
             badgeEl.style.display = "block";
           }
         } catch (e) {}
@@ -576,13 +577,42 @@
       try {
         const response = await fetch(`/${pathAdmin}/order/pos/create`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
           body: JSON.stringify(payload)
         });
+
+        if (response.redirected && response.url.includes("/account/login")) {
+          if (typeof notyf !== "undefined") {
+            notyf.error("Phiên đăng nhập đã hết hạn! Đang chuyển hướng đăng nhập...");
+          }
+          setTimeout(() => {
+            window.location.href = response.url;
+          }, 1200);
+          return;
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          if (typeof notyf !== "undefined") {
+            notyf.error(`Máy chủ phản hồi không hợp lệ (HTTP ${response.status}). Vui lòng tải lại trang!`);
+          }
+          btnCheckout.disabled = false;
+          return;
+        }
+
         const data = await response.json();
 
         if (data.code === "error") {
           if (typeof notyf !== "undefined") notyf.error(data.message);
+          if (data.redirectUrl) {
+            setTimeout(() => {
+              window.location.href = data.redirectUrl;
+            }, 1200);
+            return;
+          }
           btnCheckout.disabled = false;
           return;
         }
@@ -592,7 +622,10 @@
           window.location.href = `/${pathAdmin}/order/print/${data.orderId}`;
         }
       } catch (err) {
-        if (typeof notyf !== "undefined") notyf.error("Lỗi kết nối máy chủ!");
+        console.error("POS Checkout Error:", err);
+        if (typeof notyf !== "undefined") {
+          notyf.error("Không thể kết nối máy chủ (vui lòng kiểm tra server localhost:3000 đang chạy)!");
+        }
         btnCheckout.disabled = false;
       }
     });

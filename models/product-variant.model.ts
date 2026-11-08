@@ -75,8 +75,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-schema.index({ productId: 1 });
-
 const ProductVariant = mongoose.model("ProductVariant", schema, "product-variants");
 
 export default ProductVariant;

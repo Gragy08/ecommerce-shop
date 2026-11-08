@@ -215,11 +215,11 @@ export const syncStockToProduct = async (productId: string): Promise<number> => 
   }
 
   const [product, variants] = await Promise.all([
-    Product.findById(productId),
+    Product.findById(productId).select("variants stock").lean(),
     ProductVariant.find({
       productId: productId,
       status: "active"
-    })
+    }).lean()
   ]);
 
   const totalStock = variants.reduce((total: number, v: any) => total + (Number(v.stock) || 0), 0);
@@ -232,19 +232,23 @@ export const syncStockToProduct = async (productId: string): Promise<number> => 
       stockById.set(String(v._id), Number(v.stock) || 0);
     }
 
+    const updatePayload: any = {
+      stock: totalStock
+    };
+
     if (Array.isArray(product.variants) && product.variants.length > 0) {
-      product.variants = product.variants.map((pv: any) => {
-        const plain = pv.toObject ? pv.toObject() : { ...pv };
+      updatePayload.variants = product.variants.map((pv: any) => {
+        const plain = pv && typeof pv.toObject === "function" ? pv.toObject() : { ...pv };
         if (plain.variantId && stockById.has(String(plain.variantId))) {
           plain.stock = stockById.get(String(plain.variantId));
         } else if (plain.sku && stockBySku.has(String(plain.sku))) {
           plain.stock = stockBySku.get(String(plain.sku));
         }
         return plain;
-      }) as any;
+      });
     }
-    product.stock = totalStock;
-    await product.save();
+
+    await Product.updateOne({ _id: product._id }, { $set: updatePayload });
   }
 
   return totalStock;
