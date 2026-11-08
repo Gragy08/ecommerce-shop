@@ -129,8 +129,6 @@ block main
                 h6.fw-bold.mb-1 Không tìm thấy thông tin
                 p.text-muted.small.mb-3 #{lookupResult.message || `Không có dữ liệu cho từ khóa "${keyword}".`}
                 a.btn.btn-outline-primary.btn-sm.rounded-pill(href="/tra-cuu-bao-hanh") Quay lại
-
-            // KẾT QUẢ PHIẾU BẢO HÀNH (TICKET DETAIL)
             else if (lookupResult.mode === "ticket")
               - const t = lookupResult.ticket;
               .clean-card.p-4
@@ -228,8 +226,6 @@ block main
                     h6.fw-bold.text-danger.mb-0 #{Number(t.totalAmount).toLocaleString('vi-VN')} đ
                   else
                     span.badge.bg-success Miễn phí (Bảo hành)
-
-            // KẾT QUẢ THEO MÃ IMEI
             else if (lookupResult.mode === "imei")
               - const dev = lookupResult.device;
               .clean-card.p-4
@@ -274,8 +270,6 @@ block main
                           td #{tk.status}
                 else
                   .small.text-muted.text-center.py-2 Máy chưa từng tiếp nhận bảo hành / sửa chữa.
-
-            // KẾT QUẢ THEO SỐ ĐIỆN THOẠI
             else if (lookupResult.mode === "phone")
               .clean-card.p-4
                 .d-flex.justify-content-between.align-items-center.pb-2.border-bottom.mb-3
