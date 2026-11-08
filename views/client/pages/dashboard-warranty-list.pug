@@ -1,0 +1,122 @@
+extends ../layouts/default.pug
+include ../mixins/page-banner.pug
+
+block main
+  +page-banner(
+    {
+      name: pageTitle,
+    },
+    "/dashboard/warranty/list"
+  )
+
+  section.dashboard(class="mb_100")
+    .container
+      .row
+        .col-xl-3.wow.fadeInUp
+          include ../partials/dashboard-sidebar.pug
+        .col-xl-9.wow.fadeInRight
+          div(class="dashboard_content mt_100")
+            .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2.mb-4
+              h3(class="dashboard_title mb-0") #{pageTitle}
+              a.btn.btn-outline-primary.rounded-pill(href="/tra-cuu-bao-hanh")
+                i.fas.fa-magnifying-glass.me-1
+                | Tra cứu bảo hành công khai
+
+            // Khối 1: Danh sách thiết bị sở hữu (theo IMEI)
+            .card.border-0.shadow-sm.rounded-4.mb-4
+              .card-header.bg-light.py-3.px-4.border-bottom
+                h5.mb-0.fw-bold.text-primary
+                  i.fas.fa-mobile-screen.me-2
+                  | Thiết bị của bạn (#{devices.length})
+              .card-body.p-0
+                if (devices && devices.length > 0)
+                  .table-responsive
+                    table.table.table-hover.align-middle.mb-0
+                      thead.table-light
+                        tr
+                          th.ps-4 Dòng máy & Phiên bản
+                          th Mã IMEI
+                          th Ngày mua
+                          th Hạn bảo hành
+                          th Tình trạng
+                          th.text-center.pe-4 Tra cứu
+                      tbody
+                        each dev in devices
+                          tr
+                            td.ps-4.fw-semibold #{dev.productName} #{dev.variantName ? `(${dev.variantName})` : ''}
+                            td
+                              code.fw-bold #{dev.identifier}
+                            td #{dev.soldAt ? moment(dev.soldAt).format("DD/MM/YYYY") : '-'}
+                            td #{dev.warrantyExpireDate ? moment(dev.warrantyExpireDate).format("DD/MM/YYYY") : '-'}
+                            td
+                              if dev.isUnderWarranty
+                                span.badge.bg-success-subtle.text-success.fw-bold Còn bảo hành (#{dev.remainingDays} ngày)
+                              else
+                                span.badge.bg-secondary-subtle.text-secondary Hết bảo hành
+                            td.text-center.pe-4
+                              a.btn.btn-sm.btn-primary.rounded-pill(href=`/tra-cuu-bao-hanh?keyword=${dev.identifier}`)
+                                i.fas.fa-eye.me-1
+                                | Chi tiết
+                else
+                  .p-4.text-center.text-muted
+                    i.fas.fa-box-open.fs-2.mb-2.d-block
+                    | Bạn chưa có thiết bị nào được lưu trên hệ thống hoặc chưa phát sinh đơn hàng có mã IMEI.
+
+            // Khối 2: Lịch sử phiếu bảo hành / sửa chữa
+            .card.border-0.shadow-sm.rounded-4
+              .card-header.bg-light.py-3.px-4.border-bottom
+                h5.mb-0.fw-bold.text-primary
+                  i.fas.fa-clock-rotate-left.me-2
+                  | Lịch sử tiếp nhận bảo hành & sửa chữa (#{tickets.length})
+              .card-body.p-0
+                if (tickets && tickets.length > 0)
+                  .table-responsive
+                    table.table.table-hover.align-middle.mb-0
+                      thead.table-light
+                        tr
+                          th.ps-4 Mã phiếu
+                          th Thiết bị / IMEI
+                          th Ngày nhận
+                          th Lỗi tiếp nhận
+                          th Trạng thái
+                          th.text-end Chi phí
+                          th.text-center.pe-4 Thao tác
+                      tbody
+                        each tk in tickets
+                          tr
+                            td.ps-4
+                              a.fw-bold.text-primary(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`) #{tk.ticketCode}
+                              if tk.replacementIdentifier
+                                span.badge.bg-success-subtle.text-success.d-block.mt-1 Đổi 1-1
+                            td
+                              .fw-semibold #{tk.productName}
+                              code.small #{tk.identifier}
+                            td #{moment(tk.createdAt).format("DD/MM/YYYY")}
+                            td(style="max-width: 200px;")
+                              .text-truncate(title=tk.issueDescription) #{tk.issueDescription}
+                            td
+                              case tk.status
+                                when "received"
+                                  span.badge.bg-secondary Mới nhận máy
+                                when "inspecting"
+                                  span.badge.bg-info.text-dark Đang sửa
+                                when "waiting_parts"
+                                  span.badge.bg-warning.text-dark Chờ linh kiện
+                                when "completed"
+                                  span.badge.bg-primary Đã xong
+                                when "returned"
+                                  span.badge.bg-success Đã nhận máy
+                                when "cancelled"
+                                  span.badge.bg-danger Đã hủy
+                            td.text-end
+                              if tk.totalAmount > 0
+                                strong.text-danger #{Number(tk.totalAmount).toLocaleString('vi-VN')} đ
+                              else
+                                span.text-success.fw-semibold Miễn phí
+                            td.text-center.pe-4
+                              a.btn.btn-sm.btn-outline-primary.rounded-pill(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`)
+                                | Theo dõi
+                else
+                  .p-4.text-center.text-muted
+                    i.fas.fa-shield-heart.fs-2.mb-2.d-block.text-success
+                    | Bạn chưa có yêu cầu bảo hành hoặc sửa chữa nào phát sinh.

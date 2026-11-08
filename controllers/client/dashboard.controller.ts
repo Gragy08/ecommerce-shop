@@ -9,6 +9,9 @@ import { domainCDN } from '../../configs/variable.config';
 import Order from '../../models/order.model';
 import Review from '../../models/review.model';
 import Product from '../../models/product.model';
+import WarrantyTicket from '../../models/warranty-ticket.model';
+import InventoryItem from '../../models/inventory-item.model';
+import moment from 'moment';
 import { syncAccountUserToCustomer } from '../admin/customer.controller';
 
 export const dashboard = async (req: Request, res: Response) => {
@@ -613,3 +616,135 @@ export const orderReviewPost = async (req: Request, res: Response) => {
     })
   }
 }
+
+export const warrantyList = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const accountUser = res.locals.accountUser;
+    const userId = accountUser.id || accountUser._id;
+    const userPhone = accountUser.phone || "";
+
+    const userOrders = await Order.find({
+      $or: [
+        { userId: userId },
+        ...(userPhone ? [{ phone: new RegExp(userPhone.replace(/\D/g, "").slice(-9)) }] : [])
+      ],
+      deleted: false,
+      orderStatus: { $ne: "cancelled" }
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const orderIds = userOrders.map((o: any) => o._id);
+    const orderImeis: string[] = [];
+    for (const ord of userOrders) {
+      if (Array.isArray(ord.items)) {
+        for (const item of ord.items) {
+          if (Array.isArray(item.identifiers)) {
+            orderImeis.push(...item.identifiers);
+          }
+        }
+      }
+    }
+
+    const inventoryDocs: any[] =
+      orderIds.length > 0 || orderImeis.length > 0
+        ? await InventoryItem.find({
+            $or: [
+              ...(orderIds.length > 0 ? [{ soldOrderId: { $in: orderIds } }] : []),
+              ...(orderImeis.length > 0 ? [{ identifier: { $in: orderImeis } }] : [])
+            ],
+            deleted: false
+          })
+            .populate("productId", "name warrantyMonths slug")
+            .populate("variantId", "sku attributeValue")
+            .sort({ soldAt: -1 })
+            .lean()
+        : [];
+
+    const devices: any[] = [];
+    const seenImeis = new Set<string>();
+
+    for (const inv of inventoryDocs) {
+      if (inv.identifier) seenImeis.add(inv.identifier);
+      const prod = inv.productId as any;
+      const vari = inv.variantId as any;
+      const variantText = vari?.attributeValue
+        ? vari.attributeValue.map((a: any) => a.label || a.value).filter(Boolean).join(" / ")
+        : "";
+
+      const warrantyMonths = Number(prod?.warrantyMonths ?? 12);
+      const soldDate = inv.soldAt;
+      let warrantyExpireDate: Date | null = null;
+      let isUnderWarranty = false;
+      let remainingDays = 0;
+
+      if (soldDate && warrantyMonths > 0) {
+        warrantyExpireDate = moment(soldDate).add(warrantyMonths, "months").toDate();
+        remainingDays = moment(warrantyExpireDate).diff(moment(), "days");
+        isUnderWarranty = remainingDays >= 0;
+      }
+
+      devices.push({
+        identifier: inv.identifier,
+        productName: prod?.name || "Thiết bị",
+        variantName: variantText,
+        soldAt: soldDate,
+        warrantyMonths,
+        warrantyExpireDate,
+        isUnderWarranty,
+        remainingDays
+      });
+    }
+
+    for (const ord of userOrders) {
+      for (const item of ord.items || []) {
+        for (const imei of item.identifiers || []) {
+          if (!seenImeis.has(imei)) {
+            seenImeis.add(imei);
+            const warrantyMonths = 12;
+            const soldDate = ord.createdAt;
+            const warrantyExpireDate = moment(soldDate).add(warrantyMonths, "months").toDate();
+            const remainingDays = moment(warrantyExpireDate).diff(moment(), "days");
+            devices.push({
+              identifier: imei,
+              productName: item.name,
+              variantName: Array.isArray(item.variant) ? item.variant.join(" / ") : "",
+              soldAt: soldDate,
+              warrantyMonths,
+              warrantyExpireDate,
+              isUnderWarranty: remainingDays >= 0,
+              remainingDays
+            });
+          }
+        }
+      }
+    }
+
+    const allImeis = Array.from(seenImeis);
+    const phoneDigits = userPhone.replace(/\D/g, "");
+    const ticketFilter: Record<string, any> = { deleted: false };
+    const orConditions: any[] = [];
+    if (allImeis.length > 0) {
+      orConditions.push({ identifier: { $in: allImeis } });
+    }
+    if (phoneDigits.length >= 9) {
+      orConditions.push({ "customerInfo.phone": new RegExp(phoneDigits.slice(-9)) });
+    }
+
+    let tickets: any[] = [];
+    if (orConditions.length > 0) {
+      ticketFilter.$or = orConditions;
+      tickets = await WarrantyTicket.find(ticketFilter).sort({ createdAt: -1 }).lean();
+    }
+
+    res.render("client/pages/dashboard-warranty-list", {
+      pageTitle: "Thiết bị & Bảo hành của tôi",
+      moment,
+      devices,
+      tickets
+    });
+  } catch (error) {
+    console.error("Error dashboard warrantyList:", error);
+    res.redirect("/dashboard");
+  }
+};

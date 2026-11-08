@@ -12,6 +12,7 @@ import checkoutRoutes from "./checkout.route";
 import orderRoutes from "./order.route";
 import chatRoutes from "./chat.route";
 import locationRoutes from "./location.route";
+import warrantyRoutes from "./warranty.route";
 import * as categoryMiddleware from "../../middlewares/client/category.middleware";
 import * as attributeMiddleware from "../../middlewares/client/attribute.middleware";
 import * as authMiddleware from "../../middlewares/client/auth.middleware";
@@ -58,5 +59,7 @@ router.use('/order', orderRoutes);
 router.use('/chat', chatRoutes);
 
 router.use('/location', locationRoutes);
+
+router.use('/tra-cuu-bao-hanh', warrantyRoutes);
 
 export default router;

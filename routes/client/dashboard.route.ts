@@ -57,6 +57,8 @@ router.patch(
 
 router.get('/order/list', dashboardController.orderList);
 
+router.get('/warranty/list', dashboardController.warrantyList);
+
 router.get('/order/detail/:id', dashboardController.orderDetail);
 
 router.get('/order/review/:id', dashboardController.orderReview);
