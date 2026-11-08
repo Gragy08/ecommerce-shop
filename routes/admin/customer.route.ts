@@ -15,6 +15,7 @@ router.get("/edit/:id", checkPermission("customer-edit"), customerController.edi
 router.patch("/edit/:id", checkPermission("customer-edit"), customerController.editPatch);
 
 router.get("/detail/:id", checkPermission("customer-list"), customerController.detail);
+router.patch("/toggle-account-status/:id", checkPermission("customer-edit"), customerController.toggleAccountStatusPatch);
 
 router.patch("/delete/:id", checkPermission("customer-delete"), customerController.deletePatch);
 

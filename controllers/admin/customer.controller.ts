@@ -75,15 +75,24 @@ export const syncCustomerOrdersByPhone = async (
     }
 
     // Liên kết với AccountUser nếu trùng số điện thoại hoặc email
-    if (!customer.accountUserId && targetPhone) {
-      const matchedUser = await AccountUser.findOne({
-        phone: targetPhone,
-        deleted: false
-      }).select("_id email");
-      if (matchedUser) {
-        customer.accountUserId = matchedUser._id;
-        if (!customer.email && matchedUser.email) {
-          customer.email = matchedUser.email;
+    if (!customer.accountUserId) {
+      const userOr: any[] = [];
+      if (targetPhone) userOr.push({ phone: targetPhone });
+      if (customer.email) userOr.push({ email: customer.email });
+
+      if (userOr.length > 0) {
+        const matchedUser = await AccountUser.findOne({
+          $or: userOr,
+          deleted: false
+        }).select("_id email phone");
+        if (matchedUser) {
+          customer.accountUserId = matchedUser._id;
+          if (!customer.email && matchedUser.email) {
+            customer.email = matchedUser.email;
+          }
+          if (!customer.phone && matchedUser.phone) {
+            customer.phone = String(matchedUser.phone).replace(/\D/g, "");
+          }
         }
       }
     }
@@ -92,6 +101,84 @@ export const syncCustomerOrdersByPhone = async (
     return customer;
   } catch (error) {
     console.error("Error syncCustomerOrdersByPhone:", error);
+    return null;
+  }
+};
+
+/**
+ * Đồng bộ từ AccountUser (Tài khoản Web) sang Customer (Hồ sơ CRM)
+ */
+export const syncAccountUserToCustomer = async (
+  accountUserId: mongoose.Types.ObjectId | string
+) => {
+  try {
+    if (!accountUserId || !mongoose.isValidObjectId(accountUserId)) return null;
+
+    const user = await AccountUser.findOne({
+      _id: accountUserId,
+      deleted: false
+    });
+    if (!user) return null;
+
+    const cleanPhone = String(user.phone || "").replace(/\D/g, "");
+    const cleanEmail = String(user.email || "").trim().toLowerCase();
+    const fullName = String(user.fullName || "Khách hàng Web").trim();
+
+    let customer = await Customer.findOne({
+      accountUserId: user._id,
+      deleted: false
+    });
+
+    if (!customer && cleanPhone) {
+      customer = await Customer.findOne({
+        phone: cleanPhone,
+        deleted: false
+      });
+    }
+
+    if (!customer && cleanEmail) {
+      customer = await Customer.findOne({
+        email: cleanEmail,
+        deleted: false
+      });
+    }
+
+    const search = slugify(`${fullName} ${cleanPhone} ${cleanEmail}`, {
+      replacement: " ",
+      lower: true
+    });
+
+    if (!customer) {
+      customer = await Customer.create({
+        fullName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        accountUserId: user._id,
+        source: "web",
+        search
+      });
+    } else {
+      customer.accountUserId = user._id;
+      if (fullName) customer.fullName = fullName;
+      if (cleanEmail) customer.email = cleanEmail;
+      if (cleanPhone && !customer.phone) {
+        const conflict = await Customer.findOne({
+          _id: { $ne: customer._id },
+          phone: cleanPhone,
+          deleted: false
+        });
+        if (!conflict) {
+          customer.phone = cleanPhone;
+        }
+      }
+      customer.search = search;
+      await customer.save();
+    }
+
+    await syncCustomerOrdersByPhone(customer.phone || "", customer._id);
+    return customer;
+  } catch (error) {
+    console.error("Error syncAccountUserToCustomer:", error);
     return null;
   }
 };
@@ -198,7 +285,7 @@ export const lookup = async (req: Request, res: Response): Promise<void> => {
 // [GET] /admin/customer/list
 export const list = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Tự động đồng bộ dữ liệu khách hàng lần đầu nếu bảng Customer đang trống
+    // 1. Tự động đồng bộ từ Order lần đầu nếu bảng Customer đang trống
     const existingAny = await Customer.countDocuments({});
     if (existingAny === 0) {
       const orders = await Order.find({ deleted: false }).sort({ createdAt: 1 }).lean();
@@ -213,29 +300,22 @@ export const list = async (req: Request, res: Response): Promise<void> => {
           });
         }
       }
-      const users = await AccountUser.find({ deleted: false }).lean();
-      for (const usr of users) {
-        if (usr.phone) {
-          const cleanPhone = String(usr.phone).replace(/\D/g, "");
-          if (cleanPhone.length >= 9) {
-            const exists = await Customer.findOne({ phone: cleanPhone, deleted: false });
-            if (!exists) {
-              const c = await Customer.create({
-                fullName: usr.fullName || "Khách hàng",
-                phone: cleanPhone,
-                email: usr.email || "",
-                accountUserId: usr._id,
-                source: "web",
-                search: slugify(`${usr.fullName || ""} ${cleanPhone} ${usr.email || ""}`, {
-                  replacement: " ",
-                  lower: true
-                })
-              });
-              await syncCustomerOrdersByPhone(cleanPhone, c._id);
-            }
-          }
-        }
-      }
+    }
+
+    // 2. Đảm bảo toàn bộ tài khoản người dùng Web (AccountUser) đều được gộp vào Customer
+    const linkedUserIds = await Customer.distinct("accountUserId", {
+      deleted: false,
+      accountUserId: { $ne: null }
+    });
+    const unlinkedUsers = await AccountUser.find({
+      _id: { $nin: linkedUserIds },
+      deleted: false
+    })
+      .select("_id")
+      .lean();
+
+    for (const u of unlinkedUsers) {
+      await syncAccountUserToCustomer(u._id);
     }
 
     const find: any = {
@@ -269,10 +349,10 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       page = parseInt(String(req.query.page));
     }
 
-    const [totalRecord, totalCustomers, vipCustomers, totalRevenueAgg] = await Promise.all([
+    const [totalRecord, totalCustomers, webAccountsCount, totalRevenueAgg] = await Promise.all([
       Customer.countDocuments(find),
       Customer.countDocuments({ deleted: false }),
-      Customer.countDocuments({ deleted: false, customerGroup: "vip" }),
+      Customer.countDocuments({ deleted: false, accountUserId: { $ne: null } }),
       Customer.aggregate([
         { $match: { deleted: false } },
         { $group: { _id: null, totalSpent: { $sum: "$totalSpent" } } }
@@ -291,6 +371,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
     };
 
     const customerList: any[] = await Customer.find(find)
+      .populate("accountUserId", "fullName email phone status googleId facebookId totalPoint usedPoint avatar")
       .sort({ createdAt: "desc" })
       .limit(limitItems)
       .skip(skip)
@@ -314,7 +395,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       pagination,
       stats: {
         totalCustomers,
-        vipCustomers,
+        webAccountsCount,
         totalRevenueFormatted: Number(totalRevenue || 0).toLocaleString("vi-VN") + " đ"
       }
     });
@@ -547,7 +628,25 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
 
     await customer.save();
 
-    if (oldPhone !== cleanPhone) {
+    // Đồng bộ ngược lại thông tin sang AccountUser nếu có liên kết
+    if (customer.accountUserId) {
+      await AccountUser.updateOne(
+        { _id: customer.accountUserId },
+        {
+          $set: {
+            fullName,
+            phone: cleanPhone,
+            ...(email ? { email } : {}),
+            search: slugify(`${fullName} ${email} ${cleanPhone}`, {
+              replacement: " ",
+              lower: true
+            })
+          }
+        }
+      );
+    }
+
+    if (oldPhone && oldPhone !== cleanPhone) {
       await Order.updateMany(
         { customerId: customer._id },
         { $set: { phone: cleanPhone } }
@@ -588,7 +687,9 @@ export const detail = async (req: Request, res: Response): Promise<void> => {
     const customer: any = await Customer.findOne({
       _id: id,
       deleted: false
-    }).lean();
+    })
+      .populate("accountUserId", "fullName email phone status googleId facebookId totalPoint usedPoint avatar")
+      .lean();
 
     if (!customer) {
       res.redirect(`/${pathAdmin}/customer/list`);
@@ -620,12 +721,30 @@ export const detail = async (req: Request, res: Response): Promise<void> => {
     };
     customer.genderLabel = genderMap[customer.gender] || "Khác";
 
+    if (customer.accountUserId) {
+      const acc = customer.accountUserId;
+      const loginType = acc.googleId
+        ? "Google"
+        : acc.facebookId
+        ? "Facebook"
+        : "Hệ thống";
+      const statusText = acc.status === "active" ? "Hoạt động" : "Tạm dừng";
+      customer.webAccountLabel = `Đã kích hoạt (${loginType}) - ${statusText}`;
+      const totalPt = Number(acc.totalPoint || 0);
+      const usedPt = Number(acc.usedPoint || 0);
+      const availPt = Math.max(0, totalPt - usedPt);
+      customer.webPointLabel = `${availPt.toLocaleString("vi-VN")} điểm khả dụng (Tổng tích: ${totalPt.toLocaleString("vi-VN")} / Đã dùng: ${usedPt.toLocaleString("vi-VN")})`;
+    } else {
+      customer.webAccountLabel = "Chưa đăng ký tài khoản Web";
+      customer.webPointLabel = "0 điểm";
+    }
+
     const orOrderQuery: any[] = [{ customerId: customer._id }];
     if (customer.phone) {
       orOrderQuery.push({ phone: customer.phone });
     }
-    if (customer.accountUserId) {
-      orOrderQuery.push({ userId: String(customer.accountUserId) });
+    if (customer.accountUserId && customer.accountUserId._id) {
+      orOrderQuery.push({ userId: String(customer.accountUserId._id) });
     }
 
     const orders: any[] = await Order.find({
@@ -696,6 +815,60 @@ export const detail = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error("Customer detail error:", error);
     res.redirect(`/${pathAdmin}/customer/list`);
+  }
+};
+
+// [PATCH] /admin/customer/toggle-account-status/:id
+export const toggleAccountStatusPatch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = String(req.params.id || "");
+    if (!mongoose.isValidObjectId(id)) {
+      res.json({ code: "error", message: "ID khách hàng không hợp lệ!" });
+      return;
+    }
+
+    const customer = await Customer.findOne({ _id: id, deleted: false });
+    if (!customer || !customer.accountUserId) {
+      res.json({
+        code: "error",
+        message: "Khách hàng này chưa có tài khoản đăng nhập Web!"
+      });
+      return;
+    }
+
+    const accountUser = await AccountUser.findOne({
+      _id: customer.accountUserId,
+      deleted: false
+    });
+    if (!accountUser) {
+      res.json({
+        code: "error",
+        message: "Không tìm thấy tài khoản Web liên kết!"
+      });
+      return;
+    }
+
+    accountUser.status = accountUser.status === "active" ? "inactive" : "active";
+    await accountUser.save();
+
+    await logAdminAction(
+      req as any,
+      `${accountUser.status === "active" ? "Mở khóa" : "Khóa"} tài khoản Web của khách hàng: ${customer.fullName}`
+    );
+
+    res.json({
+      code: "success",
+      message:
+        accountUser.status === "active"
+          ? "Đã mở khóa tài khoản đăng nhập Web!"
+          : "Đã tạm khóa tài khoản đăng nhập Web!"
+    });
+  } catch (error) {
+    console.error("Toggle account status error:", error);
+    res.json({
+      code: "error",
+      message: "Lỗi hệ thống khi đổi trạng thái tài khoản Web!"
+    });
   }
 };
 

@@ -9,6 +9,25 @@ block main
             .col
               h4.card-title #{pageTitle}
             .col-auto.d-flex.gap-2
+              if (customer.accountUserId && permissions.includes("customer-edit"))
+                if (customer.accountUserId.status == "active")
+                  a.btn.btn-outline-danger(
+                    href="javascript:;"
+                    button-api
+                    data-method="PATCH"
+                    data-api=`/${pathAdmin}/customer/toggle-account-status/${customer._id}`
+                  )
+                    i.fa-solid.fa-lock.me-1
+                    | Khóa tài khoản Web
+                else
+                  a.btn.btn-outline-success(
+                    href="javascript:;"
+                    button-api
+                    data-method="PATCH"
+                    data-api=`/${pathAdmin}/customer/toggle-account-status/${customer._id}`
+                  )
+                    i.fa-solid.fa-unlock.me-1
+                    | Mở khóa tài khoản Web
               if (permissions.includes("customer-edit"))
                 a.btn.btn-primary(href=`/${pathAdmin}/customer/edit/${customer._id}`)
                   i.fa-solid.fa-pen.me-1
@@ -25,7 +44,7 @@ block main
             .col-md-6.col-lg-6
               .mb-3
                 label.form-label Số điện thoại
-                input.form-control(type="text" value=customer.phone readonly)
+                input.form-control(type="text" value=(customer.phone || '') readonly)
             .col-md-6.col-lg-6
               .mb-3
                 label.form-label Email
@@ -34,6 +53,14 @@ block main
               .mb-3
                 label.form-label Số CCCD
                 input.form-control(type="text" value=(customer.cccd || '') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Tài khoản Web
+                input.form-control(type="text" value=customer.webAccountLabel readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Điểm tích lũy (Web)
+                input.form-control(type="text" value=customer.webPointLabel readonly)
             .col-md-6.col-lg-6
               .mb-3
                 label.form-label Nhóm khách hàng

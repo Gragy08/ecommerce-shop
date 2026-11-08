@@ -9,6 +9,7 @@ import { domainCDN } from '../../configs/variable.config';
 import Order from '../../models/order.model';
 import Review from '../../models/review.model';
 import Product from '../../models/product.model';
+import { syncAccountUserToCustomer } from '../admin/customer.controller';
 
 export const dashboard = async (req: Request, res: Response) => {
   const userId = res.locals.accountUser.id;
@@ -103,6 +104,8 @@ export const profileEditPatch = async (req: Request, res: Response) => {
     await AccountUser.updateOne({
       _id: id
     }, req.body);
+
+    await syncAccountUserToCustomer(id);
 
     const tokenUser = jwt.sign(
       {

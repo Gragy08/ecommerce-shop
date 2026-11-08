@@ -19,11 +19,11 @@ block main
           .card.mb-3.mb-md-0
             .card-body.p-3
               .d-flex.align-items-center
-                .avatar-sm.bg-warning-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
-                  i.las.la-crown.fs-3.text-warning
+                .avatar-sm.bg-info-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-user-check.fs-3.text-info
                 div
-                  h6.text-muted.mb-1 Khách hàng VIP
-                  h4.mb-0 #{stats ? stats.vipCustomers : 0}
+                  h6.text-muted.mb-1 Đã có tài khoản Web
+                  h4.mb-0 #{stats ? stats.webAccountsCount : 0}
         .col-md-4
           .card.mb-3.mb-md-0
             .card-body.p-3
@@ -58,7 +58,7 @@ block main
                   th Họ và tên
                   th Số điện thoại
                   th Email
-                  th Địa chỉ
+                  th Tài khoản Web
                   th Nhóm khách
                   th.text-center Số đơn
                   th.text-end Tổng chi tiêu
@@ -70,9 +70,16 @@ block main
                       td #{pagination.skip + index + 1}
                       td
                         a.fw-semibold.text-dark.text-decoration-none(href=`/${pathAdmin}/customer/detail/${item._id}`) #{item.fullName}
-                      td #{item.phone}
+                      td #{item.phone || '-'}
                       td #{item.email || '-'}
-                      td #{item.address || '-'}
+                      td
+                        if (item.accountUserId)
+                          if (item.accountUserId.status == "active")
+                            span.badge.bg-success Đã kích hoạt
+                          else
+                            span.badge.bg-danger Đang khóa
+                        else
+                          span.badge.bg-light.text-dark.border Chưa đăng ký
                       td
                         if (item.customerGroup == "vip")
                           span.badge.bg-warning.text-dark Khách VIP

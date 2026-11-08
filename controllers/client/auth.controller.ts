@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { generateRandomNumber } from "../../helpers/generate.helper";
 import VerifyOTP from "../../models/verify-otp.model";
 import { sendMail } from "../../helpers/mail.helper";
+import { syncAccountUserToCustomer } from "../admin/customer.controller";
 
 export const register = async (req: Request, res: Response) => {
   res.render("client/pages/register", {
@@ -50,6 +51,8 @@ export const registerPost = async (req: Request, res: Response) => {
 
     const newAccount = new AccountUser(req.body);
     await newAccount.save();
+
+    await syncAccountUserToCustomer(newAccount._id);
 
     const tokenUser = jwt.sign(
       {
@@ -157,6 +160,9 @@ export const logout = async (req: Request, res: Response) => {
 
 export const callbackGoogle = async (req: Request, res: Response) => {
   const user = req.user as any;
+  if (user && user.id) {
+    await syncAccountUserToCustomer(user.id);
+  }
 
   const tokenUser = jwt.sign(
     {
@@ -180,6 +186,9 @@ export const callbackGoogle = async (req: Request, res: Response) => {
 
 export const callbackFacebook = async (req: Request, res: Response) => {
   const user = req.user as any;
+  if (user && user.id) {
+    await syncAccountUserToCustomer(user.id);
+  }
 
   const tokenUser = jwt.sign(
     {

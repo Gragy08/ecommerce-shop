@@ -9,8 +9,8 @@ const customerSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: ""
     },
     email: {
       type: String,
@@ -98,7 +98,10 @@ customerSchema.index(
   { phone: 1 },
   {
     unique: true,
-    partialFilterExpression: { deleted: false }
+    partialFilterExpression: {
+      deleted: false,
+      phone: { $gt: "" }
+    }
   }
 );
 
