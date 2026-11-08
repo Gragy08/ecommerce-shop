@@ -2,105 +2,112 @@ extends ../layouts/default.pug
 
 block main
   style.
-    .warranty-lookup-wrapper {
-      padding: 60px 0 90px;
+    .warranty-page {
+      padding: 30px 0 60px;
       background: #f8fafc;
-      min-height: 75vh;
+      min-height: 70vh;
     }
-    .warranty-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-    }
-    .search-input-pill {
-      border: 2px solid #e2e8f0;
-      border-radius: 50rem;
-      padding: 6px 8px 6px 20px;
+    .clean-card {
       background: #fff;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    .search-input-pill:focus-within {
+    .clean-search-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 50px;
+      background: #fff;
+      padding: 4px 6px 4px 18px;
+      transition: all 0.2s;
+    }
+    .clean-search-box:focus-within {
       border-color: #2563eb;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
-    .search-input-pill input {
+    .clean-search-box input {
       border: none;
       box-shadow: none;
-      font-size: 15px;
+      font-size: 14px;
     }
-    .search-input-pill input:focus {
+    .clean-search-box input:focus {
       outline: none;
       box-shadow: none;
     }
-    .stepper-container {
+    .stepper-track-clean {
       position: relative;
       padding: 10px 0 20px;
     }
-    .stepper-line-bg {
+    .stepper-line {
       position: absolute;
-      top: 24px;
-      left: 12%;
-      right: 12%;
-      height: 3px;
+      top: 22px;
+      left: 10%;
+      right: 10%;
+      height: 2px;
       background: #e2e8f0;
       z-index: 1;
     }
-    .stepper-line-fill {
+    .stepper-line-active {
       height: 100%;
       background: #2563eb;
       transition: width 0.3s;
     }
-    .stepper-col {
+    .step-node {
       position: relative;
       z-index: 2;
       text-align: center;
     }
-    .stepper-dot {
-      width: 28px;
-      height: 28px;
+    .step-circle {
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background: #fff;
-      border: 3px solid #cbd5e1;
-      margin: 0 auto 6px;
+      border: 2px solid #cbd5e1;
+      margin: 0 auto 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
-      color: #94a3b8;
       font-weight: 700;
+      color: #94a3b8;
     }
-    .stepper-col.completed .stepper-dot {
+    .step-node.done .step-circle {
       background: #2563eb;
       border-color: #2563eb;
       color: #fff;
     }
-    .stepper-col.active .stepper-dot {
+    .step-node.active .step-circle {
       background: #fff;
       border-color: #2563eb;
       color: #2563eb;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
-    .stepper-col .step-text {
-      font-size: 13px;
+    .step-title {
+      font-size: 12px;
       font-weight: 600;
       color: #64748b;
     }
-    .stepper-col.completed .step-text,
-    .stepper-col.active .step-text {
+    .step-node.done .step-title,
+    .step-node.active .step-title {
       color: #0f172a;
     }
+    .step-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
 
-  section.warranty-lookup-wrapper
+  section.warranty-page
     .container
-      // Thanh tìm kiếm tinh gọn
+      // Thanh tìm kiếm gọn gàng
       .row.justify-content-center.mb-4
-        .col-xl-7.col-lg-8.col-md-10.text-center
-          h3.fw-bold.mb-2 Tra cứu bảo hành & sửa chữa
-          p.text-muted.small.mb-4 Nhập mã IMEI, mã phiếu (BH-...) hoặc số điện thoại mua hàng
+        .col-lg-7.col-md-9.text-center
+          h4.fw-bold.mb-1 Tra cứu bảo hành
+          if accountUser
+            p.text-muted.small.mb-3 Xin chào <strong>#{accountUser.fullName}</strong>! Bạn có thể tra cứu theo mã máy hoặc xem các phiếu bên dưới.
+          else
+            p.text-muted.small.mb-3 Nhập mã IMEI, mã phiếu (BH-...) hoặc số điện thoại mua hàng
 
           form#warrantyLookupForm(action="/tra-cuu-bao-hanh" method="GET")
-            .search-input-pill.d-flex.align-items-center.shadow-sm
+            .clean-search-box.d-flex.align-items-center.shadow-sm
               i.fas.fa-search.text-muted.me-2
               input#warrantyKeywordInput.form-control(
                 type="text"
@@ -109,209 +116,293 @@ block main
                 placeholder="Nhập IMEI, Mã phiếu (BH-...) hoặc SĐT..."
                 required
               )
-              button.btn.btn-primary.rounded-pill.px-4.py-2.fw-semibold(type="submit")
+              button.btn.btn-primary.btn-sm.rounded-pill.px-3.py-2.fw-semibold(type="submit")
                 | Tra cứu
 
-      // Khu vực kết quả
+      // KHỐI 1: HIỂN THỊ KẾT QUẢ TÌM KIẾM THEO KEYWORD
       if lookupResult
-        .row.justify-content-center
-          .col-xl-8.col-lg-9.col-md-11
+        .row.justify-content-center.mb-4
+          .col-lg-8.col-md-10
             if (!lookupResult.found)
-              .warranty-card.p-4.text-center
-                i.fas.fa-circle-exclamation.text-warning.fs-1.mb-3
-                h5.fw-bold.mb-1 Không tìm thấy kết quả
+              .clean-card.p-4.text-center
+                i.fas.fa-circle-exclamation.text-warning.fs-2.mb-2
+                h6.fw-bold.mb-1 Không tìm thấy thông tin
                 p.text-muted.small.mb-3 #{lookupResult.message || `Không có dữ liệu cho từ khóa "${keyword}".`}
-                a.btn.btn-outline-primary.btn-sm.rounded-pill(href="/tra-cuu-bao-hanh") Thử lại từ khóa khác
+                a.btn.btn-outline-primary.btn-sm.rounded-pill(href="/tra-cuu-bao-hanh") Quay lại
 
-            // KẾT QUẢ THEO MÃ PHIẾU
+            // KẾT QUẢ PHIẾU BẢO HÀNH (TICKET DETAIL)
             else if (lookupResult.mode === "ticket")
               - const t = lookupResult.ticket;
-              .warranty-card.p-4.mb-3
-                // Header gọn gàng
-                .d-flex.justify-content-between.align-items-start.flex-wrap.gap-2.pb-3.border-bottom.mb-3
+              .clean-card.p-4
+                // Header mã phiếu & trạng thái
+                .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2.pb-3.border-bottom.mb-3
                   div
-                    .small.text-muted Mã phiếu bảo hành
-                    h4.fw-bold.text-primary.mb-0 #{t.ticketCode}
-                  .text-end
+                    span.text-muted.small Mã phiếu: 
+                    strong.fs-5.text-primary #{t.ticketCode}
+                  div
                     case t.status
                       when "received"
                         span.badge.bg-secondary Mới tiếp nhận
                       when "inspecting"
-                        span.badge.bg-info.text-dark Đang kiểm tra / sửa chữa
+                        span.badge.bg-info.text-dark Đang sửa chữa
                       when "waiting_parts"
                         span.badge.bg-warning.text-dark Chờ linh kiện
                       when "completed"
-                        span.badge.bg-success Đã xong (Chờ nhận máy)
+                        span.badge.bg-success Đã xong - Mời nhận máy
                       when "returned"
-                        span.badge.bg-primary Đã bàn giao khách
+                        span.badge.bg-primary Đã bàn giao
                       when "cancelled"
                         span.badge.bg-danger Đã hủy
-                    if t.estimatedReturnDate
-                      .small.text-muted.mt-1 Hẹn trả: #{moment(t.estimatedReturnDate).format("DD/MM/YYYY")}
 
                 // Stepper tiến trình tối giản
                 if t.status !== "cancelled"
-                  .stepper-container.mb-3
-                    .stepper-line-bg
+                  .stepper-track-clean.mb-3
+                    .stepper-line
                       - const pct = t.progressStep === 1 ? 0 : t.progressStep === 2 ? 33 : t.progressStep === 3 ? 66 : 100;
-                      .stepper-line-fill(style=`width: ${pct}%`)
+                      .stepper-line-active(style=`width: ${pct}%`)
                     .row.g-0
-                      .col-3.stepper-col(class=(t.progressStep > 1 ? "completed" : t.progressStep === 1 ? "active" : ""))
-                        .stepper-dot 1
-                        .step-text Tiếp nhận
-                        .small.text-muted #{moment(t.createdAt).format("DD/MM")}
-                      .col-3.stepper-col(class=(t.progressStep > 2 ? "completed" : t.progressStep === 2 ? "active" : ""))
-                        .stepper-dot 2
-                        .step-text Xử lý
-                        .small.text-muted=(t.status === 'waiting_parts' ? 'Chờ linh kiện' : '')
-                      .col-3.stepper-col(class=(t.progressStep > 3 ? "completed" : t.progressStep === 3 ? "active" : ""))
-                        .stepper-dot 3
-                        .step-text Hoàn tất
-                        .small.text-muted=(t.estimatedReturnDate ? moment(t.estimatedReturnDate).format("DD/MM") : '')
-                      .col-3.stepper-col(class=(t.progressStep >= 4 ? "completed" : ""))
-                        .stepper-dot 4
-                        .step-text Bàn giao
-                        .small.text-muted=(t.returnedAt ? moment(t.returnedAt).format("DD/MM") : '')
+                      .col-3.step-node(class=(t.progressStep > 1 ? "done" : t.progressStep === 1 ? "active" : ""))
+                        .step-circle 1
+                        .step-title Tiếp nhận
+                        .step-sub #{moment(t.createdAt).format("DD/MM")}
+                      .col-3.step-node(class=(t.progressStep > 2 ? "done" : t.progressStep === 2 ? "active" : ""))
+                        .step-circle 2
+                        .step-title Xử lý
+                        .step-sub=(t.status === 'waiting_parts' ? 'Chờ linh kiện' : '')
+                      .col-3.step-node(class=(t.progressStep > 3 ? "done" : t.progressStep === 3 ? "active" : ""))
+                        .step-circle 3
+                        .step-title Hoàn tất
+                        .step-sub=(t.estimatedReturnDate ? moment(t.estimatedReturnDate).format("DD/MM") : '')
+                      .col-3.step-node(class=(t.progressStep >= 4 ? "done" : ""))
+                        .step-circle 4
+                        .step-title Đã trả máy
+                        .step-sub=(t.returnedAt ? moment(t.returnedAt).format("DD/MM") : '')
 
-                // Chi tiết thiết bị & lỗi
+                // Bảng thông tin 2 cột rõ ràng
                 .row.g-2.mb-3
                   .col-md-6
-                    .p-3.bg-light.rounded-3.h-100
-                      .small.text-muted Thiết bị
-                      .fw-bold #{t.productName} #{t.variantName ? `(${t.variantName})` : ''}
-                      .small.text-muted.mt-1 Mã IMEI: 
-                        code.text-dark #{t.identifier}
+                    .p-2.bg-light.rounded-2.small.h-100
+                      .text-muted Thiết bị:
+                      strong.d-block #{t.productName} #{t.variantName ? `(${t.variantName})` : ''}
+                      .text-muted.mt-1 Mã IMEI: 
+                        code.text-dark.fw-bold #{t.identifier}
                       if t.replacementIdentifier
-                        .small.text-success.fw-bold.mt-1 Đổi 1-1 sang: #{t.replacementIdentifier}
+                        .text-success.fw-bold.mt-1 Đổi 1-1: #{t.replacementIdentifier}
                   .col-md-6
-                    .p-3.bg-light.rounded-3.h-100
-                      .small.text-muted Tình trạng lỗi tiếp nhận
-                      .fw-semibold #{t.issueDescription}
-                      if t.resolutionNote
-                        .small.text-success.mt-1.pt-1.border-top
-                          strong Kết quả: 
-                          | #{t.resolutionNote}
+                    .p-2.bg-light.rounded-2.small.h-100
+                      .text-muted Khách hàng:
+                      strong.d-block #{t.customerName} (#{t.customerPhone})
+                      .text-muted.mt-1 Ngày hẹn trả: 
+                        span.fw-semibold #{t.estimatedReturnDate ? moment(t.estimatedReturnDate).format("DD/MM/YYYY") : 'Đang cập nhật'}
 
-                // Chi phí & Linh kiện (chỉ hiện nếu có)
+                // Tình trạng lỗi
+                .p-2.border.rounded-2.small.mb-3
+                  span.text-muted Lỗi tiếp nhận: 
+                  strong #{t.issueDescription}
+                  if t.resolutionNote
+                    .mt-1.pt-1.border-top.text-success
+                      strong Kết quả xử lý: 
+                      | #{t.resolutionNote}
+
+                // Linh kiện thay thế (nếu có)
                 if (t.partsUsed && t.partsUsed.length > 0)
-                  .border.rounded-3.p-3.mb-3
-                    .small.fw-bold.text-muted.mb-2 Linh kiện thay thế:
-                    each part in t.partsUsed
-                      .d-flex.justify-content-between.small.py-1.border-bottom
-                        span #{part.partName} × #{part.quantity}
-                        span.fw-semibold #{(part.quantity * part.unitPrice).toLocaleString('vi-VN')} đ
+                  .mb-3
+                    .small.fw-bold.text-muted.mb-1 Linh kiện thay thế:
+                    table.table.table-sm.table-bordered.align-middle.mb-0.small
+                      thead.table-light
+                        tr
+                          th Tên linh kiện
+                          th.text-center SL
+                          th.text-end Thành tiền
+                      tbody
+                        each p in t.partsUsed
+                          tr
+                            td #{p.partName}
+                            td.text-center #{p.quantity}
+                            td.text-end #{(p.quantity * p.unitPrice).toLocaleString('vi-VN')} đ
 
-                .d-flex.justify-content-between.align-items-center.p-3.bg-light.rounded-3
-                  span.fw-bold Tổng thanh toán:
+                // Tổng thanh toán
+                .d-flex.justify-content-between.align-items-center.p-2.bg-light.rounded-2
+                  span.small.fw-bold Tổng chi phí:
                   if t.totalAmount > 0
-                    h5.fw-bold.text-danger.mb-0 #{Number(t.totalAmount).toLocaleString('vi-VN')} đ
+                    h6.fw-bold.text-danger.mb-0 #{Number(t.totalAmount).toLocaleString('vi-VN')} đ
                   else
-                    span.badge.bg-success Miễn phí (Bảo hành chính hãng)
+                    span.badge.bg-success Miễn phí (Bảo hành)
 
             // KẾT QUẢ THEO MÃ IMEI
             else if (lookupResult.mode === "imei")
               - const dev = lookupResult.device;
-              .warranty-card.p-4.mb-3
-                .d-flex.justify-content-between.align-items-start.flex-wrap.gap-2.pb-3.border-bottom.mb-3
+              .clean-card.p-4
+                .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2.pb-2.border-bottom.mb-3
                   div
-                    .small.text-muted Thiết bị
-                    h4.fw-bold.mb-0 #{dev.productName} #{dev.variantName ? `(${dev.variantName})` : ''}
-                    .small.text-muted.mt-1 IMEI: 
-                      code.text-dark.fw-bold #{dev.identifier}
-                  div.text-end
+                    h5.fw-bold.mb-0 #{dev.productName} #{dev.variantName ? `(${dev.variantName})` : ''}
+                    small.text-muted IMEI: 
+                    code.text-dark.fw-bold #{dev.identifier}
+                  div
                     if dev.isUnderWarranty
-                      span.badge.bg-success.fs-6 Còn bảo hành (#{dev.remainingDays} ngày)
+                      span.badge.bg-success Còn bảo hành (#{dev.remainingDays} ngày)
                     else
-                      span.badge.bg-secondary.fs-6 Hết hạn bảo hành
+                      span.badge.bg-secondary Hết hạn bảo hành
 
-                .row.g-2.text-center.mb-3
+                .row.g-2.text-center.mb-3.small
                   .col-6
-                    .p-2.bg-light.rounded-3
-                      .small.text-muted Ngày mua / Kích hoạt
-                      strong #{dev.soldAt ? moment(dev.soldAt).format("DD/MM/YYYY") : 'Chưa có thông tin'}
+                    .p-2.bg-light.rounded-2
+                      .text-muted Ngày mua
+                      strong #{dev.soldAt ? moment(dev.soldAt).format("DD/MM/YYYY") : '-'}
                   .col-6
-                    .p-2.bg-light.rounded-3
-                      .small.text-muted Hạn bảo hành (#{dev.warrantyMonths} tháng)
+                    .p-2.bg-light.rounded-2
+                      .text-muted Hạn bảo hành (#{dev.warrantyMonths} tháng)
                       strong(class=(dev.isUnderWarranty ? "text-success" : "text-danger"))
                         | #{dev.warrantyExpireDate ? moment(dev.warrantyExpireDate).format("DD/MM/YYYY") : '-'}
 
-                // Lịch sử bảo hành gọn nhẹ
                 if (lookupResult.tickets && lookupResult.tickets.length > 0)
-                  .small.fw-bold.text-muted.mb-2 Lịch sử bảo hành máy (#{lookupResult.tickets.length}):
-                  .table-responsive
-                    table.table.table-sm.table-bordered.align-middle.mb-0
-                      thead.table-light
+                  .small.fw-bold.text-muted.mb-1 Lịch sử bảo hành máy:
+                  table.table.table-sm.table-bordered.align-middle.mb-0.small
+                    thead.table-light
+                      tr
+                        th Mã phiếu
+                        th Ngày nhận
+                        th Lỗi
+                        th Trạng thái
+                    tbody
+                      each tk in lookupResult.tickets
                         tr
-                          th Mã phiếu
-                          th Ngày nhận
-                          th Lỗi
-                          th Trạng thái
-                      tbody
-                        each tk in lookupResult.tickets
-                          tr
-                            td
-                              a.fw-bold(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`) #{tk.ticketCode}
-                            td #{moment(tk.createdAt).format("DD/MM/YYYY")}
-                            td #{tk.issueDescription}
-                            td #{tk.status}
+                          td
+                            a.fw-bold(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`) #{tk.ticketCode}
+                          td #{moment(tk.createdAt).format("DD/MM/YYYY")}
+                          td #{tk.issueDescription}
+                          td #{tk.status}
                 else
-                  .small.text-muted.text-center.py-2 Chưa có lần bảo hành nào trước đây.
+                  .small.text-muted.text-center.py-2 Máy chưa từng tiếp nhận bảo hành / sửa chữa.
 
             // KẾT QUẢ THEO SỐ ĐIỆN THOẠI
             else if (lookupResult.mode === "phone")
-              .warranty-card.p-4.mb-3
-                .pb-3.border-bottom.mb-3
-                  .small.text-muted Lịch sử thiết bị theo SĐT
-                  h5.fw-bold.mb-0 #{lookupResult.customerName} — #{lookupResult.maskedPhone}
+              .clean-card.p-4
+                .d-flex.justify-content-between.align-items-center.pb-2.border-bottom.mb-3
+                  h6.fw-bold.mb-0 #{lookupResult.customerName} (#{lookupResult.maskedPhone})
+                  span.badge.bg-primary.rounded-pill #{lookupResult.devices.length} máy • #{lookupResult.tickets.length} phiếu
 
                 if (lookupResult.devices && lookupResult.devices.length > 0)
-                  .small.fw-bold.text-muted.mb-2 Thiết bị đã mua (#{lookupResult.devices.length}):
-                  .table-responsive.mb-3
-                    table.table.table-sm.table-bordered.align-middle
-                      thead.table-light
+                  .small.fw-bold.text-muted.mb-1 Thiết bị đã mua:
+                  table.table.table-sm.table-bordered.align-middle.mb-3.small
+                    thead.table-light
+                      tr
+                        th Tên máy
+                        th Mã IMEI
+                        th Hạn BH
+                        th.text-center Xem
+                    tbody
+                      each d in lookupResult.devices
                         tr
-                          th Tên máy
-                          th Mã IMEI
-                          th Hạn bảo hành
-                          th.text-center Tra cứu
-                      tbody
-                        each d in lookupResult.devices
-                          tr
-                            td.fw-semibold #{d.productName} #{d.variantName ? `(${d.variantName})` : ''}
-                            td
-                              code #{d.identifier}
-                            td
-                              if d.isUnderWarranty
-                                span.badge.bg-success Còn BH (#{d.remainingDays} ngày)
-                              else
-                                span.badge.bg-secondary Hết BH
-                            td.text-center
-                              a.btn.btn-sm.btn-outline-primary.py-0.px-2(href=`/tra-cuu-bao-hanh?keyword=${d.identifier}`) Xem
+                          td.fw-semibold #{d.productName} #{d.variantName ? `(${d.variantName})` : ''}
+                          td
+                            code #{d.identifier}
+                          td
+                            if d.isUnderWarranty
+                              span.badge.bg-success Còn BH (#{d.remainingDays} ngày)
+                            else
+                              span.badge.bg-secondary Hết BH
+                          td.text-center
+                            a.btn.btn-sm.btn-outline-primary.py-0.px-2(href=`/tra-cuu-bao-hanh?keyword=${d.identifier}`) Xem
 
                 if (lookupResult.tickets && lookupResult.tickets.length > 0)
-                  .small.fw-bold.text-muted.mb-2 Lịch sử phiếu bảo hành (#{lookupResult.tickets.length}):
-                  .table-responsive
-                    table.table.table-sm.table-bordered.align-middle.mb-0
-                      thead.table-light
+                  .small.fw-bold.text-muted.mb-1 Phiếu bảo hành / sửa chữa:
+                  table.table.table-sm.table-bordered.align-middle.mb-0.small
+                    thead.table-light
+                      tr
+                        th Mã phiếu
+                        th Thiết bị
+                        th Ngày nhận
+                        th Trạng thái
+                        th.text-center Xem
+                    tbody
+                      each tk in lookupResult.tickets
                         tr
-                          th Mã phiếu
-                          th Máy / IMEI
-                          th Ngày nhận
-                          th Trạng thái
-                          th.text-center Chi tiết
-                      tbody
-                        each tk in lookupResult.tickets
-                          tr
-                            td.fw-bold #{tk.ticketCode}
-                            td #{tk.productName}
-                            td #{moment(tk.createdAt).format("DD/MM/YYYY")}
-                            td #{tk.status}
-                            td.text-center
-                              a.btn.btn-sm.btn-outline-primary.py-0.px-2(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`) Xem
+                          td.fw-bold #{tk.ticketCode}
+                          td #{tk.productName}
+                          td #{moment(tk.createdAt).format("DD/MM/YYYY")}
+                          td #{tk.status}
+                          td.text-center
+                            a.btn.btn-sm.btn-outline-primary.py-0.px-2(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`) Xem
 
-            // Hỗ trợ nhanh 1 dòng gọn gàng
-            .text-center.mt-3
-              small.text-muted
-                | Cần hỗ trợ thêm? Gọi ngay 
-                a.fw-bold.text-decoration-none(href="tel:0982887766") 0982.887.766
-                |  (Miễn phí)
+      // KHỐI 2: KHI ĐĂNG NHẬP SẴN -> TỰ ĐỘNG HIỆN DANH SÁCH BẢO HÀNH CỦA TÔI
+      if accountUser && myWarrantyData
+        .row.justify-content-center
+          .col-lg-8.col-md-10
+            .clean-card.p-4.mb-3
+              .d-flex.justify-content-between.align-items-center.pb-2.border-bottom.mb-3
+                h6.fw-bold.mb-0.text-primary
+                  i.fas.fa-shield-halved.me-2
+                  | Phiếu bảo hành của bạn (#{myWarrantyData.tickets.length})
+                a.small.text-decoration-none(href="/dashboard/warranty/list") Xem trong Dashboard &rarr;
+
+              if (myWarrantyData.tickets && myWarrantyData.tickets.length > 0)
+                table.table.table-sm.table-bordered.align-middle.mb-0.small
+                  thead.table-light
+                    tr
+                      th Mã phiếu
+                      th Thiết bị
+                      th Ngày nhận
+                      th Trạng thái
+                      th.text-center Chi tiết
+                  tbody
+                    each tk in myWarrantyData.tickets
+                      tr
+                        td
+                          a.fw-bold.text-primary(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`) #{tk.ticketCode}
+                          if tk.replacementIdentifier
+                            span.badge.bg-success-subtle.text-success.d-block.mt-1 Đổi 1-1
+                        td
+                          div.fw-semibold #{tk.productName}
+                          code.small #{tk.identifier}
+                        td #{moment(tk.createdAt).format("DD/MM/YYYY")}
+                        td
+                          case tk.status
+                            when "received"
+                              span.badge.bg-secondary Mới tiếp nhận
+                            when "inspecting"
+                              span.badge.bg-info.text-dark Đang sửa
+                            when "waiting_parts"
+                              span.badge.bg-warning.text-dark Chờ linh kiện
+                            when "completed"
+                              span.badge.bg-success Đã xong
+                            when "returned"
+                              span.badge.bg-primary Đã nhận máy
+                            when "cancelled"
+                              span.badge.bg-danger Đã hủy
+                        td.text-center
+                          a.btn.btn-sm.btn-outline-primary.py-0.px-2(href=`/tra-cuu-bao-hanh?keyword=${tk.ticketCode}`)
+                            | Xem
+              else
+                .text-center.text-muted.py-3.small
+                  | Bạn chưa có phiếu bảo hành hoặc yêu cầu sửa chữa nào.
+
+            // Khối thiết bị đã mua
+            if (myWarrantyData.devices && myWarrantyData.devices.length > 0)
+              .clean-card.p-4
+                .d-flex.justify-content-between.align-items-center.pb-2.border-bottom.mb-3
+                  h6.fw-bold.mb-0.text-primary
+                    i.fas.fa-mobile-screen.me-2
+                    | Thiết bị đã mua của bạn (#{myWarrantyData.devices.length})
+
+                table.table.table-sm.table-bordered.align-middle.mb-0.small
+                  thead.table-light
+                    tr
+                      th Tên máy
+                      th Mã IMEI
+                      th Hạn bảo hành
+                      th.text-center Tra cứu
+                  tbody
+                    each dev in myWarrantyData.devices
+                      tr
+                        td.fw-semibold #{dev.productName} #{dev.variantName ? `(${dev.variantName})` : ''}
+                        td
+                          code.fw-bold #{dev.identifier}
+                        td
+                          if dev.isUnderWarranty
+                            span.badge.bg-success Còn BH (#{dev.remainingDays} ngày)
+                          else
+                            span.badge.bg-secondary Hết BH
+                        td.text-center
+                          a.btn.btn-sm.btn-outline-primary.py-0.px-2(href=`/tra-cuu-bao-hanh?keyword=${dev.identifier}`)
+                            | Tra cứu

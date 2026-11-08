@@ -21,9 +21,156 @@ const maskName = (name: string): string => {
 };
 
 /**
- * Hàm tra cứu nghiệp vụ dùng chung
+ * Kiểm tra xem người dùng hiện tại có phải chính chủ phiếu bảo hành không
  */
-export const executeLookup = async (rawKeyword: string): Promise<any> => {
+const checkIsOwner = (customerPhone: string, customerName: string, accountUser?: any): boolean => {
+  if (!accountUser) return false;
+  const userPhone = (accountUser.phone || "").replace(/\D/g, "");
+  const targetPhone = (customerPhone || "").replace(/\D/g, "");
+
+  if (userPhone && targetPhone && userPhone.length >= 9 && targetPhone.length >= 9) {
+    if (userPhone.endsWith(targetPhone.slice(-9)) || targetPhone.endsWith(userPhone.slice(-9))) {
+      return true;
+    }
+  }
+
+  if (accountUser.fullName && customerName) {
+    if (accountUser.fullName.trim().toLowerCase() === customerName.trim().toLowerCase()) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Lấy danh sách thiết bị và phiếu bảo hành của tài khoản đã đăng nhập
+ */
+export const getUserWarrantyData = async (accountUser: any): Promise<{ devices: any[]; tickets: any[] } | null> => {
+  if (!accountUser) return null;
+  const userId = accountUser.id || accountUser._id;
+  const userPhone = (accountUser.phone || "").replace(/\D/g, "");
+
+  const userOrders = await Order.find({
+    $or: [
+      { userId: userId },
+      ...(userPhone.length >= 9 ? [{ phone: new RegExp(userPhone.slice(-9)) }] : [])
+    ],
+    deleted: false,
+    orderStatus: { $ne: "cancelled" }
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const orderIds = userOrders.map((o: any) => o._id);
+  const orderImeis: string[] = [];
+  for (const ord of userOrders) {
+    if (Array.isArray(ord.items)) {
+      for (const item of ord.items) {
+        if (Array.isArray(item.identifiers)) {
+          orderImeis.push(...item.identifiers);
+        }
+      }
+    }
+  }
+
+  const inventoryDocs: any[] =
+    orderIds.length > 0 || orderImeis.length > 0
+      ? await InventoryItem.find({
+          $or: [
+            ...(orderIds.length > 0 ? [{ soldOrderId: { $in: orderIds } }] : []),
+            ...(orderImeis.length > 0 ? [{ identifier: { $in: orderImeis } }] : [])
+          ],
+          deleted: false
+        })
+          .populate("productId", "name warrantyMonths slug")
+          .populate("variantId", "sku attributeValue")
+          .sort({ soldAt: -1 })
+          .lean()
+      : [];
+
+  const devices: any[] = [];
+  const seenImeis = new Set<string>();
+
+  for (const inv of inventoryDocs) {
+    if (inv.identifier) seenImeis.add(inv.identifier);
+    const prod = inv.productId as any;
+    const vari = inv.variantId as any;
+    const variantText = vari?.attributeValue
+      ? vari.attributeValue.map((a: any) => a.label || a.value).filter(Boolean).join(" / ")
+      : "";
+
+    const warrantyMonths = Number(prod?.warrantyMonths ?? 12);
+    const soldDate = inv.soldAt;
+    let warrantyExpireDate: Date | null = null;
+    let isUnderWarranty = false;
+    let remainingDays = 0;
+
+    if (soldDate && warrantyMonths > 0) {
+      warrantyExpireDate = moment(soldDate).add(warrantyMonths, "months").toDate();
+      remainingDays = moment(warrantyExpireDate).diff(moment(), "days");
+      isUnderWarranty = remainingDays >= 0;
+    }
+
+    devices.push({
+      identifier: inv.identifier,
+      productName: prod?.name || "Thiết bị",
+      variantName: variantText,
+      soldAt: soldDate,
+      warrantyMonths,
+      warrantyExpireDate,
+      isUnderWarranty,
+      remainingDays
+    });
+  }
+
+  for (const ord of userOrders) {
+    for (const item of ord.items || []) {
+      for (const imei of item.identifiers || []) {
+        if (!seenImeis.has(imei)) {
+          seenImeis.add(imei);
+          const warrantyMonths = 12;
+          const soldDate = ord.createdAt;
+          const warrantyExpireDate = moment(soldDate).add(warrantyMonths, "months").toDate();
+          const remainingDays = moment(warrantyExpireDate).diff(moment(), "days");
+          devices.push({
+            identifier: imei,
+            productName: item.name,
+            variantName: Array.isArray(item.variant) ? item.variant.join(" / ") : "",
+            soldAt: soldDate,
+            warrantyMonths,
+            warrantyExpireDate,
+            isUnderWarranty: remainingDays >= 0,
+            remainingDays
+          });
+        }
+      }
+    }
+  }
+
+  const allImeis = Array.from(seenImeis);
+  const orConditions: any[] = [];
+  if (allImeis.length > 0) {
+    orConditions.push({ identifier: { $in: allImeis } });
+  }
+  if (userPhone.length >= 9) {
+    orConditions.push({ "customerInfo.phone": new RegExp(userPhone.slice(-9)) });
+  }
+
+  let tickets: any[] = [];
+  if (orConditions.length > 0) {
+    tickets = await WarrantyTicket.find({ $or: orConditions, deleted: false })
+      .sort({ createdAt: -1 })
+      .lean();
+  }
+
+  return { devices, tickets };
+};
+
+/**
+ * Xử lý tra cứu chi tiết
+ */
+export const executeLookup = async (rawKeyword: string, accountUser?: any): Promise<any> => {
   const keyword = (rawKeyword || "").trim();
   if (!keyword) return null;
 
@@ -69,6 +216,8 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
         break;
     }
 
+    const isOwner = checkIsOwner(ticket.customerInfo?.phone || "", ticket.customerInfo?.fullName || "", accountUser);
+
     return {
       mode: "ticket",
       found: true,
@@ -81,8 +230,9 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
         variantName: ticket.variantName,
         identifier: ticket.identifier,
         replacementIdentifier: ticket.replacementIdentifier,
-        customerName: maskName(ticket.customerInfo?.fullName || ""),
-        customerPhone: maskPhone(ticket.customerInfo?.phone || ""),
+        customerName: isOwner ? ticket.customerInfo?.fullName : maskName(ticket.customerInfo?.fullName || ""),
+        customerPhone: isOwner ? ticket.customerInfo?.phone : maskPhone(ticket.customerInfo?.phone || ""),
+        isOwner,
         issueDescription: ticket.issueDescription,
         deviceCondition: ticket.deviceCondition,
         accessoriesIncluded: ticket.accessoriesIncluded,
@@ -103,7 +253,7 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
     };
   }
 
-  // 2. Tra cứu theo Số điện thoại khách hàng (9 - 11 chữ số bắt đầu bằng 0)
+  // 2. Tra cứu theo Số điện thoại khách hàng
   if (digitsOnly.length >= 9 && digitsOnly.length <= 11 && /^0\d+/.test(digitsOnly)) {
     const phoneRegex = new RegExp(digitsOnly.slice(-9));
 
@@ -126,7 +276,6 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
       Customer.findOne({ phone: phoneRegex, deleted: false }).lean()
     ]);
 
-    // Trích xuất các thiết bị đã mua từ các đơn hàng
     const orderIds = orders.map((o) => o._id);
     const orderImeis: string[] = [];
     for (const ord of orders) {
@@ -189,7 +338,6 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
       });
     }
 
-    // Bổ sung thiết bị lưu trên đơn hàng chưa có bản ghi inventory riêng
     for (const ord of orders) {
       for (const item of ord.items || []) {
         for (const imei of item.identifiers || []) {
@@ -214,14 +362,17 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
       }
     }
 
+    const rawCustName = matchedCustomer?.fullName || orders[0]?.fullName || tickets[0]?.customerInfo?.fullName || "Khách hàng";
+    const isOwner = checkIsOwner(digitsOnly, rawCustName, accountUser);
     const hasData = tickets.length > 0 || devices.length > 0;
 
     return {
       mode: "phone",
       found: hasData,
       keyword,
-      maskedPhone: maskPhone(digitsOnly),
-      customerName: maskName(matchedCustomer?.fullName || orders[0]?.fullName || tickets[0]?.customerInfo?.fullName || "Khách hàng"),
+      isOwner,
+      maskedPhone: isOwner ? digitsOnly : maskPhone(digitsOnly),
+      customerName: isOwner ? rawCustName : maskName(rawCustName),
       devices,
       tickets: tickets.map((t: any) => ({
         ticketCode: t.ticketCode,
@@ -269,7 +420,7 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
   let soldOrder: any = null;
   if (device?.soldOrderId) {
     soldOrder = await Order.findOne({ _id: device.soldOrderId, deleted: false })
-      .select("code createdAt")
+      .select("code createdAt phone fullName")
       .lean();
   }
 
@@ -306,45 +457,57 @@ export const executeLookup = async (rawKeyword: string): Promise<any> => {
       isUnderWarranty,
       remainingDays
     },
-    tickets: tickets.map((t: any) => ({
-      ticketCode: t.ticketCode,
-      warrantyType: t.warrantyType,
-      productName: t.productName,
-      variantName: t.variantName,
-      identifier: t.identifier,
-      replacementIdentifier: t.replacementIdentifier,
-      customerName: maskName(t.customerInfo?.fullName || ""),
-      issueDescription: t.issueDescription,
-      status: t.status,
-      resolutionNote: t.resolutionNote,
-      partsUsed: (t.partsUsed || []).map((p: any) => ({
-        partName: p.partName,
-        quantity: p.quantity,
-        unitPrice: p.unitPrice
-      })),
-      repairCost: t.repairCost || 0,
-      totalAmount: t.totalAmount || 0,
-      createdAt: t.createdAt,
-      returnedAt: t.returnedAt
-    }))
+    tickets: tickets.map((t: any) => {
+      const isOwner = checkIsOwner(t.customerInfo?.phone || soldOrder?.phone || "", t.customerInfo?.fullName || soldOrder?.fullName || "", accountUser);
+      return {
+        ticketCode: t.ticketCode,
+        warrantyType: t.warrantyType,
+        productName: t.productName,
+        variantName: t.variantName,
+        identifier: t.identifier,
+        replacementIdentifier: t.replacementIdentifier,
+        customerName: isOwner ? t.customerInfo?.fullName : maskName(t.customerInfo?.fullName || ""),
+        issueDescription: t.issueDescription,
+        status: t.status,
+        resolutionNote: t.resolutionNote,
+        partsUsed: (t.partsUsed || []).map((p: any) => ({
+          partName: p.partName,
+          quantity: p.quantity,
+          unitPrice: p.unitPrice
+        })),
+        repairCost: t.repairCost || 0,
+        totalAmount: t.totalAmount || 0,
+        createdAt: t.createdAt,
+        returnedAt: t.returnedAt
+      };
+    })
   };
 };
 
 // [GET] /tra-cuu-bao-hanh
 export const index = async (req: Request, res: Response): Promise<void> => {
   try {
+    const accountUser = res.locals.accountUser || null;
     const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim() : "";
     let lookupResult = null;
+    let myWarrantyData = null;
 
     if (keyword) {
-      lookupResult = await executeLookup(keyword);
+      lookupResult = await executeLookup(keyword, accountUser);
+    }
+
+    // Nếu người dùng đã đăng nhập, tự động lấy danh sách thiết bị & phiếu bảo hành của chính họ
+    if (accountUser) {
+      myWarrantyData = await getUserWarrantyData(accountUser);
     }
 
     res.render("client/pages/warranty-lookup", {
       pageTitle: "Tra cứu Bảo hành & Sửa chữa",
       moment,
       keyword,
-      lookupResult
+      lookupResult,
+      myWarrantyData,
+      accountUser
     });
   } catch (error) {
     console.error("Error warranty lookup page:", error);
@@ -352,7 +515,9 @@ export const index = async (req: Request, res: Response): Promise<void> => {
       pageTitle: "Tra cứu Bảo hành & Sửa chữa",
       moment,
       keyword: "",
-      lookupResult: null
+      lookupResult: null,
+      myWarrantyData: null,
+      accountUser: res.locals.accountUser || null
     });
   }
 };
@@ -360,6 +525,7 @@ export const index = async (req: Request, res: Response): Promise<void> => {
 // [GET] /tra-cuu-bao-hanh/api/search?keyword=...
 export const searchApi = async (req: Request, res: Response): Promise<void> => {
   try {
+    const accountUser = res.locals.accountUser || null;
     const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim() : "";
     if (!keyword) {
       res.status(400).json({
@@ -369,7 +535,7 @@ export const searchApi = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const result = await executeLookup(keyword);
+    const result = await executeLookup(keyword, accountUser);
     res.json({
       code: "success",
       data: result
