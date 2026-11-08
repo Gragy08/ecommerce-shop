@@ -1,0 +1,56 @@
+extends ../layouts/default.pug
+
+block main
+  if permissions.includes('customer-edit')
+    .card
+      .card-header
+        .row.align-items-center
+          .col
+            h4.card-title #{pageTitle}
+      .card-body.pt-0
+        form(id="customerEditForm" data-id=customerDetail._id)
+          .row
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="fullName") Họ và tên *
+                input.form-control(id="fullName" type="text" name="fullName" value=customerDetail.fullName)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="phone") Số điện thoại *
+                input.form-control(id="phone" type="text" name="phone" value=customerDetail.phone)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="email") Email
+                input.form-control(id="email" type="email" name="email" value=customerDetail.email)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="cccd") Số CCCD
+                input.form-control(id="cccd" type="text" name="cccd" value=customerDetail.cccd)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="birthday") Ngày sinh
+                input.form-control(id="birthday" type="date" name="birthday" value=customerDetail.birthdayFormat)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="gender") Giới tính
+                select.form-select(id="gender" name="gender")
+                  option(value="other" selected=(customerDetail.gender == "other")) Khác
+                  option(value="male" selected=(customerDetail.gender == "male")) Nam
+                  option(value="female" selected=(customerDetail.gender == "female")) Nữ
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="customerGroup") Nhóm khách hàng
+                select.form-select(id="customerGroup" name="customerGroup")
+                  option(value="retail" selected=(customerDetail.customerGroup == "retail")) Khách lẻ
+                  option(value="vip" selected=(customerDetail.customerGroup == "vip")) Khách VIP
+                  option(value="wholesale" selected=(customerDetail.customerGroup == "wholesale")) Khách sỉ
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="address") Địa chỉ
+                input.form-control(id="address" type="text" name="address" value=customerDetail.address)
+            .col-12
+              .mb-3
+                label.form-label(for="notes") Ghi chú
+                textarea.form-control(id="notes" name="notes" rows="3") #{customerDetail.notes}
+          button.btn.btn-primary(type="submit") Cập nhật
+          a.btn.btn-danger.ms-1(href=`/${pathAdmin}/customer/list`) Hủy

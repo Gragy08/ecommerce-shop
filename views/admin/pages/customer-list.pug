@@ -1,0 +1,103 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+include ../mixins/form-search.pug
+
+block main
+  .row
+    .col-12
+      .row.mb-3
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-primary-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-users.fs-3.text-primary
+                div
+                  h6.text-muted.mb-1 Tổng khách hàng
+                  h4.mb-0 #{stats ? stats.totalCustomers : 0}
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-warning-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-crown.fs-3.text-warning
+                div
+                  h6.text-muted.mb-1 Khách hàng VIP
+                  h4.mb-0 #{stats ? stats.vipCustomers : 0}
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-success-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-wallet.fs-3.text-success
+                div
+                  h6.text-muted.mb-1 Tổng chi tiêu tích lũy
+                  h4.mb-0.text-danger #{stats ? stats.totalRevenueFormatted : '0 đ'}
+
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            if (permissions.includes("customer-create"))
+              .col-auto
+                a.btn.btn-primary(
+                  href=`/${pathAdmin}/customer/create`
+                )
+                  i.fa-solid.fa-plus.me-1
+                  | Tạo khách hàng
+        .card-body.pt-0
+          .row
+            .col-lg-6
+              +form-search()
+          .table-responsive
+            table.table.table-striped.align-middle.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Họ và tên
+                  th Số điện thoại
+                  th Email
+                  th Địa chỉ
+                  th Nhóm khách
+                  th.text-center Số đơn
+                  th.text-end Tổng chi tiêu
+                  th.text-end Hành động
+              tbody
+                if (recordList && recordList.length > 0)
+                  each item, index in recordList
+                    tr
+                      td #{pagination.skip + index + 1}
+                      td
+                        a.fw-semibold.text-dark.text-decoration-none(href=`/${pathAdmin}/customer/detail/${item._id}`) #{item.fullName}
+                      td #{item.phone}
+                      td #{item.email || '-'}
+                      td #{item.address || '-'}
+                      td
+                        if (item.customerGroup == "vip")
+                          span.badge.bg-warning.text-dark Khách VIP
+                        else if (item.customerGroup == "wholesale")
+                          span.badge.bg-info Khách sỉ
+                        else
+                          span.badge.bg-secondary Khách lẻ
+                      td.text-center #{item.orderCount || 0}
+                      td.text-end.fw-semibold.text-danger #{item.totalSpentFormatted}
+                      td.text-end
+                        a.me-1(href=`/${pathAdmin}/customer/detail/${item._id}` title="Xem chi tiết")
+                          i.las.la-eye.text-secondary.fs-20
+                        if (permissions.includes("customer-edit"))
+                          a.me-1(href=`/${pathAdmin}/customer/edit/${item._id}` title="Chỉnh sửa")
+                            i.las.la-pen.text-secondary.fs-20
+                        if (permissions.includes("customer-delete"))
+                          a(
+                            href="javascript:;"
+                            button-api
+                            data-method="PATCH"
+                            data-api=`/${pathAdmin}/customer/delete/${item._id}`
+                            title="Xóa"
+                          )
+                            i.las.la-trash-alt.text-secondary.fs-20
+                else
+                  tr
+                    td.text-center.text-muted.py-4(colspan="9") Chưa có khách hàng nào.
+          +pagination()

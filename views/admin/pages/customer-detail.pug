@@ -1,0 +1,156 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}
+            .col-auto.d-flex.gap-2
+              if (permissions.includes("customer-edit"))
+                a.btn.btn-primary(href=`/${pathAdmin}/customer/edit/${customer._id}`)
+                  i.fa-solid.fa-pen.me-1
+                  | Chỉnh sửa
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/customer/list`)
+                i.fa-solid.fa-arrow-left.me-1
+                | Quay lại danh sách
+        .card-body.pt-0
+          .row
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Họ và tên
+                input.form-control(type="text" value=customer.fullName readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Số điện thoại
+                input.form-control(type="text" value=customer.phone readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Email
+                input.form-control(type="text" value=(customer.email || '') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Số CCCD
+                input.form-control(type="text" value=(customer.cccd || '') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Nhóm khách hàng
+                input.form-control(type="text" value=customer.customerGroupLabel readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Giới tính
+                input.form-control(type="text" value=customer.genderLabel readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Tổng số đơn hàng
+                input.form-control(type="text" value=(customer.orderCount || 0) readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Tổng chi tiêu tích lũy
+                input.form-control.fw-bold.text-danger(type="text" value=customer.totalSpentFormatted readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Ngày sinh
+                input.form-control(type="text" value=(customer.birthdayFormat || '') readonly)
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label Địa chỉ
+                input.form-control(type="text" value=(customer.address || '') readonly)
+            .col-12
+              .mb-4
+                label.form-label Ghi chú
+                input.form-control(type="text" value=(customer.notes || '') readonly)
+
+          label.form-label.fw-bold.mb-2 Lịch sử đơn hàng (#{orders ? orders.length : 0})
+          .table-responsive.mb-4
+            table.table.table-bordered.align-middle.mb-0
+              thead.table-light
+                tr
+                  th(style="width: 50px") STT
+                  th Mã đơn hàng
+                  th Sản phẩm đặt mua
+                  th.text-end Tổng tiền
+                  th Thanh toán
+                  th Trạng thái đơn
+                  th Ngày đặt
+                  th.text-end Chi tiết
+              tbody
+                if (orders && orders.length > 0)
+                  each ord, index in orders
+                    tr
+                      td.text-center #{index + 1}
+                      td
+                        a.fw-semibold.text-primary(href=`/${pathAdmin}/order/edit/${ord._id}`) #{ord.code}
+                      td
+                        if (ord.items && ord.items.length > 0)
+                          each item in ord.items
+                            div
+                              span.fw-medium #{item.name}
+                              span.text-muted.ms-1 (x#{item.quantity})
+                              if (item.variant && item.variant.length > 0)
+                                small.text-muted.d-block #{item.variant.join(', ')}
+                        else
+                          span.text-muted -
+                      td.text-end.fw-bold.text-danger #{ord.totalFormatted}
+                      td
+                        if (ord.paymentStatus == "paid")
+                          span.badge.bg-success Đã thanh toán
+                        else if (ord.paymentStatus == "refunded")
+                          span.badge.bg-warning.text-dark Hoàn tiền
+                        else
+                          span.badge.bg-secondary Chưa thanh toán
+                      td
+                        if (ord.orderStatus == "completed")
+                          span.badge.bg-success Hoàn thành
+                        else if (ord.orderStatus == "shipping")
+                          span.badge.bg-info Đang giao
+                        else if (ord.orderStatus == "confirmed")
+                          span.badge.bg-primary Đã xác nhận
+                        else if (ord.orderStatus == "cancelled")
+                          span.badge.bg-danger Đã hủy
+                        else if (ord.orderStatus == "returned")
+                          span.badge.bg-dark Trả hàng
+                        else
+                          span.badge.bg-warning.text-dark Chờ xác nhận
+                      td #{ord.createdAtFormat}
+                      td.text-end
+                        a(href=`/${pathAdmin}/order/edit/${ord._id}` title="Xem đơn hàng")
+                          i.las.la-eye.text-secondary.fs-20
+                else
+                  tr
+                    td.text-center.text-muted.py-3(colspan="8") Khách hàng chưa có đơn hàng nào.
+
+          if (ownedDevices && ownedDevices.length > 0)
+            label.form-label.fw-bold.mb-2 Thiết bị IMEI đã mua (#{ownedDevices.length})
+            .table-responsive
+              table.table.table-bordered.align-middle.mb-0
+                thead.table-light
+                  tr
+                    th(style="width: 50px") STT
+                    th Mã IMEI
+                    th Sản phẩm
+                    th Mã SKU
+                    th Đơn hàng
+                    th Ngày xuất bán
+                tbody
+                  each dev, index in ownedDevices
+                    tr
+                      td.text-center #{index + 1}
+                      td
+                        a.badge.bg-light.text-dark.border.text-decoration-none(
+                          href=`/${pathAdmin}/inventory/tracker?keyword=${dev.imei}`
+                          target="_blank"
+                        )
+                          i.fa-solid.fa-barcode.me-1.text-secondary
+                          | #{dev.imei}
+                      td.fw-semibold #{dev.productName}
+                      td
+                        code #{dev.sku}
+                      td
+                        if dev.orderId
+                          a(href=`/${pathAdmin}/order/edit/${dev.orderId}`) #{dev.orderCode}
+                        else
+                          | #{dev.orderCode}
+                      td #{dev.soldAtFormat}

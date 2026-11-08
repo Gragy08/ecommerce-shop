@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Order from '../../models/order.model';
 import { pathAdmin } from '../../configs/variable.config';
 import { Parser } from 'json2csv';
+import { upsertCustomerFromOrder } from './customer.controller';
 
 export const list = async (req: Request, res: Response) => {
   const find: {
@@ -110,6 +111,14 @@ export const editPatch = async (req: Request, res: Response) => {
     order.note = note;
 
     await order.save();
+
+    await upsertCustomerFromOrder({
+      fullName: order.fullName || undefined,
+      phone: order.phone || undefined,
+      address: order.address || undefined,
+      userId: order.userId || undefined,
+      source: "web"
+    });
 
     res.json({
       code: "success",

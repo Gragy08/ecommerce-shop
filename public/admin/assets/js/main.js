@@ -2842,3 +2842,94 @@ if (supplierEditForm) {
     });
 }
 // End Supplier Edit Form
+
+// Customer Create Form
+const customerCreateForm = document.querySelector("#customerCreateForm");
+if (customerCreateForm) {
+  const validation = new JustValidate('#customerCreateForm');
+
+  validation
+    .addField('#fullName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập họ và tên khách hàng!'
+      }
+    ])
+    .addField('#phone', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập số điện thoại!'
+      }
+    ])
+    .onSuccess(async (event) => {
+      const formData = new FormData(event.target);
+      const dataFinal = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(`/${pathAdmin}/customer/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(dataFinal)
+        });
+        const data = await response.json();
+
+        if (data.code === "error") {
+          notyf.error(data.message);
+        } else if (data.code === "success") {
+          drawNotify("success", data.message);
+          window.location.href = `/${pathAdmin}/customer/list`;
+        }
+      } catch (err) {
+        notyf.error("Lỗi kết nối máy chủ!");
+      }
+    });
+}
+// End Customer Create Form
+
+// Customer Edit Form
+const customerEditForm = document.querySelector("#customerEditForm");
+if (customerEditForm) {
+  const validation = new JustValidate('#customerEditForm');
+  const id = customerEditForm.getAttribute("data-id");
+
+  validation
+    .addField('#fullName', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập họ và tên khách hàng!'
+      }
+    ])
+    .addField('#phone', [
+      {
+        rule: 'required',
+        errorMessage: 'Vui lòng nhập số điện thoại!'
+      }
+    ])
+    .onSuccess(async (event) => {
+      const formData = new FormData(event.target);
+      const dataFinal = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(`/${pathAdmin}/customer/edit/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(dataFinal)
+        });
+        const data = await response.json();
+
+        if (data.code === "error") {
+          notyf.error(data.message);
+        } else if (data.code === "success") {
+          drawNotify("success", data.message);
+          window.location.href = `/${pathAdmin}/customer/list`;
+        }
+      } catch (err) {
+        notyf.error("Lỗi kết nối máy chủ!");
+      }
+    });
+}
+// End Customer Edit Form

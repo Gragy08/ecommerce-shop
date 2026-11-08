@@ -1,0 +1,56 @@
+extends ../layouts/default.pug
+
+block main
+  if permissions.includes('customer-create')
+    .card
+      .card-header
+        .row.align-items-center
+          .col
+            h4.card-title #{pageTitle}
+      .card-body.pt-0
+        form(id="customerCreateForm")
+          .row
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="fullName") Họ và tên *
+                input.form-control(id="fullName" type="text" name="fullName")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="phone") Số điện thoại *
+                input.form-control(id="phone" type="text" name="phone")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="email") Email
+                input.form-control(id="email" type="email" name="email")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="cccd") Số CCCD
+                input.form-control(id="cccd" type="text" name="cccd")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="birthday") Ngày sinh
+                input.form-control(id="birthday" type="date" name="birthday")
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="gender") Giới tính
+                select.form-select(id="gender" name="gender")
+                  option(value="other") Khác
+                  option(value="male") Nam
+                  option(value="female") Nữ
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="customerGroup") Nhóm khách hàng
+                select.form-select(id="customerGroup" name="customerGroup")
+                  option(value="retail") Khách lẻ
+                  option(value="vip") Khách VIP
+                  option(value="wholesale") Khách sỉ
+            .col-md-6.col-lg-6
+              .mb-3
+                label.form-label(for="address") Địa chỉ
+                input.form-control(id="address" type="text" name="address")
+            .col-12
+              .mb-3
+                label.form-label(for="notes") Ghi chú
+                textarea.form-control(id="notes" name="notes" rows="3")
+          button.btn.btn-primary(type="submit") Tạo mới
+          a.btn.btn-danger.ms-1(href=`/${pathAdmin}/customer/list`) Hủy

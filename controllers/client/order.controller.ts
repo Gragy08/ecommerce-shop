@@ -14,6 +14,7 @@ import { addPointAfterPayment } from '../../helpers/point.helper';
 import { pointConfig } from '../../configs/variable.config';
 import AccountUser from '../../models/account-user.model';
 import { getApiPayment, getApiShipping, getGeneral } from '../../configs/setting.config';
+import { upsertCustomerFromOrder } from '../admin/customer.controller';
 
 
 export const createPost = async (req: Request, res: Response) => {
@@ -256,6 +257,15 @@ export const createPost = async (req: Request, res: Response) => {
   // Lưu dữ liệu vào CSDL
   const newRecord = new Order(dataFinal);
   await newRecord.save();
+
+  // Tự động đồng bộ hồ sơ khách hàng CRM
+  await upsertCustomerFromOrder({
+    fullName: dataFinal.fullName,
+    phone: dataFinal.phone,
+    address: dataFinal.address,
+    userId: dataFinal.userId,
+    source: "web"
+  });
 
   // Cập nhật lại số điểm của người dùng
   if(res.locals.accountUser) {

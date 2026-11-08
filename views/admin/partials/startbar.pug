@@ -189,6 +189,22 @@
                 li.nav-item
                   a.nav-link(href=`/${pathAdmin}/account-user/list`) Danh sách tài khoản
                 // end nav-item
+          if (permissions.includes("customer-role"))
+            li.nav-item
+              a.nav-link(
+                aria-controls="sidebarCustomer" 
+                aria-expanded="false" 
+                role="button" 
+                data-bs-toggle="collapse" 
+                href="#sidebarCustomer"
+                )
+                i.iconoir-group.menu-icon
+                span Khách hàng
+              #sidebarCustomer.collapse
+                ul.nav.flex-column
+                  if (permissions.includes("customer-list"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/customer/list`) Danh sách khách hàng
           if (permissions.includes("coupon-role"))
             li.nav-item
               a.nav-link(

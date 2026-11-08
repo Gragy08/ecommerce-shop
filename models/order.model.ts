@@ -3,6 +3,11 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
   {
     userId: String,
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+      default: null
+    },
     code: String, // Mã đơn hàng (VD: AB000001)
     fullName: String,
     phone: String,
@@ -16,6 +21,7 @@ const schema = new mongoose.Schema(
         quantity: Number,
         price: Number,
         variant: [String], // Một mảng các label (Ví dụ: ["Kích cỡ: Size M", "Màu sắc: Đen"])
+        identifiers: [String], // Danh sách mã IMEI đã xuất cho đơn hàng
         image: String,
         name: String
       }
