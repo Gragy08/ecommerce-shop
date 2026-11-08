@@ -71,6 +71,510 @@ const enrichOrderItemsMetadata = async (order: any): Promise<boolean> => {
   return modified;
 };
 
+const createPosOrderCode = (): string => {
+  const dateStr = moment().format("YYMMDD");
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  return `POS-${dateStr}-${randomSuffix}`;
+};
+
+// [GET] /admin/order/pos
+export const pos = async (_req: Request, res: Response): Promise<void> => {
+  res.render("admin/pages/order-pos", {
+    pageTitle: "Bán hàng tại quầy (POS)"
+  });
+};
+
+// [GET] /admin/order/api/search-products?q=...
+export const searchProducts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    if (!q) {
+      res.json({ code: "success", results: [] });
+      return;
+    }
+
+    const qUpper = q.toUpperCase();
+
+    // 1. Kiểm tra xem có quét trúng đích danh mã IMEI không
+    const matchedDevice: any = await InventoryItem.findOne({
+      identifier: qUpper,
+      deleted: false
+    })
+      .populate("productId", "name slug inventoryType priceNew images")
+      .populate("variantId", "sku attributeValue priceNew stock")
+      .lean();
+
+    if (matchedDevice && matchedDevice.productId && matchedDevice.variantId) {
+      const product = matchedDevice.productId as any;
+      const variant = matchedDevice.variantId as any;
+
+      if (matchedDevice.status !== "available") {
+        res.json({
+          code: "warning",
+          message: `Thiết bị có mã IMEI "${qUpper}" hiện đang ở trạng thái "${matchedDevice.status}" (không thể bán)!`,
+          deviceStatus: matchedDevice.status
+        });
+        return;
+      }
+
+      const availableItems = await InventoryItem.find({
+        variantId: variant._id,
+        status: "available",
+        deleted: false
+      })
+        .select("identifier")
+        .lean();
+
+      const availableIdentifiers = availableItems.map((i: any) => i.identifier).filter(Boolean);
+      const availableStock = availableIdentifiers.length;
+      const unitPrice = Number(variant.priceNew || product.priceNew || 0);
+
+      res.json({
+        code: "success",
+        isDirectImeiMatch: true,
+        matchedImei: qUpper,
+        product: {
+          _id: product._id,
+          name: product.name,
+          inventoryType: product.inventoryType || "imei",
+          image: product.images && product.images[0] ? product.images[0] : ""
+        },
+        variant: {
+          _id: variant._id,
+          sku: variant.sku,
+          attributeValues: (variant.attributeValue || []).map((a: any) => ({
+            label: a.label || a.value || "",
+            value: a.value || ""
+          }))
+        },
+        unitPrice,
+        availableStock,
+        availableIdentifiers
+      });
+      return;
+    }
+
+    // 2. Tìm kiếm theo tên sản phẩm hoặc mã SKU
+    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
+    const matchedProducts = await Product.find({
+      $or: [{ name: regex }, { sku: regex }, { search: regex }],
+      deleted: false,
+      status: "active"
+    })
+      .select("_id name slug inventoryType priceNew images")
+      .limit(25)
+      .lean();
+
+    const productIds = matchedProducts.map((p: any) => p._id);
+
+    const variants = await ProductVariant.find({
+      $or: [{ productId: { $in: productIds } }, { sku: regex }],
+      status: "active"
+    })
+      .populate("productId", "name slug inventoryType priceNew status images deleted")
+      .limit(40)
+      .lean();
+
+    const activeVariants = variants.filter(
+      (v: any) => v.productId && !(v.productId as any).deleted && (v.productId as any).status === "active"
+    );
+    const variantIds = activeVariants.map((v: any) => v._id);
+
+    // Lấy danh sách IMEI có sẵn cho các biến thể loại IMEI
+    const availableImeiItems = await InventoryItem.find({
+      variantId: { $in: variantIds },
+      trackingType: "imei",
+      status: "available",
+      deleted: false
+    })
+      .select("variantId identifier")
+      .lean();
+
+    const imeiMap = new Map<string, string[]>();
+    for (const item of availableImeiItems) {
+      const vId = String(item.variantId);
+      if (!imeiMap.has(vId)) imeiMap.set(vId, []);
+      if (item.identifier) imeiMap.get(vId)!.push(item.identifier);
+    }
+
+    const results = activeVariants.map((v: any) => {
+      const p = v.productId as any;
+      const vId = String(v._id);
+      const invType = p.inventoryType || "quantity";
+      const unitPrice = Number(v.priceNew || p.priceNew || 0);
+      const imeiList = imeiMap.get(vId) || [];
+      const availableStock = invType === "imei" ? imeiList.length : Number(v.stock || 0);
+
+      return {
+        productId: p._id,
+        productName: p.name,
+        productImage: p.images && p.images[0] ? p.images[0] : "",
+        inventoryType: invType,
+        variantId: v._id,
+        variantSku: v.sku,
+        attributeValues: (v.attributeValue || []).map((a: any) => ({
+          label: a.label || a.value || "",
+          value: a.value || ""
+        })),
+        unitPrice,
+        availableStock,
+        availableIdentifiers: imeiList
+      };
+    });
+
+    results.sort((a, b) => {
+      if (a.availableStock > 0 && b.availableStock <= 0) return -1;
+      if (a.availableStock <= 0 && b.availableStock > 0) return 1;
+      return b.availableStock - a.availableStock;
+    });
+
+    res.json({
+      code: "success",
+      isDirectImeiMatch: false,
+      results
+    });
+  } catch (error) {
+    console.error("Error searchProducts:", error);
+    res.status(500).json({ code: "error", message: "Lỗi tìm kiếm sản phẩm!" });
+  }
+};
+
+// [GET] /admin/order/api/available-imeis/:variantId
+export const availableImeis = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const variantId = String(req.params.variantId || "");
+    if (!mongoose.isValidObjectId(variantId)) {
+      res.status(400).json({ code: "error", message: "Mã biến thể không hợp lệ!" });
+      return;
+    }
+
+    const items = await InventoryItem.find({
+      variantId: new mongoose.Types.ObjectId(variantId),
+      status: "available",
+      deleted: false
+    })
+      .select("identifier")
+      .lean();
+
+    const identifiers = items.map((i: any) => i.identifier).filter(Boolean);
+
+    res.json({
+      code: "success",
+      identifiers
+    });
+  } catch (error) {
+    console.error("Error availableImeis:", error);
+    res.status(500).json({ code: "error", message: "Lỗi khi lấy danh sách IMEI có sẵn!" });
+  }
+};
+
+// [POST] /admin/order/pos/create
+export const createPosPost = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const customerInfo = req.body.customerInfo || {};
+    const itemsInput: any[] = req.body.items || [];
+    const rawPaymentMethod = String(req.body.paymentMethod || "money");
+    const paymentMethod = ["money", "cash", "bank_transfer", "credit_card", "installment"].includes(rawPaymentMethod)
+      ? rawPaymentMethod === "cash"
+        ? "money"
+        : rawPaymentMethod
+      : "money";
+    const note = typeof req.body.note === "string" ? req.body.note.trim() : "";
+
+    if (!Array.isArray(itemsInput) || itemsInput.length === 0) {
+      res.json({ code: "error", message: "Đơn hàng phải có ít nhất một sản phẩm!" });
+      return;
+    }
+
+    const orderItems: any[] = [];
+    let calculatedSubTotal = 0;
+    const imeiToSellList: Array<{ imei: string; variantId: mongoose.Types.ObjectId; productId: string }> = [];
+    const quantityToSellList: Array<{ variantId: mongoose.Types.ObjectId; productId: string; quantity: number }> = [];
+
+    for (const rawItem of itemsInput) {
+      if (rawItem.isCustomItem) {
+        const customName = typeof rawItem.productName === "string" ? rawItem.productName.trim() : "";
+        if (!customName) {
+          res.json({ code: "error", message: "Vui lòng nhập tên mặt hàng hoặc dịch vụ bán ngoài!" });
+          return;
+        }
+
+        const quantity = Math.max(1, parseInt(String(rawItem.quantity), 10) || 1);
+        const unitPrice = Math.max(0, parseFloat(String(rawItem.unitPrice)) || 0);
+        const discount = Math.max(0, parseFloat(String(rawItem.discount)) || 0);
+        const lineTotal = Math.max(0, quantity * unitPrice - discount);
+        const purchasePrice = Math.max(0, parseFloat(String(rawItem.purchasePrice)) || 0);
+        const customType = rawItem.customItemType === "custom_service" ? "custom_service" : "custom_product";
+
+        calculatedSubTotal += lineTotal;
+
+        orderItems.push({
+          isCustomItem: true,
+          customItemType: customType,
+          name: customName,
+          variantSku: customType === "custom_service" ? "DICH-VU" : "BAN-NGOAI",
+          variant: [customType === "custom_service" ? "Dịch vụ / Tiền công" : "Sản phẩm bán ngoài"],
+          inventoryType: "custom",
+          identifiers: [],
+          quantity,
+          price: unitPrice,
+          purchasePrice,
+          discount
+        });
+        continue;
+      }
+
+      if (!mongoose.isValidObjectId(rawItem.productId) || !mongoose.isValidObjectId(rawItem.variantId)) {
+        res.json({ code: "error", message: "Thông tin sản phẩm hoặc biến thể không hợp lệ!" });
+        return;
+      }
+
+      const [product, variant]: [any, any] = await Promise.all([
+        Product.findOne({ _id: rawItem.productId, deleted: false }).lean(),
+        ProductVariant.findOne({ _id: rawItem.variantId, productId: rawItem.productId }).lean()
+      ]);
+
+      if (!product || !variant) {
+        res.json({ code: "error", message: "Sản phẩm hoặc biến thể không tồn tại trong hệ thống!" });
+        return;
+      }
+
+      const quantity = Math.max(1, parseInt(String(rawItem.quantity), 10) || 1);
+      const unitPrice = Math.max(0, parseFloat(String(rawItem.unitPrice)) || 0);
+      const discount = Math.max(0, parseFloat(String(rawItem.discount)) || 0);
+      const lineTotal = Math.max(0, quantity * unitPrice - discount);
+
+      calculatedSubTotal += lineTotal;
+
+      const rawIdentifiers: string[] = Array.isArray(rawItem.identifiers)
+        ? rawItem.identifiers
+        : typeof rawItem.identifiers === "string" && rawItem.identifiers.trim()
+        ? rawItem.identifiers.split(/[\n,;]+/)
+        : [];
+      const identifiers = rawIdentifiers.map((id) => String(id).trim().toUpperCase()).filter(Boolean);
+
+      const invType = product.inventoryType || "quantity";
+
+      if (invType === "imei") {
+        if (identifiers.length !== quantity) {
+          res.json({
+            code: "error",
+            message: `Sản phẩm "${product.name}" yêu cầu chọn đủ ${quantity} mã IMEI (hiện chọn: ${identifiers.length})!`
+          });
+          return;
+        }
+
+        const availableItems = await InventoryItem.find({
+          variantId: variant._id,
+          identifier: { $in: identifiers },
+          status: "available",
+          deleted: false
+        }).lean();
+
+        if (availableItems.length !== identifiers.length) {
+          const foundIdentifiers = availableItems.map((i: any) => i.identifier);
+          const missing = identifiers.filter((id) => !foundIdentifiers.includes(id));
+          res.json({
+            code: "error",
+            message: `Mã IMEI ${missing.join(", ")} không còn có sẵn trong kho!`
+          });
+          return;
+        }
+
+        for (const imei of identifiers) {
+          imeiToSellList.push({
+            imei,
+            variantId: variant._id,
+            productId: String(product._id)
+          });
+        }
+      } else {
+        const currentStock = Number(variant.stock || 0);
+        if (currentStock < quantity) {
+          res.json({
+            code: "error",
+            message: `Sản phẩm "${product.name}" (${variant.sku}) không đủ tồn kho (còn ${currentStock}, cần ${quantity})!`
+          });
+          return;
+        }
+        quantityToSellList.push({
+          variantId: variant._id,
+          productId: String(product._id),
+          quantity
+        });
+      }
+
+      const variantLabels = (variant.attributeValue || [])
+        .map((a: any) => a.label || a.value || "")
+        .filter(Boolean);
+
+      orderItems.push({
+        productId: String(product._id),
+        variantId: variant._id,
+        name: product.name,
+        variantSku: variant.sku || "",
+        variant: variantLabels,
+        inventoryType: invType,
+        identifiers,
+        quantity,
+        price: unitPrice,
+        purchasePrice: Number(variant.purchasePrice || product.purchasePrice || 0),
+        discount,
+        image: product.images && product.images[0] ? product.images[0] : ""
+      });
+    }
+
+    const orderDiscount = Math.max(0, parseFloat(String(req.body.discount)) || 0);
+    const total = Math.max(0, calculatedSubTotal - orderDiscount);
+
+    const rawPhone = typeof customerInfo.phone === "string" ? customerInfo.phone.trim() : "";
+    const cleanPhone = rawPhone.replace(/\D/g, "");
+    const fullName =
+      typeof customerInfo.fullName === "string" && customerInfo.fullName.trim()
+        ? customerInfo.fullName.trim()
+        : "Khách lẻ tại quầy";
+    const address =
+      typeof customerInfo.address === "string" && customerInfo.address.trim()
+        ? customerInfo.address.trim()
+        : "Mua trực tiếp tại quầy";
+
+    const rawAdminId = (req as any).adminId;
+    const validAdminObjectId =
+      rawAdminId && mongoose.isValidObjectId(rawAdminId)
+        ? new mongoose.Types.ObjectId(rawAdminId)
+        : undefined;
+    const cashierName = res.locals.accountAdmin ? res.locals.accountAdmin.fullName : "Admin";
+
+    const code = createPosOrderCode();
+
+    const newOrder = await Order.create({
+      code,
+      channel: "pos",
+      cashierId: validAdminObjectId,
+      cashierName,
+      stockDeducted: true,
+      fullName,
+      phone: cleanPhone || rawPhone,
+      address,
+      note,
+      items: orderItems,
+      subTotal: calculatedSubTotal,
+      discount: orderDiscount,
+      total,
+      paymentMethod,
+      paymentStatus: "paid",
+      orderStatus: "completed"
+    });
+
+    // 1. Trừ tồn kho các thiết bị IMEI
+    const affectedVariantMap = new Map<string, { variantId: mongoose.Types.ObjectId; productId: string }>();
+    for (const imeiEntry of imeiToSellList) {
+      const invDoc = await InventoryItem.findOne({
+        identifier: imeiEntry.imei,
+        deleted: false
+      });
+      if (invDoc) {
+        const prevStatus = invDoc.status;
+        invDoc.status = "sold";
+        invDoc.soldOrderId = newOrder._id;
+        invDoc.soldAt = new Date();
+        invDoc.statusLogs.push({
+          fromStatus: prevStatus,
+          toStatus: "sold",
+          reason: "Xuất bán tại quầy POS",
+          note: `Hóa đơn ${code} - Khách: ${fullName}`,
+          updatedBy: validAdminObjectId,
+          updatedAt: new Date()
+        } as any);
+        await invDoc.save();
+      }
+      affectedVariantMap.set(String(imeiEntry.variantId), {
+        variantId: imeiEntry.variantId,
+        productId: imeiEntry.productId
+      });
+    }
+
+    for (const entry of affectedVariantMap.values()) {
+      const availCount = await InventoryItem.countDocuments({
+        variantId: entry.variantId,
+        status: "available",
+        deleted: false
+      });
+      await ProductVariant.updateOne({ _id: entry.variantId }, { stock: availCount });
+      await syncStockToProduct(entry.productId);
+    }
+
+    // 2. Trừ tồn kho các sản phẩm theo số lượng
+    for (const qEntry of quantityToSellList) {
+      await ProductVariant.updateOne(
+        { _id: qEntry.variantId },
+        { $inc: { stock: -qEntry.quantity } }
+      );
+      await syncStockToProduct(qEntry.productId);
+    }
+
+    // 3. Tự động đồng bộ hồ sơ khách hàng CRM
+    if (cleanPhone.length >= 9) {
+      const customer = await upsertCustomerFromOrder({
+        fullName,
+        phone: cleanPhone,
+        address,
+        source: "pos"
+      });
+      if (customer) {
+        newOrder.customerId = customer._id;
+        await newOrder.save();
+      }
+    }
+
+    await logAdminAction(
+      req as any,
+      `Tạo hóa đơn bán lẻ tại quầy POS: ${code} (${total.toLocaleString("vi-VN")} đ)`
+    );
+
+    res.json({
+      code: "success",
+      message: `Thanh toán đơn hàng ${code} thành công!`,
+      orderId: newOrder._id,
+      orderCode: code
+    });
+  } catch (error) {
+    console.error("Error createPosPost:", error);
+    res.status(500).json({ code: "error", message: "Lỗi hệ thống khi tạo đơn hàng POS!" });
+  }
+};
+
+// [GET] /admin/order/print/:id
+export const printInvoice = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = String(req.params.id || "");
+    if (!mongoose.isValidObjectId(id)) {
+      res.redirect(`/${pathAdmin}/order/list`);
+      return;
+    }
+
+    const order: any = await Order.findOne({ _id: id, deleted: false }).lean();
+    if (!order) {
+      res.redirect(`/${pathAdmin}/order/list`);
+      return;
+    }
+
+    order.id = String(order._id);
+    order.createdAtFormat = order.createdAt
+      ? moment(order.createdAt).format("DD/MM/YYYY HH:mm")
+      : "-";
+
+    res.render("admin/pages/order-print", {
+      pageTitle: `In hóa đơn: ${order.code}`,
+      order
+    });
+  } catch (error) {
+    console.error("Print invoice error:", error);
+    res.redirect(`/${pathAdmin}/order/list`);
+  }
+};
+
 // [GET] /admin/order/list
 export const list = async (req: Request, res: Response): Promise<void> => {
   try {

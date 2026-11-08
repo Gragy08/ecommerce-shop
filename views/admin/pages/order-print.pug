@@ -1,0 +1,206 @@
+extends ../layouts/default.pug
+
+block main
+  style.
+    @media print {
+      .startbar, .topbar, .footer, .no-print {
+        display: none !important;
+      }
+      .page-wrapper, .page-content, .container-fluid {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+      }
+      body[data-print-mode="k80"] #printAreaA4 {
+        display: none !important;
+      }
+      body[data-print-mode="k80"] #printAreaK80 {
+        display: block !important;
+        width: 78mm !important;
+        margin: 0 auto !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      body[data-print-mode="a4"] #printAreaK80 {
+        display: none !important;
+      }
+      body[data-print-mode="a4"] #printAreaA4 {
+        display: block !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+    }
+
+  .row.no-print.mb-3
+    .col-12
+      .card
+        .card-body.p-3.d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
+          .d-flex.align-items-center.gap-2
+            h4.card-title.mb-0 In hóa đơn: #{order.code}
+            span.badge.bg-success Đã hoàn tất
+          .d-flex.gap-2
+            button.btn.btn-primary(type="button" onclick="printInvoiceMode('k80')")
+              i.fa-solid.fa-print.me-1
+              | In hóa đơn nhiệt K80
+            button.btn.btn-outline-primary(type="button" onclick="printInvoiceMode('a4')")
+              i.fa-solid.fa-file-invoice.me-1
+              | In hóa đơn khổ A4
+            a.btn.btn-outline-success(href=`/${pathAdmin}/order/pos`)
+              i.fa-solid.fa-plus.me-1
+              | Tạo đơn POS mới
+            a.btn.btn-outline-secondary(href=`/${pathAdmin}/order/edit/${order.id}`)
+              i.fa-solid.fa-arrow-left.me-1
+              | Chi tiết đơn
+
+  .row.g-4
+    // Khổ A4 bên trái
+    .col-lg-8#printAreaA4
+      .card.border
+        .card-body.p-4
+          .d-flex.justify-content-between.border-bottom.pb-3.mb-3
+            div
+              h4.fw-bold.mb-1 CỬA HÀNG TY PHU QUY
+              div.text-muted.small Địa chỉ: 509 Nguyễn Trung Trực, Rạch Giá, Kiên Giang
+              div.text-muted.small Điện thoại: 0982.887.761
+            .text-end
+              h4.fw-bold.text-primary.mb-1 HÓA ĐƠN BÁN HÀNG
+              div.small Mã HĐ: 
+                strong #{order.code}
+              div.small Ngày lập: #{order.createdAtFormat}
+              if order.cashierName
+                div.small Thu ngân: #{order.cashierName}
+
+          .row.mb-3
+            .col-6
+              div.small.text-muted Khách hàng:
+              strong #{order.fullName}
+              if order.phone
+                div.small SĐT: #{order.phone}
+              if order.address
+                div.small Địa chỉ: #{order.address}
+            .col-6.text-end
+              div.small.text-muted Hình thức thanh toán:
+              strong
+                case order.paymentMethod
+                  when "money"
+                    | Tiền mặt
+                  when "bank_transfer"
+                    | Chuyển khoản ngân hàng
+                  when "credit_card"
+                    | Quẹt thẻ POS
+                  when "installment"
+                    | Trả góp
+                  when "vnpay"
+                    | VNPay
+                  when "zalopay"
+                    | ZaloPay
+                  default
+                    | Tiền mặt
+              div.small Kênh bán: #{order.channel == 'pos' ? 'Tại quầy POS' : 'Online Web'}
+
+          table.table.table-bordered.table-sm.align-middle.mb-3
+            thead.table-light
+              tr
+                th.text-center(style="width: 45px") STT
+                th Sản phẩm
+                th.text-center(style="width: 70px") SL
+                th.text-end(style="width: 130px") Đơn giá
+                th.text-end(style="width: 140px") Thành tiền
+            tbody
+              each item, idx in order.items
+                tr
+                  td.text-center #{idx + 1}
+                  td
+                    .fw-semibold #{item.name}
+                    if item.variant && item.variant.length > 0
+                      small.text-muted.d-block #{item.variant.join(' | ')}
+                    if item.identifiers && item.identifiers.length > 0
+                      small.d-block.mt-1
+                        | IMEI: 
+                        code.text-dark #{item.identifiers.join(', ')}
+                  td.text-center #{item.quantity}
+                  td.text-end #{(item.price || 0).toLocaleString('vi-VN')} đ
+                  td.text-end.fw-semibold #{((item.price || 0) * (item.quantity || 1) - (item.discount || 0)).toLocaleString('vi-VN')} đ
+
+          .row.justify-content-end
+            .col-md-5
+              .d-flex.justify-content-between.mb-1
+                span Tạm tính:
+                strong #{(order.subTotal || 0).toLocaleString('vi-VN')} đ
+              if order.discount > 0
+                .d-flex.justify-content-between.mb-1
+                  span Giảm giá:
+                  strong -#{order.discount.toLocaleString('vi-VN')} đ
+              if order.pointDiscount > 0
+                .d-flex.justify-content-between.mb-1
+                  span Giảm điểm:
+                  strong -#{order.pointDiscount.toLocaleString('vi-VN')} đ
+              if order.shipping && order.shipping.fee > 0
+                .d-flex.justify-content-between.mb-1
+                  span Phí vận chuyển:
+                  strong +#{order.shipping.fee.toLocaleString('vi-VN')} đ
+              .d-flex.justify-content-between.border-top.pt-2.mt-2
+                span.fw-bold Tổng thanh toán:
+                h5.fw-bold.text-danger.mb-0 #{(order.total || 0).toLocaleString('vi-VN')} đ
+
+          .row.mt-5.text-center
+            .col-6
+              strong Khách hàng
+              .text-muted.small (Ký và ghi rõ họ tên)
+            .col-6
+              strong Người lập phiếu
+              .text-muted.small (Ký và ghi rõ họ tên)
+
+    // Khổ nhiệt K80 bên phải
+    .col-lg-4#printAreaK80
+      .card.border.mx-auto(style="max-width: 320px; font-family: monospace; font-size: 13px;")
+        .card-body.p-3
+          .text-center.border-bottom.pb-2.mb-2
+            .fw-bold.fs-16 TY PHU QUY SHOP
+            div 509 Nguyễn Trung Trực, Rạch Giá
+            div SĐT: 0982.887.761
+            .fw-bold.mt-2 HÓA ĐƠN BÁN LẺ
+            div Mã: #{order.code}
+            div Ngày: #{order.createdAtFormat}
+
+          .border-bottom.pb-2.mb-2
+            div Khách: #{order.fullName}
+            if order.phone
+              div SĐT: #{order.phone}
+            if order.cashierName
+              div Thu ngân: #{order.cashierName}
+
+          .border-bottom.pb-2.mb-2
+            each item in order.items
+              .mb-2
+                .fw-bold #{item.name}
+                if item.variant && item.variant.length > 0
+                  .small.text-muted #{item.variant.join(' | ')}
+                if item.identifiers && item.identifiers.length > 0
+                  .small IMEI: #{item.identifiers.join(', ')}
+                .d-flex.justify-content-between
+                  span #{item.quantity} x #{(item.price || 0).toLocaleString('vi-VN')}
+                  strong #{((item.price || 0) * (item.quantity || 1) - (item.discount || 0)).toLocaleString('vi-VN')} đ
+
+          .mb-2
+            .d-flex.justify-content-between
+              span Tạm tính:
+              span #{(order.subTotal || 0).toLocaleString('vi-VN')} đ
+            if order.discount > 0
+              .d-flex.justify-content-between
+                span Giảm giá:
+                span -#{order.discount.toLocaleString('vi-VN')} đ
+            .d-flex.justify-content-between.fw-bold.fs-14.border-top.pt-1.mt-1
+              span TỔNG CỘNG:
+              span #{(order.total || 0).toLocaleString('vi-VN')} đ
+
+          .text-center.border-top.pt-2.mt-2.small
+            div Cảm ơn Quý khách & Hẹn gặp lại!
+
+  script.
+    function printInvoiceMode(mode) {
+      document.body.setAttribute('data-print-mode', mode);
+      window.print();
+    }
+    document.body.setAttribute('data-print-mode', 'k80');

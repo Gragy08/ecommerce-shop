@@ -9,6 +9,9 @@ block main
             .col
               h4.card-title #{pageTitle}: #{orderDetail.code}
             .col-auto.d-flex.gap-2
+              a.btn.btn-primary(href=`/${pathAdmin}/order/print/${orderDetail.id}`)
+                i.fa-solid.fa-print.me-1
+                | In hóa đơn
               if (orderDetail.customerId)
                 a.btn.btn-outline-primary(href=`/${pathAdmin}/customer/detail/${orderDetail.customerId}`)
                   i.fa-solid.fa-user.me-1

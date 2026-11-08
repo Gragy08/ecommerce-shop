@@ -40,6 +40,9 @@ block main
             .col
               h4.card-title #{pageTitle}
             .col-auto.d-flex.gap-2
+              a.btn.btn-primary(href=`/${pathAdmin}/order/pos`)
+                i.fa-solid.fa-cash-register.me-1
+                | Bán hàng tại quầy (POS)
               a.btn.btn-outline-secondary(href=`/${pathAdmin}/order/export/csv`)
                 i.fa-solid.fa-download.me-1
                 | Xuất CSV
@@ -120,6 +123,8 @@ block main
                             span.badge.bg-dark Trả hàng
                       td #{item.createdAtFormat}
                       td.text-end
+                        a.me-1(href=`/${pathAdmin}/order/print/${item.id}` title="In hóa đơn")
+                          i.las.la-print.text-secondary.fs-20
                         a.me-1(href=`/${pathAdmin}/order/edit/${item.id}` title="Chi tiết / Cập nhật")
                           i.las.la-pen.text-secondary.fs-20
                         a(

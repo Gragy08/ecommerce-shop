@@ -211,10 +211,20 @@
                   // end nav-item
           li.nav-item
             a.nav-link(
-              href=`/${pathAdmin}/order/list`
+              aria-controls="sidebarOrder" 
+              aria-expanded="false" 
+              role="button" 
+              data-bs-toggle="collapse" 
+              href="#sidebarOrder"
               )
               i.iconoir-bag.menu-icon
               span Quản lý đơn hàng
+            #sidebarOrder.collapse
+              ul.nav.flex-column
+                li.nav-item
+                  a.nav-link(href=`/${pathAdmin}/order/pos`) Bán hàng tại quầy (POS)
+                li.nav-item
+                  a.nav-link(href=`/${pathAdmin}/order/list`) Danh sách đơn hàng
           li.nav-item
             a.nav-link(
               href=`/${pathAdmin}/review/list`

@@ -1,0 +1,190 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card.mb-3
+        .card-header.py-2
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto.d-flex.gap-2
+              a.btn.btn-outline-secondary.btn-sm(href=`/${pathAdmin}/order/list`)
+                i.fa-solid.fa-list.me-1
+                | Danh sách đơn hàng
+              a.btn.btn-outline-primary.btn-sm(href=`/${pathAdmin}/inventory/list`)
+                i.fa-solid.fa-warehouse.me-1
+                | Tồn kho
+
+  .row.g-3
+    // Cột trái: Tìm kiếm / Quét IMEI & Giỏ hàng
+    .col-xl-8.col-lg-7
+      .card.mb-3(style="position: relative; z-index: 30;")
+        .card-body.p-3
+          .position-relative
+            .input-group
+              span.input-group-text
+                i.fa-solid.fa-barcode
+              input#posSearchInput.form-control(
+                type="text"
+                placeholder="Quét mã IMEI hoặc tìm tên sản phẩm, mã SKU..."
+                autocomplete="off"
+                autofocus
+              )
+              button#btnClearSearch.btn.btn-outline-secondary(type="button" style="display: none;")
+                i.fa-solid.fa-xmark
+              button#btnOpenCustomItemModal.btn.btn-outline-primary(type="button")
+                i.fa-solid.fa-plus.me-1
+                | Bán ngoài / Dịch vụ
+
+            #posSearchResults.dropdown-menu.w-100.p-2(
+              style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40; max-height: 400px; overflow-y: auto; display: none;"
+            )
+
+      .card(style="position: relative; z-index: 1;")
+        .card-header.d-flex.justify-content-between.align-items-center
+          h5.card-title.mb-0
+            | Giỏ hàng (
+            span#cartTotalItemsCount 0
+            | )
+          button#btnResetCart.btn.btn-outline-danger.btn-sm(type="button")
+            i.fa-solid.fa-trash-can.me-1
+            | Làm mới
+        .card-body.pt-0
+          .table-responsive(style="min-height: 300px;")
+            table.table.table-bordered.align-middle.mb-0
+              thead.table-light
+                tr
+                  th.text-center(style="width: 45px") STT
+                  th Sản phẩm / Biến thể
+                  th.text-end(style="width: 130px") Đơn giá
+                  th.text-center(style="width: 110px") Số lượng
+                  th(style="width: 220px") Mã IMEI xuất bán
+                  th.text-end(style="width: 130px") Thành tiền
+                  th.text-center(style="width: 45px")
+              tbody#cartTableBody
+                tr#cartEmptyRow
+                  td.text-center.text-muted.py-5(colspan="7") Chưa có sản phẩm nào trong giỏ hàng.
+
+    // Cột phải: Khách hàng & Thanh toán
+    .col-xl-4.col-lg-5
+      .card.mb-3
+        .card-header
+          h5.card-title.mb-0 Thông tin khách hàng
+        .card-body.pt-0
+          .mb-3
+            label.form-label(for="customerPhone") Số điện thoại
+            input#customerPhone.form-control(type="text" autocomplete="off")
+            #customerLookupBadge.mt-1(style="display: none;")
+          .mb-3
+            label.form-label(for="customerName") Họ và tên khách hàng *
+            input#customerName.form-control(type="text" value="Khách lẻ tại quầy")
+          .mb-0
+            label.form-label(for="customerAddress") Địa chỉ
+            input#customerAddress.form-control(type="text")
+
+      .card
+        .card-header
+          h5.card-title.mb-0 Thanh toán
+        .card-body.pt-0
+          .d-flex.justify-content-between.align-items-center.mb-2
+            span.text-muted Tạm tính:
+            strong#subTotalDisplay 0 đ
+
+          .d-flex.justify-content-between.align-items-center.mb-2
+            span.text-muted Giảm giá (VNĐ):
+            input#orderDiscountInput.form-control.form-control-sm.text-end(
+              type="number"
+              min="0"
+              value="0"
+              style="width: 150px;"
+            )
+
+          hr.my-2
+
+          .d-flex.justify-content-between.align-items-center.mb-3
+            span.fw-bold Khách cần trả:
+            h4#totalAmountDisplay.fw-bold.text-danger.mb-0 0 đ
+
+          .mb-3
+            label.form-label Phương thức thanh toán
+            select#posPaymentMethod.form-select
+              option(value="money") Tiền mặt
+              option(value="bank_transfer") Chuyển khoản ngân hàng
+              option(value="credit_card") Quẹt thẻ POS
+              option(value="installment") Trả góp
+
+          #cashTenderSection
+            .mb-2
+              .d-flex.justify-content-between.align-items-center.mb-1
+                label.form-label.mb-0(for="paidAmountInput") Tiền khách đưa (VNĐ)
+                button#btnExactAmount.btn.btn-link.btn-sm.p-0.text-decoration-none(type="button") Đúng số tiền
+              input#paidAmountInput.form-control.text-end.fw-bold(type="number" min="0")
+            .d-flex.justify-content-between.align-items-center.p-2.bg-light.rounded.mb-3
+              span.text-muted Tiền thừa trả khách:
+              strong#changeAmountDisplay.text-success 0 đ
+
+          .mb-3
+            label.form-label(for="orderNote") Ghi chú đơn hàng
+            textarea#orderNote.form-control(rows="2")
+
+          button#btnCheckout.btn.btn-primary.w-100.py-2.fw-bold(type="button")
+            i.fa-solid.fa-check.me-1
+            | Thanh toán & Xuất hóa đơn
+
+  // Modal chọn mã IMEI cho sản phẩm trong giỏ
+  #selectImeiModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-dialog-centered.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title
+            | Chọn mã IMEI: 
+            span#modalImeiProductName.text-primary
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        .modal-body
+          .d-flex.justify-content-between.align-items-center.mb-2
+            span
+              | Yêu cầu chọn: 
+              strong#modalRequiredCount 1
+              |  mã IMEI
+            span
+              | Đã chọn: 
+              strong#modalSelectedCount.text-primary 0
+              |  / 
+              span#modalMaxCount 1
+          input#modalImeiSearch.form-control.form-control-sm.mb-3(type="text" placeholder="Lọc nhanh mã IMEI...")
+          #modalImeiList.d-flex.flex-wrap.gap-2.p-3.bg-light.rounded.border(style="max-height: 300px; overflow-y: auto;")
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Đóng
+          button#btnConfirmImeis.btn.btn-primary(type="button") Xác nhận
+
+  // Modal thêm sản phẩm bán ngoài / dịch vụ
+  #customItemModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header
+          h5.modal-title Thêm sản phẩm ngoài / Dịch vụ
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        .modal-body
+          .mb-3
+            label.form-label Phân loại
+            select#customItemType.form-select
+              option(value="custom_product") Sản phẩm bán ngoài
+              option(value="custom_service") Dịch vụ / Tiền công
+          .mb-3
+            label.form-label(for="customProductName") Tên sản phẩm / Dịch vụ *
+            input#customProductName.form-control(type="text")
+          .row
+            .col-6
+              .mb-3
+                label.form-label(for="customUnitPrice") Đơn giá bán (VNĐ) *
+                input#customUnitPrice.form-control(type="number" min="0" value="0")
+            .col-6
+              .mb-3
+                label.form-label(for="customQuantity") Số lượng *
+                input#customQuantity.form-control(type="number" min="1" value="1")
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button#btnAddCustomItem.btn.btn-primary(type="button") Thêm vào giỏ
+
+  script(src="/admin/assets/js/order-pos.js")
