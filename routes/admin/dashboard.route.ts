@@ -5,6 +5,8 @@ const router = Router();
 
 router.get('/', dashboardController.dashboard);
 
+router.get('/analytics', dashboardController.omnichannelAnalytics);
+
 router.get('/revenue-by-time', dashboardController.revenueByTime);
 
 router.get('/order-statistic', dashboardController.orderStatistic);

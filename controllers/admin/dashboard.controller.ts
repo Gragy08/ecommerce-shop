@@ -1,6 +1,12 @@
 import { Request, Response } from 'express';
 import Order from '../../models/order.model';
 import AccountUser from '../../models/account-user.model';
+import InventoryItem from '../../models/inventory-item.model';
+import WarrantyTicket from '../../models/warranty-ticket.model';
+import Product from '../../models/product.model';
+import ProductVariant from '../../models/product-variant.model';
+import Customer from '../../models/customer.model';
+import { getAnalyticsDateRange, formatVNDate } from '../../helpers/date.helper';
 
 export const dashboard = async (req: Request, res: Response) => {
   // MỤC DOANH THU
@@ -993,3 +999,400 @@ export const customerStatistic = async (req: Request, res: Response) => {
     topUsers
   });
 }
+
+// [GET] /admin/dashboard/analytics - Báo cáo Bán hàng Đa kênh & Lợi nhuận gộp
+export const omnichannelAnalytics = async (req: Request, res: Response) => {
+  try {
+    const period = typeof req.query.period === "string" ? req.query.period : "30days";
+    const from = typeof req.query.startDate === "string" ? req.query.startDate : (typeof req.query.from === "string" ? req.query.from : "");
+    const to = typeof req.query.endDate === "string" ? req.query.endDate : (typeof req.query.to === "string" ? req.query.to : "");
+    const range = getAnalyticsDateRange(period, from, to);
+
+    const permissions = (res.locals.permissions as string[]) || [];
+    const isSuperAdmin = Boolean(res.locals.accountAdmin?.isSuperAdmin);
+    const canViewCost = Boolean(isSuperAdmin || permissions.includes("product-purchase-price"));
+
+    // 1. Lấy dữ liệu dự phòng giá vốn từ Variants và Products
+    const [allVariants, allProducts] = await Promise.all([
+      ProductVariant.find({ deleted: false }).select("_id purchasePrice sku").lean(),
+      Product.find({ deleted: false }).select("_id purchasePrice name").lean()
+    ]);
+    const variantCostMap = new Map<string, number>();
+    for (const v of allVariants) {
+      if (v.purchasePrice) variantCostMap.set(String(v._id), Number(v.purchasePrice));
+    }
+    const productCostMap = new Map<string, number>();
+    for (const p of allProducts) {
+      if (p.purchasePrice) productCostMap.set(String(p._id), Number(p.purchasePrice));
+    }
+
+    // 2. Lấy đơn hàng trong kỳ lọc (loại bỏ đơn hủy)
+    const orderMatch = {
+      createdAt: { $gte: range.startDate, $lte: range.endDate },
+      deleted: false
+    };
+
+    const [allOrdersInPeriod, cancelledOrdersCount] = await Promise.all([
+      Order.find({
+        ...orderMatch,
+        orderStatus: { $ne: "cancelled" }
+      }).lean(),
+      Order.countDocuments({
+        ...orderMatch,
+        orderStatus: "cancelled"
+      })
+    ]);
+
+    // 3. Tính toán các chỉ số kinh doanh & Lợi nhuận gộp
+    let netRevenue = 0;
+    let totalCogs = 0;
+    let totalGrossProfit = 0;
+
+    let posRevenue = 0;
+    let posOrdersCount = 0;
+    let posCogs = 0;
+    let posGrossProfit = 0;
+
+    let onlineRevenue = 0;
+    let onlineOrdersCount = 0;
+    let onlineCogs = 0;
+    let onlineGrossProfit = 0;
+
+    const paymentMap: Record<string, { label: string; count: number; revenue: number }> = {
+      money: { label: "Tiền mặt", count: 0, revenue: 0 },
+      bank_transfer: { label: "Chuyển khoản", count: 0, revenue: 0 },
+      installment: { label: "Trả góp", count: 0, revenue: 0 },
+      vnpay: { label: "VNPay", count: 0, revenue: 0 },
+      zalopay: { label: "ZaloPay", count: 0, revenue: 0 },
+      other: { label: "Khác / Thẻ POS", count: 0, revenue: 0 }
+    };
+
+    let installmentPendingCount = 0;
+    let installmentPendingAmount = 0;
+
+    const productSalesMap: Record<string, {
+      name: string;
+      sku: string;
+      quantity: number;
+      revenue: number;
+      cogs: number;
+      grossProfit: number;
+    }> = {};
+
+    for (const ord of allOrdersInPeriod) {
+      const ordRev = Number(ord.total) || 0;
+      netRevenue += ordRev;
+
+      let orderCogs = 0;
+      if (Array.isArray(ord.items)) {
+        for (const it of ord.items) {
+          const qty = Number(it.quantity) || 1;
+          let unitCost = Number(it.purchasePrice) || 0;
+          if (unitCost === 0 && it.variantId) {
+            unitCost = variantCostMap.get(String(it.variantId)) || 0;
+          }
+          if (unitCost === 0 && it.productId) {
+            unitCost = productCostMap.get(String(it.productId)) || 0;
+          }
+          const itemCost = unitCost * qty;
+          orderCogs += itemCost;
+
+          const itemRev = (Number(it.price) || 0) * qty - (Number(it.discount) || 0);
+          const prodKey = it.variantSku || String(it.variantId || it.productId || it.name);
+          if (!productSalesMap[prodKey]) {
+            productSalesMap[prodKey] = {
+              name: it.name || "Sản phẩm",
+              sku: it.variantSku || "N/A",
+              quantity: 0,
+              revenue: 0,
+              cogs: 0,
+              grossProfit: 0
+            };
+          }
+          productSalesMap[prodKey].quantity += qty;
+          productSalesMap[prodKey].revenue += itemRev;
+          productSalesMap[prodKey].cogs += itemCost;
+          productSalesMap[prodKey].grossProfit += (itemRev - itemCost);
+        }
+      }
+
+      const orderGrossProfit = ordRev - orderCogs;
+      totalCogs += orderCogs;
+      totalGrossProfit += orderGrossProfit;
+
+      // Phân bổ kênh
+      const isPos = ord.channel === "pos";
+      if (isPos) {
+        posRevenue += ordRev;
+        posOrdersCount += 1;
+        posCogs += orderCogs;
+        posGrossProfit += orderGrossProfit;
+      } else {
+        onlineRevenue += ordRev;
+        onlineOrdersCount += 1;
+        onlineCogs += orderCogs;
+        onlineGrossProfit += orderGrossProfit;
+      }
+
+      // Phương thức thanh toán
+      const pm = ord.paymentMethod || "money";
+      let pmKey = "other";
+      if (["money", "cash"].includes(pm)) pmKey = "money";
+      else if (["bank_transfer", "installment", "vnpay", "zalopay"].includes(pm)) pmKey = pm;
+
+      if (paymentMap[pmKey]) {
+        paymentMap[pmKey].count += 1;
+        paymentMap[pmKey].revenue += ordRev;
+      } else {
+        paymentMap.other.count += 1;
+        paymentMap.other.revenue += ordRev;
+      }
+
+      if (pm === "installment" && ord.installmentInfo) {
+        if (ord.installmentInfo.settlementStatus === "pending") {
+          installmentPendingCount += 1;
+          installmentPendingAmount += Number(ord.installmentInfo.loanAmount) || 0;
+        }
+      }
+    }
+
+    // 4. Biểu đồ xu hướng theo ngày hoặc theo giờ (Timeline)
+    const isHourly = range.period === "today" || range.period === "yesterday";
+    const timelineLabels: string[] = [];
+    const posTimeline: number[] = [];
+    const onlineTimeline: number[] = [];
+    const totalTimeline: number[] = [];
+
+    if (isHourly) {
+      const hourlyData: Record<number, { pos: number; online: number; total: number }> = {};
+      for (let h = 0; h < 24; h++) {
+        hourlyData[h] = { pos: 0, online: 0, total: 0 };
+        timelineLabels.push(`${String(h).padStart(2, '0')}:00`);
+      }
+      for (const ord of allOrdersInPeriod) {
+        const d = new Date(ord.createdAt);
+        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+        const vnTime = new Date(utc + (7 * 3600000));
+        const h = vnTime.getHours();
+        const rev = Number(ord.total) || 0;
+        if (hourlyData[h]) {
+          hourlyData[h].total += rev;
+          if (ord.channel === "pos") hourlyData[h].pos += rev;
+          else hourlyData[h].online += rev;
+        }
+      }
+      for (let h = 0; h < 24; h++) {
+        posTimeline.push(hourlyData[h].pos);
+        onlineTimeline.push(hourlyData[h].online);
+        totalTimeline.push(hourlyData[h].total);
+      }
+    } else {
+      const dailyData: Record<string, { label: string; pos: number; online: number; total: number }> = {};
+      const cur = new Date(range.startDate);
+      while (cur <= range.endDate) {
+        const day = String(cur.getDate()).padStart(2, '0');
+        const month = String(cur.getMonth() + 1).padStart(2, '0');
+        const dKey = `${day}/${month}`;
+        if (!dailyData[dKey]) {
+          dailyData[dKey] = { label: dKey, pos: 0, online: 0, total: 0 };
+          timelineLabels.push(dKey);
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+      for (const ord of allOrdersInPeriod) {
+        const d = new Date(ord.createdAt);
+        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+        const vnTime = new Date(utc + (7 * 3600000));
+        const day = String(vnTime.getDate()).padStart(2, '0');
+        const month = String(vnTime.getMonth() + 1).padStart(2, '0');
+        const dKey = `${day}/${month}`;
+        const rev = Number(ord.total) || 0;
+        if (dailyData[dKey]) {
+          dailyData[dKey].total += rev;
+          if (ord.channel === "pos") dailyData[dKey].pos += rev;
+          else dailyData[dKey].online += rev;
+        }
+      }
+      for (const key of timelineLabels) {
+        posTimeline.push(dailyData[key]?.pos || 0);
+        onlineTimeline.push(dailyData[key]?.online || 0);
+        totalTimeline.push(dailyData[key]?.total || 0);
+      }
+    }
+
+    // 5. Thống kê trạng thái tồn kho & Định giá vốn kho (Inventory Valuation)
+    const inventoryAgg = await InventoryItem.aggregate([
+      { $match: { deleted: false } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: { $ifNull: ["$quantity", 1] } },
+          cost: {
+            $sum: {
+              $multiply: [
+                { $ifNull: ["$purchasePrice", 0] },
+                { $ifNull: ["$quantity", 1] }
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const invStatusMap: Record<string, { qty: number; cost: number }> = {
+      available: { qty: 0, cost: 0 },
+      sold: { qty: 0, cost: 0 },
+      warranty: { qty: 0, cost: 0 },
+      damaged: { qty: 0, cost: 0 },
+      returned: { qty: 0, cost: 0 },
+      liquidated: { qty: 0, cost: 0 }
+    };
+
+    for (const row of inventoryAgg) {
+      if (row._id && invStatusMap[row._id]) {
+        invStatusMap[row._id] = { qty: row.count || 0, cost: row.cost || 0 };
+      }
+    }
+
+    const [availableImeiCount, availableQtyCount] = await Promise.all([
+      InventoryItem.countDocuments({
+        status: "available",
+        trackingType: "imei",
+        deleted: false
+      }),
+      InventoryItem.aggregate([
+        { $match: { status: "available", trackingType: "quantity", deleted: false } },
+        { $group: { _id: null, total: { $sum: "$quantity" } } }
+      ])
+    ]);
+    const totalAvailableQuantity = (availableQtyCount[0]?.total || 0);
+
+    // 6. Thống kê dịch vụ sửa chữa & bảo hành (Warranty)
+    const warrantyTickets = await WarrantyTicket.find({
+      createdAt: { $gte: range.startDate, $lte: range.endDate },
+      deleted: false
+    }).lean();
+
+    let warrantyTotalAmount = 0;
+    let warrantyRepairCost = 0;
+    const warrantyStatusCounts: Record<string, number> = {
+      received: 0,
+      inspecting: 0,
+      waiting_parts: 0,
+      completed: 0,
+      returned: 0,
+      cancelled: 0
+    };
+
+    for (const wt of warrantyTickets) {
+      const st = wt.status || "received";
+      if (warrantyStatusCounts[st] !== undefined) {
+        warrantyStatusCounts[st] += 1;
+      }
+      if (["completed", "returned"].includes(st) || (Number(wt.totalAmount) > 0 && wt.paymentMethod !== "Miễn phí")) {
+        warrantyTotalAmount += Number(wt.totalAmount) || 0;
+        warrantyRepairCost += Number(wt.repairCost) || 0;
+      }
+    }
+    const warrantyPartsCost = Math.max(0, warrantyTotalAmount - warrantyRepairCost);
+
+    // 7. Top 5 sản phẩm bán chạy theo doanh thu & lợi nhuận
+    const topProductsList = Object.values(productSalesMap)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5)
+      .map(p => ({
+        ...p,
+        margin: p.revenue > 0 ? ((p.grossProfit / p.revenue) * 100).toFixed(1) : "0"
+      }));
+
+    // 8. Tổng hợp tài chính & Tỷ suất
+    const totalOrdersCount = allOrdersInPeriod.length;
+    const totalCompletedOrders = allOrdersInPeriod.filter(o => o.orderStatus === "completed").length;
+    const avgOrderValue = totalOrdersCount > 0 ? Math.round(netRevenue / totalOrdersCount) : 0;
+    const posAov = posOrdersCount > 0 ? Math.round(posRevenue / posOrdersCount) : 0;
+    const onlineAov = onlineOrdersCount > 0 ? Math.round(onlineRevenue / onlineOrdersCount) : 0;
+    const posShare = netRevenue > 0 ? ((posRevenue / netRevenue) * 100).toFixed(1) : "0";
+    const onlineShare = netRevenue > 0 ? ((onlineRevenue / netRevenue) * 100).toFixed(1) : "0";
+    const grossProfitMargin = netRevenue > 0 ? ((totalGrossProfit / netRevenue) * 100).toFixed(1) : "0";
+
+    const paymentBreakdownList = Object.keys(paymentMap).map(k => {
+      const item = paymentMap[k];
+      return {
+        key: k,
+        label: item.label,
+        count: item.count,
+        revenue: item.revenue,
+        percentage: netRevenue > 0 ? ((item.revenue / netRevenue) * 100).toFixed(1) : "0"
+      };
+    });
+
+    res.render("admin/pages/dashboard-analytics.pug", {
+      pageTitle: "Báo cáo Bán hàng Đa kênh & Lợi nhuận gộp",
+      range,
+      canViewCost,
+      kpis: {
+        netRevenue,
+        cogs: totalCogs,
+        grossProfit: totalGrossProfit,
+        grossProfitMargin,
+        totalOrders: totalOrdersCount,
+        completedOrders: totalCompletedOrders,
+        cancelledOrders: cancelledOrdersCount,
+        avgOrderValue,
+        posRevenue,
+        posOrders: posOrdersCount,
+        posGrossProfit,
+        posShare,
+        posAov,
+        onlineRevenue,
+        onlineOrders: onlineOrdersCount,
+        onlineGrossProfit,
+        onlineShare,
+        onlineAov,
+        availableStockQty: invStatusMap.available.qty,
+        availableStockCost: invStatusMap.available.cost,
+        imeiStockQty: availableImeiCount,
+        quantityStockQty: totalAvailableQuantity,
+        warrantyTotalTickets: warrantyTickets.length,
+        warrantyRevenue: warrantyTotalAmount,
+        installmentPendingCount,
+        installmentPendingAmount
+      },
+      paymentBreakdown: paymentBreakdownList,
+      inventoryBreakdown: invStatusMap,
+      warrantyBreakdown: {
+        totalTickets: warrantyTickets.length,
+        statusCounts: warrantyStatusCounts,
+        totalRevenue: warrantyTotalAmount,
+        repairFeeRevenue: warrantyRepairCost,
+        partsRevenue: warrantyPartsCost
+      },
+      topProducts: topProductsList,
+      chartData: {
+        isHourly,
+        timelineLabels: JSON.stringify(timelineLabels),
+        posTimeline: JSON.stringify(posTimeline),
+        onlineTimeline: JSON.stringify(onlineTimeline),
+        totalTimeline: JSON.stringify(totalTimeline),
+        channelLabels: JSON.stringify(["Quầy POS", "Online Store"]),
+        channelRevenue: JSON.stringify([posRevenue, onlineRevenue]),
+        paymentLabels: JSON.stringify(paymentBreakdownList.map(p => p.label)),
+        paymentRevenue: JSON.stringify(paymentBreakdownList.map(p => p.revenue)),
+        inventoryStatusLabels: JSON.stringify(["Có sẵn", "Đã bán", "Bảo hành", "Lỗi/Hỏng", "Khác"]),
+        inventoryStatusCounts: JSON.stringify([
+          invStatusMap.available.qty,
+          invStatusMap.sold.qty,
+          invStatusMap.warranty.qty,
+          invStatusMap.damaged.qty,
+          invStatusMap.returned.qty + invStatusMap.liquidated.qty
+        ])
+      }
+    });
+  } catch (error) {
+    console.error("Error omnichannelAnalytics:", error);
+    res.status(500).render("admin/pages/dashboard.pug", {
+      pageTitle: "Lỗi thống kê",
+      errorMessage: "Đã xảy ra lỗi khi tạo báo cáo thống kê!"
+    });
+  }
+};
