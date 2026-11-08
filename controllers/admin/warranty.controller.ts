@@ -195,6 +195,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
 
     res.render("admin/pages/warranty-list", {
       pageTitle: "Quản lý Bảo hành & Sửa chữa",
+      moment,
       tickets,
       filters: {
         keyword,
@@ -969,6 +970,7 @@ export const detail = async (req: Request, res: Response): Promise<void> => {
 
     res.render("admin/pages/warranty-detail", {
       pageTitle: `Chi tiết phiếu bảo hành: ${ticket.ticketCode}`,
+      moment,
       ticket,
       availableReplacementItems,
       otherTicketsSameDevice

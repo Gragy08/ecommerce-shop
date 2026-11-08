@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from 'express';
 import path from 'path';
+import moment from 'moment';
 import adminRoutes from "./routes/admin/index.route";
 import clientRoutes from "./routes/client/index.route";
 import { domainCDN, pathAdmin } from './configs/variable.config';
@@ -58,6 +59,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Tạo biến toàn cục trong file Pug
 app.locals.pathAdmin = pathAdmin;
 app.locals.domainCDN = domainCDN;
+app.locals.moment = moment;
 
 // Khởi tạo thư viện lấy cookie
 app.use(cookieParser());
