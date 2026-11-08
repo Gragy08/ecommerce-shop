@@ -81,19 +81,45 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
   };
 
+  const normalizeText = (str) => {
+    if (!str) return "";
+    return String(str)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "d")
+      .toLowerCase()
+      .trim();
+  };
+
   const filterVariants = (keyword) => {
-    const k = (keyword || "").toLowerCase().trim();
-    if (!k) return variantList.slice(0, 15);
+    const kRaw = (keyword || "").normalize("NFC").toLowerCase().trim();
+    const kNorm = normalizeText(keyword);
+    if (!kRaw) return variantList.slice(0, 50);
     return variantList
       .filter((v) => {
+        const nameLower = (v.productName || "").normalize("NFC").toLowerCase();
+        const skuLower = (v.sku || "").toLowerCase();
+        const labelsLower = (v.labels || "").normalize("NFC").toLowerCase();
+        const titleLower = (v.fullTitle || "").normalize("NFC").toLowerCase();
+
+        if (
+          nameLower.includes(kRaw) ||
+          skuLower.includes(kRaw) ||
+          labelsLower.includes(kRaw) ||
+          titleLower.includes(kRaw)
+        ) {
+          return true;
+        }
+
         return (
-          v.productName.toLowerCase().includes(k) ||
-          v.sku.toLowerCase().includes(k) ||
-          (v.labels && v.labels.toLowerCase().includes(k)) ||
-          v.fullTitle.toLowerCase().includes(k)
+          normalizeText(v.productName).includes(kNorm) ||
+          normalizeText(v.sku).includes(kNorm) ||
+          normalizeText(v.labels).includes(kNorm) ||
+          normalizeText(v.fullTitle).includes(kNorm)
         );
       })
-      .slice(0, 15);
+      .slice(0, 50);
   };
 
   const hideSuggestions = () => {

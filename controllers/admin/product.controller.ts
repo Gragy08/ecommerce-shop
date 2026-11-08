@@ -336,16 +336,22 @@ export const createPost = async (req: Request, res: Response) => {
     const newRecord = new Product(req.body);
     await newRecord.save();
 
-    if(Array.isArray(newRecord.variants) && newRecord.variants.length > 0) {
-      const syncedVariants = await syncProductVariants(newRecord.id, newRecord.variants, {
+    const syncedVariants = await syncProductVariants(
+      newRecord.id,
+      Array.isArray(newRecord.variants) ? newRecord.variants : [],
+      {
         name: req.body.name,
         priceOld: req.body.priceOld,
         priceNew: req.body.priceNew,
         priceWholeSale: req.body.priceWholeSale,
         purchasePrice: req.body.purchasePrice,
+        stock: req.body.stock,
+        status: req.body.status,
         inventoryType: req.body.inventoryType,
         images: req.body.images
-      });
+      }
+    );
+    if (syncedVariants.length > 0) {
       const totalStock = syncedVariants
         .filter((v: any) => v.status)
         .reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0);
@@ -565,16 +571,22 @@ export const editPatch = async (req: Request, res: Response) => {
     req.body.attributes = JSON.parse(req.body.attributes);
 
     req.body.variants = JSON.parse(req.body.variants);
-    if(Array.isArray(req.body.variants) && req.body.variants.length > 0) {
-      req.body.variants = await syncProductVariants(id, req.body.variants, {
+    req.body.variants = await syncProductVariants(
+      id,
+      Array.isArray(req.body.variants) ? req.body.variants : [],
+      {
         name: req.body.name,
         priceOld: req.body.priceOld,
         priceNew: req.body.priceNew,
         priceWholeSale: req.body.priceWholeSale,
         purchasePrice: req.body.purchasePrice,
+        stock: req.body.stock,
+        status: req.body.status,
         inventoryType: req.body.inventoryType || productDetail.inventoryType,
         images: req.body.images
-      });
+      }
+    );
+    if (req.body.variants.length > 0) {
       req.body.stock = req.body.variants
         .filter((v: any) => v.status)
         .reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0);

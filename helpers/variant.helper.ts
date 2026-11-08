@@ -103,6 +103,8 @@ export const syncProductVariants = async (
     priceNew?: number;
     priceWholeSale?: number;
     purchasePrice?: number;
+    stock?: number;
+    status?: string;
     inventoryType?: string;
     images?: string[];
   }
@@ -119,8 +121,78 @@ export const syncProductVariants = async (
   const basePriceNew = productOverrides?.priceNew ?? product.priceNew ?? basePriceOld;
   const basePriceWholeSale = productOverrides?.priceWholeSale ?? product.priceWholeSale ?? 0;
   const basePurchasePrice = productOverrides?.purchasePrice ?? product.purchasePrice ?? 0;
+  const baseStock = productOverrides?.stock ?? product.stock ?? 0;
+  const baseStatus = (productOverrides?.status ?? product.status) === "inactive" ? "inactive" : "active";
   const baseInventoryType = productOverrides?.inventoryType ?? product.inventoryType ?? "quantity";
   const baseImages = productOverrides?.images ?? product.images ?? [];
+
+  // Trường hợp sản phẩm đơn (không có thuộc tính/biến thể con):
+  // Tự động tạo hoặc cập nhật 1 bản ghi ProductVariant mặc định trong `product-variants`
+  // để phục vụ Nhập kho, Tồn kho, POS và Bảo hành, nhưng vẫn trả về mảng `[]` cho `Product.variants`.
+  if (!Array.isArray(variantsInput) || variantsInput.length === 0) {
+    let defaultVariant: any = await ProductVariant.findOne({ productId: product._id });
+    const candidateSku = product.sku || generateVariantSku(baseName, []);
+
+    let stockToSave = Number(baseStock) || 0;
+    if (baseInventoryType === "imei" && defaultVariant) {
+      const totalImeiDocs = await InventoryItem.countDocuments({
+        variantId: defaultVariant._id,
+        deleted: false
+      });
+      if (totalImeiDocs > 0) {
+        stockToSave = await InventoryItem.countDocuments({
+          variantId: defaultVariant._id,
+          status: "available",
+          deleted: false
+        });
+      }
+    } else if (defaultVariant && productOverrides?.stock === undefined) {
+      stockToSave = Number(defaultVariant.stock ?? baseStock) || 0;
+    }
+
+    if (defaultVariant) {
+      const uniqueSku = await resolveUniqueVariantSku(
+        defaultVariant.sku || candidateSku,
+        defaultVariant._id
+      );
+      await ProductVariant.updateOne(
+        { _id: defaultVariant._id },
+        {
+          $set: {
+            sku: uniqueSku,
+            attributeValue: [],
+            priceOld: basePriceOld,
+            priceNew: basePriceNew,
+            priceWholeSale: basePriceWholeSale,
+            purchasePrice: basePurchasePrice || defaultVariant.purchasePrice || 0,
+            stock: stockToSave,
+            status: baseStatus,
+            images: baseImages
+          }
+        }
+      );
+      await ProductVariant.deleteMany({
+        productId: product._id,
+        _id: { $ne: defaultVariant._id }
+      });
+    } else {
+      const uniqueSku = await resolveUniqueVariantSku(candidateSku);
+      await ProductVariant.create({
+        productId: product._id,
+        sku: uniqueSku,
+        attributeValue: [],
+        priceOld: basePriceOld,
+        priceNew: basePriceNew,
+        priceWholeSale: basePriceWholeSale,
+        purchasePrice: basePurchasePrice,
+        stock: stockToSave,
+        status: baseStatus,
+        images: baseImages
+      });
+    }
+
+    return [];
+  }
 
   const validVariantIds: mongoose.Types.ObjectId[] = [];
   const updatedVariantsArray: any[] = [];
@@ -298,4 +370,38 @@ export const syncStockToProduct = async (productId: string): Promise<number> => 
   }
 
   return totalStock;
+};
+
+/**
+ * Tự động bổ sung bản ghi ProductVariant mặc định cho các sản phẩm chưa có biến thể trong `product-variants`
+ * (Ví dụ: phụ kiện, ốp lưng, cáp sạc tạo không chọn thuộc tính biến thể)
+ */
+export const ensureDefaultVariantsForProducts = async (): Promise<void> => {
+  try {
+    const existingProductIds = await ProductVariant.distinct("productId");
+    const productsMissingVariants = await Product.find({
+      _id: { $nin: existingProductIds },
+      deleted: false
+    }).lean();
+
+    for (const prod of productsMissingVariants as any[]) {
+      const variantsArr = Array.isArray(prod.variants) ? prod.variants : [];
+      const synced = await syncProductVariants(String(prod._id), variantsArr, {
+        name: prod.name,
+        priceOld: prod.priceOld,
+        priceNew: prod.priceNew,
+        priceWholeSale: prod.priceWholeSale,
+        purchasePrice: prod.purchasePrice,
+        stock: prod.stock,
+        status: prod.status,
+        inventoryType: prod.inventoryType,
+        images: prod.images
+      });
+      if (variantsArr.length > 0 && synced.length > 0) {
+        await Product.updateOne({ _id: prod._id }, { $set: { variants: synced } });
+      }
+    }
+  } catch (error) {
+    console.error("ensureDefaultVariantsForProducts error:", error);
+  }
 };

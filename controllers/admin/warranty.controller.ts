@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import moment from "moment";
+import slugify from "slugify";
 import WarrantyTicket from "../../models/warranty-ticket.model";
 import InventoryItem from "../../models/inventory-item.model";
 import Order from "../../models/order.model";
@@ -9,7 +10,7 @@ import ProductVariant from "../../models/product-variant.model";
 import Customer from "../../models/customer.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { upsertCustomerFromOrder } from "./customer.controller";
-import { syncStockToProduct } from "../../helpers/variant.helper";
+import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
 import { logAdminAction } from "../../helpers/log.helper";
 
 const generateTicketCode = (): string => {
@@ -548,6 +549,8 @@ export const checkDevice = async (req: Request, res: Response): Promise<void> =>
 // [GET] /admin/warranty/api/search-parts?q=...
 export const searchParts = async (req: Request, res: Response): Promise<void> => {
   try {
+    await ensureDefaultVariantsForProducts();
+
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
 
     const productQuery: Record<string, any> = {
@@ -558,7 +561,11 @@ export const searchParts = async (req: Request, res: Response): Promise<void> =>
 
     if (q) {
       const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-      productQuery.$or = [{ name: regex }, { sku: regex }, { search: regex }];
+      const slugQuery = slugify(q, { replacement: " ", lower: true });
+      const slugRegex = slugQuery
+        ? new RegExp(slugQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+        : regex;
+      productQuery.$or = [{ name: regex }, { sku: regex }, { search: regex }, { search: slugRegex }];
     }
 
     const matchedProducts = await Product.find(productQuery)

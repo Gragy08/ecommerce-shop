@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import moment from "moment";
+import slugify from "slugify";
 import { Parser } from "json2csv";
 import Order from "../../models/order.model";
 import Product from "../../models/product.model";
@@ -10,7 +11,7 @@ import AttributeProduct from "../../models/attribute-product.model";
 import Customer from "../../models/customer.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { upsertCustomerFromOrder, syncCustomerOrdersByPhone } from "./customer.controller";
-import { syncStockToProduct } from "../../helpers/variant.helper";
+import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
 import { logAdminAction } from "../../helpers/log.helper";
 
 /**
@@ -156,10 +157,16 @@ export const searchProducts = async (req: Request, res: Response): Promise<void>
     }
 
     // 2. Tìm kiếm theo tên sản phẩm hoặc mã SKU
+    await ensureDefaultVariantsForProducts();
+
     const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const slugQuery = slugify(q, { replacement: " ", lower: true });
+    const slugRegex = slugQuery
+      ? new RegExp(slugQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+      : regex;
 
     const matchedProducts = await Product.find({
-      $or: [{ name: regex }, { sku: regex }, { search: regex }],
+      $or: [{ name: regex }, { sku: regex }, { search: regex }, { search: slugRegex }],
       deleted: false,
       status: "active"
     })

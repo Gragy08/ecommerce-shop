@@ -9,7 +9,7 @@ import CategoryProduct from "../../models/category-product.model";
 import WarrantyTicket from "../../models/warranty-ticket.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { logAdminAction } from "../../helpers/log.helper";
-import { syncStockToProduct } from "../../helpers/variant.helper";
+import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
 import moment from "moment";
 
 interface ReceiptLineInput {
@@ -358,15 +358,21 @@ export const receiptList = async (req: Request, res: Response): Promise<void> =>
 // [GET] /admin/inventory/receipt/create
 export const createReceipt = async (_req: Request, res: Response): Promise<void> => {
   try {
+    await ensureDefaultVariantsForProducts();
+
     const [variants, suppliers] = await Promise.all([
       ProductVariant.find({ status: "active" })
-        .populate("productId", "name inventoryType purchasePrice images")
+        .populate("productId", "name inventoryType purchasePrice images deleted status")
         .sort({ createdAt: -1 })
         .lean(),
       Supplier.find({ deleted: false, status: "active" }).sort({ name: 1 }).lean()
     ]);
 
-    const variantClientData = variants.map((variant: any) => {
+    const activeVariants = variants.filter(
+      (v: any) => v.productId && !(v.productId as any).deleted
+    );
+
+    const variantClientData = activeVariants.map((variant: any) => {
       const product = variant.productId || {};
       const labels = Array.isArray(variant.attributeValue)
         ? variant.attributeValue.map((item: any) => item.value || item.label || "").filter(Boolean).join(" - ")
