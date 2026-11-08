@@ -1479,6 +1479,16 @@ if(productEditForm) {
       listTr.forEach(tr => {
         const status = tr.querySelector("input.form-check-input").checked;
         const attributeValue = JSON.parse(tr.querySelector("[attribute-value]").value);
+
+        const labelInputs = tr.querySelectorAll(`input[name="variant_label_edit"]`);
+        labelInputs.forEach(input => {
+          const index = parseInt(input.getAttribute("data-attr-index"));
+          const newLabel = input.value;
+          if(attributeValue[index] && newLabel) {
+            attributeValue[index].label = newLabel;
+          }
+        });
+
         let priceWholeSale = tr.querySelector("[price-whole-sale]").value;
         if(priceWholeSale) {
           priceWholeSale = parseInt(priceWholeSale);

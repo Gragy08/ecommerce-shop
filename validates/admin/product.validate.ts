@@ -58,6 +58,10 @@ export const createPost = (req: Request, res: Response, next: NextFunction) => {
     attributes: Joi.string().allow(''),
     variants: Joi.string().allow(''),
     stock: Joi.string().allow(''),
+    inventoryType: Joi.string().valid("imei", "quantity").allow(''),
+    purchasePrice: Joi.alternatives().try(Joi.string(), Joi.number()).allow(''),
+    warrantyMonths: Joi.alternatives().try(Joi.string(), Joi.number()).allow(''),
+    sku: Joi.string().allow(''),
     tags: Joi.string().allow(''),
     boughtTogether: Joi.string().allow(''),
   });

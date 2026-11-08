@@ -120,7 +120,7 @@ block main
                       tr
                         td
                           .form-check.form-switch.form-switch-success
-                            input.form-check-input(type="checkbox" checked=item.status)
+                            input.form-check-input(type="checkbox" checked=(item.status === true || item.status === "active"))
                           input(class="d-none" attribute-value value=item.attributeValue)
                         each attr in item.attributeValue
                           td #{attr.label}

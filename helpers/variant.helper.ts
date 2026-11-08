@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import slugify from "slugify";
 import Product from "../models/product.model";
 import ProductVariant from "../models/product-variant.model";
+import InventoryItem from "../models/inventory-item.model";
 
 /**
  * Chuẩn hóa chuỗi thành mã SKU viết hoa không dấu
@@ -93,13 +94,33 @@ export const resolveUniqueProductSku = async (
  * Đồng bộ danh sách biến thể từ form quản trị vào collection `product-variants`
  * Đồng thời gắn `variantId` và `sku` vào từng phần tử của mảng `variants` trong Product
  */
-export const syncProductVariants = async (productId: string, variantsInput: any[] = []): Promise<any[]> => {
+export const syncProductVariants = async (
+  productId: string,
+  variantsInput: any[] = [],
+  productOverrides?: {
+    name?: string;
+    priceOld?: number;
+    priceNew?: number;
+    priceWholeSale?: number;
+    purchasePrice?: number;
+    inventoryType?: string;
+    images?: string[];
+  }
+): Promise<any[]> => {
   if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
     return variantsInput;
   }
 
   const product = await Product.findById(productId);
   if (!product) return variantsInput;
+
+  const baseName = productOverrides?.name ?? product.name ?? "";
+  const basePriceOld = productOverrides?.priceOld ?? product.priceOld ?? 0;
+  const basePriceNew = productOverrides?.priceNew ?? product.priceNew ?? basePriceOld;
+  const basePriceWholeSale = productOverrides?.priceWholeSale ?? product.priceWholeSale ?? 0;
+  const basePurchasePrice = productOverrides?.purchasePrice ?? product.purchasePrice ?? 0;
+  const baseInventoryType = productOverrides?.inventoryType ?? product.inventoryType ?? "quantity";
+  const baseImages = productOverrides?.images ?? product.images ?? [];
 
   const validVariantIds: mongoose.Types.ObjectId[] = [];
   const updatedVariantsArray: any[] = [];
@@ -134,13 +155,38 @@ export const syncProductVariants = async (productId: string, variantsInput: any[
       });
     }
 
-    const priceOld = Number(item.priceOld) || product.priceOld || 0;
-    const priceNew = Number(item.priceNew) || product.priceNew || priceOld;
-    const priceWholeSale = Number(item.priceWholeSale) || product.priceWholeSale || 0;
-    const purchasePrice = Number(item.purchasePrice) || product.purchasePrice || 0;
-    const stock = Number(item.stock) || 0;
-    const status = item.status || "active";
-    const images = Array.isArray(item.images) ? item.images : (product.images || []);
+    const isActive =
+      item.status === undefined ||
+      item.status === true ||
+      item.status === "true" ||
+      item.status === "active" ||
+      item.status === 1;
+    const dbStatus: "active" | "inactive" = isActive ? "active" : "inactive";
+
+    const priceOld = Number(item.priceOld) || basePriceOld || 0;
+    const priceNew = Number(item.priceNew) || basePriceNew || priceOld;
+    const priceWholeSale = Number(item.priceWholeSale) || basePriceWholeSale || 0;
+    const purchasePrice =
+      item.purchasePrice !== undefined && item.purchasePrice !== null && item.purchasePrice !== ""
+        ? Number(item.purchasePrice)
+        : (variantDoc?.purchasePrice || basePurchasePrice || 0);
+
+    let stock = Number(item.stock) || 0;
+    if (baseInventoryType === "imei" && variantDoc) {
+      const totalImeiDocs = await InventoryItem.countDocuments({
+        variantId: variantDoc._id,
+        deleted: false
+      });
+      if (totalImeiDocs > 0) {
+        stock = await InventoryItem.countDocuments({
+          variantId: variantDoc._id,
+          status: "available",
+          deleted: false
+        });
+      }
+    }
+
+    const images = Array.isArray(item.images) && item.images.length > 0 ? item.images : baseImages;
 
     if (variantDoc) {
       variantDoc.attributeValue = attributeValue;
@@ -149,19 +195,19 @@ export const syncProductVariants = async (productId: string, variantsInput: any[
       variantDoc.priceWholeSale = priceWholeSale;
       variantDoc.purchasePrice = purchasePrice;
       variantDoc.stock = stock;
-      variantDoc.status = status;
+      variantDoc.status = dbStatus;
       if (images.length > 0) variantDoc.images = images;
       
       const candidateSku = item.sku && item.sku.trim()
         ? item.sku.trim().toUpperCase()
-        : (variantDoc.sku || generateVariantSku(product.name || "", attributeValue));
+        : (variantDoc.sku || generateVariantSku(baseName, attributeValue));
       variantDoc.sku = await resolveUniqueVariantSku(candidateSku, variantDoc._id);
 
       await variantDoc.save();
     } else {
       const candidateSku = item.sku && item.sku.trim()
         ? item.sku.trim().toUpperCase()
-        : generateVariantSku(product.name || "", attributeValue);
+        : generateVariantSku(baseName, attributeValue);
       const sku = await resolveUniqueVariantSku(candidateSku);
 
       variantDoc = await ProductVariant.create({
@@ -173,14 +219,14 @@ export const syncProductVariants = async (productId: string, variantsInput: any[
         priceWholeSale: priceWholeSale,
         purchasePrice: purchasePrice,
         stock: stock,
-        status: status,
+        status: dbStatus,
         images: images
       });
     }
 
     validVariantIds.push(variantDoc._id);
 
-    // Gắn ngược lại vào mảng lưu trong Product
+    // Gắn ngược lại vào mảng lưu trong Product (status dạng boolean cho frontend/client filter)
     updatedVariantsArray.push({
       ...item,
       variantId: variantDoc._id,
@@ -191,7 +237,7 @@ export const syncProductVariants = async (productId: string, variantsInput: any[
       priceWholeSale: priceWholeSale,
       purchasePrice: purchasePrice,
       stock: stock,
-      status: status
+      status: isActive
     });
   }
 

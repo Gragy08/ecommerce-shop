@@ -337,8 +337,19 @@ export const createPost = async (req: Request, res: Response) => {
     await newRecord.save();
 
     if(Array.isArray(newRecord.variants) && newRecord.variants.length > 0) {
-      const syncedVariants = await syncProductVariants(newRecord.id, newRecord.variants);
-      await Product.updateOne({ _id: newRecord.id }, { variants: syncedVariants });
+      const syncedVariants = await syncProductVariants(newRecord.id, newRecord.variants, {
+        name: req.body.name,
+        priceOld: req.body.priceOld,
+        priceNew: req.body.priceNew,
+        priceWholeSale: req.body.priceWholeSale,
+        purchasePrice: req.body.purchasePrice,
+        inventoryType: req.body.inventoryType,
+        images: req.body.images
+      });
+      const totalStock = syncedVariants
+        .filter((v: any) => v.status)
+        .reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0);
+      await Product.updateOne({ _id: newRecord.id }, { variants: syncedVariants, stock: totalStock });
     }
 
     logAdminAction(req, `Đã tạo sản phẩm: ${req.body.name} (Id: ${newRecord.id})`);
@@ -555,7 +566,18 @@ export const editPatch = async (req: Request, res: Response) => {
 
     req.body.variants = JSON.parse(req.body.variants);
     if(Array.isArray(req.body.variants) && req.body.variants.length > 0) {
-      req.body.variants = await syncProductVariants(id, req.body.variants);
+      req.body.variants = await syncProductVariants(id, req.body.variants, {
+        name: req.body.name,
+        priceOld: req.body.priceOld,
+        priceNew: req.body.priceNew,
+        priceWholeSale: req.body.priceWholeSale,
+        purchasePrice: req.body.purchasePrice,
+        inventoryType: req.body.inventoryType || productDetail.inventoryType,
+        images: req.body.images
+      });
+      req.body.stock = req.body.variants
+        .filter((v: any) => v.status)
+        .reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0);
     }
 
     req.body.tags = JSON.parse(req.body.tags);
