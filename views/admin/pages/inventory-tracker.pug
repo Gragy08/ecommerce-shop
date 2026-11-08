@@ -85,6 +85,21 @@ block main
                       tr
                         td.text-muted Ngày nhập kho:
                         td #{item.receivedAtFormat}
+                      if item.soldOrderId
+                        tr
+                          td.text-muted Đơn hàng xuất bán:
+                          td
+                            a.fw-bold.text-primary(href=`/${pathAdmin}/order/edit/${item.soldOrderId._id}`)
+                              | #{item.soldOrderId.code}
+                            span.text-muted.ms-2 (#{item.soldAtFormat})
+                        tr
+                          td.text-muted Khách hàng mua:
+                          td
+                            if item.soldOrderId.customerId
+                              a.fw-semibold.text-dark(href=`/${pathAdmin}/customer/detail/${item.soldOrderId.customerId}`)
+                                | #{item.soldOrderId.fullName} - #{item.soldOrderId.phone}
+                            else
+                              | #{item.soldOrderId.fullName} - #{item.soldOrderId.phone}
 
               .col-md-6
                 .card.border.h-100

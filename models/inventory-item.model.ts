@@ -95,6 +95,14 @@ const inventoryItemSchema = new mongoose.Schema(
       ref: "Order",
       default: null
     },
+    soldOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      default: null
+    },
+    soldAt: {
+      type: Date
+    },
     deleted: {
       type: Boolean,
       default: false

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { generateRandomNumber, generateRandomString } from '../../helpers/generate.helper';
 import Order from '../../models/order.model';
 import Product from '../../models/product.model';
+import ProductVariant from '../../models/product-variant.model';
 import AttributeProduct from '../../models/attribute-product.model';
 import Coupon from '../../models/coupon.model';
 import { getInfoAddress } from '../../helpers/location.helper';
@@ -48,11 +49,12 @@ export const createPost = async (req: Request, res: Response) => {
   dataFinal.paymentMethod = req.body.paymentMethod;
   dataFinal.paymentStatus = "unpaid";
   dataFinal.orderStatus = "pending";
+  dataFinal.channel = "online";
 
   // Mảng items
   dataFinal.items = [];
   for (const item of req.body.items) {
-    const productDetail = await Product.findOne({
+    const productDetail: any = await Product.findOne({
       _id: item.productId,
       deleted: false,
       status: "active"
@@ -60,11 +62,14 @@ export const createPost = async (req: Request, res: Response) => {
 
     if(productDetail) {
       let price = 0;
+      let variantId: any = undefined;
+      let variantSku = productDetail.sku || "";
+      let purchasePrice = productDetail.purchasePrice || 0;
       const variant = [];
 
       if(item.variant) {
         // Tìm đúng biến thể khớp trong danh sách
-        const variantMatched = productDetail.variants.find(variantItem => {
+        const variantMatched: any = productDetail.variants.find((variantItem: any) => {
           return (
             variantItem.attributeValue.every((attr: any) => {
               const selected = item.variant.find((v: any) => v.attrId === attr.attrId);
@@ -72,7 +77,19 @@ export const createPost = async (req: Request, res: Response) => {
             })
           );
         });
-        price = variantMatched.priceNew || 0;
+        if (variantMatched) {
+          price = variantMatched.priceNew || 0;
+          variantId = variantMatched.variantId || undefined;
+          variantSku = variantMatched.sku || variantSku;
+          purchasePrice = variantMatched.purchasePrice || purchasePrice;
+          if (!variantId && variantSku) {
+            const pv = await ProductVariant.findOne({
+              productId: productDetail._id,
+              sku: variantSku
+            }).select("_id").lean();
+            if (pv) variantId = pv._id;
+          }
+        }
         for (const v of item.variant) {
           const attribute: any = await AttributeProduct
             .findOne({
@@ -80,7 +97,7 @@ export const createPost = async (req: Request, res: Response) => {
             })
             .select("name")
             .lean();
-          variant.push(`${attribute.name}: ${v.label}`);
+          variant.push(`${attribute ? attribute.name : ''}: ${v.label}`);
         };
       } else {
         price = productDetail.priceNew || 0;
@@ -88,9 +105,14 @@ export const createPost = async (req: Request, res: Response) => {
 
       const itemFinal = {
         productId: item.productId,
+        variantId: variantId,
+        variantSku: variantSku,
+        inventoryType: productDetail.inventoryType || "quantity",
+        purchasePrice: purchasePrice,
         quantity: item.quantity,
         price: price,
         variant: variant.length > 0 ? variant : undefined,
+        identifiers: [],
         image: productDetail.images[0],
         name: productDetail.name
       };

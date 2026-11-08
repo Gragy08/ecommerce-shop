@@ -2337,6 +2337,61 @@ if(settingGeneralForm) {
 // Order Edit Form
 const orderEditForm = document.querySelector("#orderEditForm");
 if (orderEditForm) {
+  const syncOrderImeiPickButtons = () => {
+    const buttons = orderEditForm.querySelectorAll(".btn-pick-order-imei");
+    buttons.forEach((btn) => {
+      const targetIdx = btn.getAttribute("data-target-index");
+      const imei = (btn.getAttribute("data-imei") || "").trim().toUpperCase();
+      const inputEl = orderEditForm.querySelector(`.order-item-imei[data-item-index="${targetIdx}"]`);
+      if (!inputEl) return;
+      const currentList = (inputEl.value || "")
+        .split(/[\n,;]+/)
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean);
+      if (currentList.includes(imei)) {
+        btn.classList.remove("btn-outline-secondary");
+        btn.classList.add("btn-primary");
+      } else {
+        btn.classList.remove("btn-primary");
+        btn.classList.add("btn-outline-secondary");
+      }
+    });
+  };
+
+  syncOrderImeiPickButtons();
+
+  orderEditForm.querySelectorAll(".order-item-imei").forEach((el) => {
+    el.addEventListener("input", syncOrderImeiPickButtons);
+  });
+
+  orderEditForm.querySelectorAll(".btn-pick-order-imei").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetIdx = btn.getAttribute("data-target-index");
+      const imei = (btn.getAttribute("data-imei") || "").trim().toUpperCase();
+      const maxQty = parseInt(btn.getAttribute("data-max-qty") || "1", 10) || 1;
+      const inputEl = orderEditForm.querySelector(`.order-item-imei[data-item-index="${targetIdx}"]`);
+      if (!inputEl) return;
+
+      let currentList = (inputEl.value || "")
+        .split(/[\n,;]+/)
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean);
+
+      if (currentList.includes(imei)) {
+        currentList = currentList.filter((item) => item !== imei);
+      } else {
+        if (currentList.length >= maxQty) {
+          notyf.error(`Dòng sản phẩm này chỉ cần tối đa ${maxQty} mã IMEI!`);
+          return;
+        }
+        currentList.push(imei);
+      }
+
+      inputEl.value = currentList.join("\n");
+      syncOrderImeiPickButtons();
+    });
+  });
+
   const validation = new JustValidate('#orderEditForm');
 
   validation
@@ -2346,10 +2401,14 @@ if (orderEditForm) {
       const paymentStatus = event.target.paymentStatus.value;
       const note = event.target.note.value;
 
+      const imeiInputs = orderEditForm.querySelectorAll(".order-item-imei");
+      const itemIdentifiers = Array.from(imeiInputs).map((el) => el.value || "");
+
       const data = {
         orderStatus: orderStatus,
         paymentStatus: paymentStatus,
-        note: note
+        note: note,
+        itemIdentifiers: itemIdentifiers
       };
 
       fetch(`/${pathAdmin}/order/edit/${id}`, {
@@ -2366,7 +2425,8 @@ if (orderEditForm) {
           }
 
           if (data.code === "success") {
-            notyf.success(data.message);
+            drawNotify("success", data.message);
+            window.location.reload();
           }
         })
         .catch(() => {

@@ -1,91 +1,136 @@
 extends ../layouts/default.pug
 include ../mixins/pagination.pug
-//- include ../mixins/form-search.pug
+include ../mixins/form-search.pug
 
 block main
   .row
     .col-12
+      .row.mb-3
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-primary-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-shopping-bag.fs-3.text-primary
+                div
+                  h6.text-muted.mb-1 Tổng đơn hàng
+                  h4.mb-0 #{stats ? stats.totalOrders : 0}
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-success-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-check-circle.fs-3.text-success
+                div
+                  h6.text-muted.mb-1 Đơn hoàn thành
+                  h4.mb-0 #{stats ? stats.completedOrders : 0}
+        .col-md-4
+          .card.mb-3.mb-md-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-danger-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-wallet.fs-3.text-danger
+                div
+                  h6.text-muted.mb-1 Tổng doanh thu
+                  h4.mb-0.text-danger #{stats ? stats.totalRevenueFormatted : '0 đ'}
+
       .card
         .card-header
           .row.align-items-center
             .col
               h4.card-title #{pageTitle}
-            // end col
-          // end row
-        // end card-header
+            .col-auto.d-flex.gap-2
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/order/export/csv`)
+                i.fa-solid.fa-download.me-1
+                | Xuất CSV
         .card-body.pt-0
           .row
-            .col-lg-2.mb-2
-              a.btn.w-100.btn-info(href=`/${pathAdmin}/order/export/csv`)
-                i.fa-solid.fa-download.me-1
-                | Xuất Excel
-            //- .col-lg-6
-              //- +form-search()
+            .col-lg-6
+              +form-search()
           .table-responsive
-            table.table.table-striped.mb-0
+            table.table.table-striped.align-middle.mb-0
               thead.table-light
                 tr
                   th STT
                   th Mã đơn
+                  th Kênh bán
                   th Khách hàng
-                  th Tổng tiền
+                  th.text-end Tổng tiền
                   th Thanh toán
                   th TT thanh toán
                   th TT đơn hàng
                   th Ngày tạo
                   th.text-end Hành động
               tbody
-                each item, index in recordList
+                if (recordList && recordList.length > 0)
+                  each item, index in recordList
+                    tr
+                      td #{pagination.skip + index + 1}
+                      td
+                        a.fw-bold.text-primary.text-decoration-none(href=`/${pathAdmin}/order/edit/${item.id}`) #{item.code}
+                      td
+                        if (item.channel == "pos")
+                          span.badge.bg-info Tại quầy POS
+                        else
+                          span.badge.bg-primary Online Web
+                      td
+                        if (item.customerId)
+                          a.fw-semibold.text-dark.text-decoration-none.d-block(href=`/${pathAdmin}/customer/detail/${item.customerId}`) #{item.fullName}
+                        else
+                          div.fw-semibold #{item.fullName}
+                        small.text-muted #{item.phone}
+                      td.text-end.fw-bold.text-danger #{item.totalFormatted}
+                      td
+                        case item.paymentMethod
+                          when "money"
+                            span.badge.bg-secondary Tiền mặt
+                          when "vnpay"
+                            span.badge.bg-danger VNPay
+                          when "zalopay"
+                            span.badge.bg-primary ZaloPay
+                          when "bank_transfer"
+                            span.badge.bg-info Chuyển khoản
+                          when "credit_card"
+                            span.badge.bg-dark Quẹt thẻ
+                          when "installment"
+                            span.badge.bg-warning.text-dark Trả góp
+                          default
+                            span.badge.bg-secondary Tiền mặt
+                      td
+                        case item.paymentStatus
+                          when "unpaid"
+                            span.badge.bg-warning.text-dark Chưa thanh toán
+                          when "paid"
+                            span.badge.bg-success Đã thanh toán
+                          when "refunded"
+                            span.badge.bg-info Đã hoàn tiền
+                      td
+                        case item.orderStatus
+                          when "pending"
+                            span.badge.bg-secondary Chờ xác nhận
+                          when "confirmed"
+                            span.badge.bg-primary Đã xác nhận
+                          when "shipping"
+                            span.badge.bg-info Đang giao
+                          when "completed"
+                            span.badge.bg-success Hoàn thành
+                          when "cancelled"
+                            span.badge.bg-danger Đã hủy
+                          when "returned"
+                            span.badge.bg-dark Trả hàng
+                      td #{item.createdAtFormat}
+                      td.text-end
+                        a.me-1(href=`/${pathAdmin}/order/edit/${item.id}` title="Chi tiết / Cập nhật")
+                          i.las.la-pen.text-secondary.fs-20
+                        a(
+                          href="javascript:;"
+                          button-api
+                          data-method="PATCH"
+                          data-api=`/${pathAdmin}/order/delete/${item.id}`
+                          title="Xóa"
+                        )
+                          i.las.la-trash-alt.text-secondary.fs-20
+                else
                   tr
-                    td #{pagination.skip + index + 1}
-                    td
-                      b #{item.code}
-                    td
-                      div #{item.fullName}
-                      small.text-muted #{item.phone}
-                    td
-                      b.text-danger #{item.total.toLocaleString('vi-VN')} đ
-                    td
-                      case item.paymentMethod
-                        when "money"
-                          span.badge.bg-secondary Tiền mặt
-                        when "vnpay"
-                          span.badge.bg-danger VNPay
-                        when "zalopay"
-                          span.badge.bg-primary ZaloPay
-                    td
-                      case item.paymentStatus
-                        when "unpaid"
-                          span.badge.bg-warning Chưa thanh toán
-                        when "paid"
-                          span.badge.bg-success Đã thanh toán
-                        when "refunded"
-                          span.badge.bg-info Đã hoàn tiền
-                    td
-                      case item.orderStatus
-                        when "pending"
-                          span.badge.bg-secondary Chờ xác nhận
-                        when "confirmed"
-                          span.badge.bg-primary Đã xác nhận
-                        when "shipping"
-                          span.badge.bg-info Đang giao
-                        when "completed"
-                          span.badge.bg-success Giao thành công
-                        when "cancelled"
-                          span.badge.bg-danger Đã hủy
-                        when "returned"
-                          span.badge.bg-dark Đã trả hàng
-                    td
-                      | #{item.createdAt.toLocaleString('vi-VN')}
-                    td.text-end
-                      a(href=`/${pathAdmin}/order/edit/${item.id}`)
-                        i.las.la-pen.text-secondary.fs-20
-                      a(
-                        href="javascript:;"
-                        button-api
-                        data-method="PATCH"
-                        data-api=`/${pathAdmin}/order/delete/${item.id}`
-                      )
-                        i.las.la-trash-alt.text-secondary.fs-20
+                    td.text-center.text-muted.py-4(colspan="10") Chưa có đơn hàng nào.
           +pagination()
-    // end col

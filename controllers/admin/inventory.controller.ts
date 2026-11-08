@@ -738,6 +738,7 @@ export const trackerPage = async (req: Request, res: Response): Promise<void> =>
       })
         .populate("productId", "name inventoryType images")
         .populate("variantId", "sku attributeValue purchasePrice priceNew")
+        .populate("soldOrderId", "code fullName phone customerId channel total createdAt")
         .populate({
           path: "receiptId",
           select: "receiptCode supplierId supplierContactName createdAt invoiceNumber createdBy hasInvoice totalCost",
@@ -752,6 +753,9 @@ export const trackerPage = async (req: Request, res: Response): Promise<void> =>
       if (matchedItem) {
         matchedItem.receivedAtFormat = matchedItem.receivedAt
           ? moment(matchedItem.receivedAt).format("DD/MM/YYYY HH:mm")
+          : "-";
+        matchedItem.soldAtFormat = matchedItem.soldAt
+          ? moment(matchedItem.soldAt).format("DD/MM/YYYY HH:mm")
           : "-";
         matchedItem.purchasePriceFormatted = (Number(matchedItem.purchasePrice) || 0).toLocaleString("vi-VN") + " đ";
 

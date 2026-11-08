@@ -1,158 +1,187 @@
 extends ../layouts/default.pug
 
 block main
-  .card
-    .card-header
-      .row.align-items-center
-        .col
-          h4.card-title #{pageTitle} - #{orderDetail.code}
-    .card-body.pt-0
-      form(id="orderEditForm")
-        input(type="hidden" name="id" value=orderDetail.id)
-        // =====================
-        // Thông tin khách hàng
-        // =====================
-        h5.mt-3 Thông tin khách hàng
-        .row
-          .col-md-6
-            .mb-3
-              label.form-label Họ tên
-              input.form-control(disabled value=orderDetail.fullName)
-          .col-md-6
-            .mb-3
-              label.form-label Số điện thoại
-              input.form-control(disabled value=orderDetail.phone)
-          .col-md-12
-            .mb-3
-              label.form-label Địa chỉ
-              textarea.form-control(rows="2" disabled)= orderDetail.address
-        // =====================
-        // Danh sách sản phẩm
-        // =====================
-        h5.mt-4 Sản phẩm trong đơn
-        .table-responsive
-          table.table.table-bordered
-            thead.table-light
-              tr
-                th Sản phẩm
-                th Thuộc tính
-                th SL
-                th Giá
-                th Thành tiền
-            tbody
-              each p in orderDetail.items
-                tr
-                  td
-                    .d-flex.align-items-center
-                      img(src=`${domainCDN}${p.image}` width="50" class="me-2 rounded")
-                      span #{p.name}
-                  td
-                    each v in p.variant
-                      div.small.text-muted #{v}
-                  td #{p.quantity}
-                  td #{p.price.toLocaleString('vi-VN')} đ
-                  td.text-danger
-                    b #{(p.price * p.quantity).toLocaleString('vi-VN')} đ
-        // =====================
-        // Thanh toán & vận chuyển
-        // =====================
-        h5.mt-4 Thanh toán & vận chuyển
-        .row
-          .col-md-4
-            .mb-3
-              label.form-label Phương thức thanh toán
-              input.form-control(
-                disabled
-                value=
-                  orderDetail.paymentMethod == 'money' ? 'Tiền mặt' :
-                  orderDetail.paymentMethod == 'vnpay' ? 'VNPay' :
-                  orderDetail.paymentMethod == 'zalopay' ? 'ZaloPay' :
-                  ''
-              )
-          .col-md-4
-            .mb-3
-              label.form-label Trạng thái thanh toán
-              select.form-select(name="paymentStatus")
-                option(
-                  value="unpaid"
-                  selected=(orderDetail.paymentStatus == "unpaid")
-                ) Chưa thanh toán
-                option(
-                  value="paid"
-                  selected=(orderDetail.paymentStatus == "paid")
-                ) Đã thanh toán
-                option(
-                  value="refunded"
-                  selected=(orderDetail.paymentStatus == "refunded")
-                ) Đã hoàn tiền
-          .col-md-4
-            .mb-3
-              label.form-label Đơn vị vận chuyển
-              input.form-control(
-                disabled
-                value=orderDetail.shipping ? orderDetail.shipping.carrierName : ''
-              )
-        .row
-          .col-md-3
-            .mb-3
-              label.form-label Tạm tính
-              input.form-control(disabled value=orderDetail.subTotal.toLocaleString('vi-VN') + 'đ')
-          .col-md-3
-            .mb-3
-              label.form-label Mã giảm giá
-              input.form-control(disabled value=orderDetail.coupon || '—')
-          .col-md-3
-            .mb-3
-              label.form-label Giảm giá
-              input.form-control(disabled value=orderDetail.discount.toLocaleString('vi-VN') + 'đ')
-          .col-md-3
-            .mb-3
-              label.form-label Phí ship
-              input.form-control(
-                disabled 
-                value=
-                  orderDetail.shipping && orderDetail.shipping.fee
-                    ? orderDetail.shipping.fee.toLocaleString('vi-VN') + 'đ'
-                    : '0đ'
-                )
-        .row
-          .col-md-4
-            .mb-3
-              label.form-label Điểm đã dùng
-              input.form-control(disabled value=orderDetail.usedPoint)
-          .col-md-4
-            .mb-3
-              label.form-label Giảm từ điểm
-              input.form-control(disabled value=orderDetail.pointDiscount.toLocaleString('vi-VN') + 'đ')
-          .col-md-4
-            .mb-3
-              label.form-label Tổng thanh toán
-              input.form-control.text-danger(
-                disabled
-                value=orderDetail.total.toLocaleString('vi-VN') + 'đ'
-              )
-        // =====================
-        // Trạng thái đơn hàng
-        // =====================
-        h5.mt-4 Trạng thái đơn hàng
-        .row
-          .col-md-6
-            .mb-3
-              label.form-label Trạng thái
-              select.form-select(name="orderStatus")
-                option(value="pending" selected=(orderDetail.orderStatus=="pending")) Chờ xác nhận
-                option(value="confirmed" selected=(orderDetail.orderStatus=="confirmed")) Đã xác nhận
-                option(value="shipping" selected=(orderDetail.orderStatus=="shipping")) Đang giao
-                option(value="completed" selected=(orderDetail.orderStatus=="completed")) Giao thành công
-                option(value="returned" selected=(orderDetail.orderStatus=="returned")) Trả hàng
-                option(value="cancelled" selected=(orderDetail.orderStatus=="cancelled")) Hủy
-          .col-md-6
-            .mb-3
-              label.form-label Ghi chú
-              textarea.form-control(name="note" rows="2")= orderDetail.note
-        // =====================
-        // Action
-        // =====================
-        .mt-4
-          button.btn.btn-primary(type="submit") Cập nhật đơn hàng
-          a.btn.btn-danger.ms-2(href=`/${pathAdmin}/order/list`) Quay lại
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title #{pageTitle}: #{orderDetail.code}
+            .col-auto.d-flex.gap-2
+              if (orderDetail.customerId)
+                a.btn.btn-outline-primary(href=`/${pathAdmin}/customer/detail/${orderDetail.customerId}`)
+                  i.fa-solid.fa-user.me-1
+                  | Hồ sơ khách hàng
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/order/list`)
+                i.fa-solid.fa-arrow-left.me-1
+                | Quay lại danh sách
+        .card-body.pt-0
+          form(id="orderEditForm")
+            input(type="hidden" name="id" value=orderDetail.id)
+            .row
+              .col-md-6.col-lg-6
+                .mb-3
+                  label.form-label Mã đơn hàng
+                  input.form-control(type="text" value=orderDetail.code readonly)
+              .col-md-6.col-lg-6
+                .mb-3
+                  label.form-label Kênh bán & Ngày tạo
+                  input.form-control(
+                    type="text"
+                    value=`${orderDetail.channel == 'pos' ? 'Tại quầy POS' : 'Online Web'} - ${orderDetail.createdAtFormat}`
+                    readonly
+                  )
+              .col-md-6.col-lg-6
+                .mb-3
+                  label.form-label Họ và tên khách hàng
+                  input.form-control(type="text" value=orderDetail.fullName readonly)
+              .col-md-6.col-lg-6
+                .mb-3
+                  label.form-label Số điện thoại
+                  input.form-control(type="text" value=orderDetail.phone readonly)
+              .col-12
+                .mb-4
+                  label.form-label Địa chỉ giao hàng
+                  input.form-control(type="text" value=(orderDetail.address || 'Mua trực tiếp tại quầy') readonly)
+
+            label.form-label.fw-bold.mb-2 Danh sách sản phẩm trong đơn
+            .table-responsive.mb-4
+              table.table.table-bordered.align-middle.mb-0
+                thead.table-light
+                  tr
+                    th(style="width: 50px") STT
+                    th Sản phẩm / Biến thể
+                    th(style="width: 110px") Loại quản lý
+                    th.text-center(style="width: 90px") Số lượng
+                    th.text-end(style="width: 140px") Đơn giá
+                    th.text-end(style="width: 150px") Thành tiền
+                    th(style="width: 340px") Mã IMEI xuất bán
+                tbody
+                  each p, index in orderDetail.items
+                    tr(data-order-item-row=index)
+                      td.text-center #{index + 1}
+                      td
+                        .d-flex.align-items-center
+                          if p.image
+                            img.me-2.rounded(src=`${domainCDN}${p.image}` width="44" height="44" style="object-fit: cover;")
+                          div
+                            .fw-semibold.text-primary #{p.name}
+                            if (p.variant && p.variant.length > 0)
+                              small.text-muted.d-block #{p.variant.join(' | ')}
+                            if p.variantSku
+                              code.text-dark #{p.variantSku}
+                      td
+                        if p.inventoryType === "imei"
+                          span.badge.bg-primary IMEI
+                        else
+                          span.badge.bg-secondary Số lượng
+                      td.text-center.fw-bold #{p.quantity}
+                      td.text-end #{(p.price || 0).toLocaleString('vi-VN')} đ
+                      td.text-end.fw-bold.text-danger #{((p.price || 0) * (p.quantity || 1)).toLocaleString('vi-VN')} đ
+                      td
+                        if p.inventoryType === "imei"
+                          if !orderDetail.stockDeducted
+                            textarea.form-control.order-item-imei(
+                              rows="2"
+                              data-item-index=index
+                              data-required-qty=p.quantity
+                            )= (p.identifiers || []).join('\n')
+                            if (p.availableImeis && p.availableImeis.length > 0)
+                              .mt-1
+                                small.text-muted.d-block.mb-1 Bấm để chọn nhanh IMEI có sẵn trong kho:
+                                .d-flex.flex-wrap.gap-1(style="max-height: 90px; overflow-y: auto;")
+                                  each imei in p.availableImeis
+                                    button.btn.btn-sm.btn-outline-secondary.py-0.px-2.btn-pick-order-imei(
+                                      type="button"
+                                      data-target-index=index
+                                      data-imei=imei
+                                      data-max-qty=p.quantity
+                                    ) #{imei}
+                            else
+                              small.text-danger.d-block.mt-1 Hiện chưa có mã IMEI khả dụng trong kho cho biến thể này.
+                          else
+                            input.order-item-imei(
+                              type="hidden"
+                              data-item-index=index
+                              value=(p.identifiers || []).join('\n')
+                            )
+                            if (p.identifiers && p.identifiers.length > 0)
+                              .d-flex.flex-wrap.gap-1
+                                each imei in p.identifiers
+                                  a.badge.bg-light.text-dark.border.text-decoration-none(
+                                    href=`/${pathAdmin}/inventory/tracker?keyword=${imei}`
+                                    target="_blank"
+                                    title="Tra cứu vòng đời IMEI"
+                                  )
+                                    i.fa-solid.fa-barcode.me-1.text-secondary
+                                    | #{imei}
+                            else
+                              span.text-muted Chưa gán IMEI
+                        else
+                          input.order-item-imei(type="hidden" data-item-index=index value="")
+                          span.text-muted Quản lý theo số lượng
+
+            .row
+              .col-md-4
+                .mb-3
+                  label.form-label Phương thức thanh toán
+                  input.form-control(
+                    type="text"
+                    readonly
+                    value=
+                      orderDetail.paymentMethod == 'money' ? 'Tiền mặt' :
+                      orderDetail.paymentMethod == 'vnpay' ? 'VNPay' :
+                      orderDetail.paymentMethod == 'zalopay' ? 'ZaloPay' :
+                      orderDetail.paymentMethod == 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
+                      orderDetail.paymentMethod == 'credit_card' ? 'Quẹt thẻ POS' :
+                      orderDetail.paymentMethod == 'installment' ? 'Trả góp' : 'Tiền mặt'
+                  )
+              .col-md-4
+                .mb-3
+                  label.form-label Đơn vị vận chuyển
+                  input.form-control(
+                    type="text"
+                    readonly
+                    value=(orderDetail.shipping && orderDetail.shipping.carrierName ? `${orderDetail.shipping.carrierName} (Phí: ${(orderDetail.shipping.fee || 0).toLocaleString('vi-VN')} đ)` : 'Không qua hãng vận chuyển')
+                  )
+              .col-md-4
+                .mb-3
+                  label.form-label Giảm giá / Điểm thưởng
+                  input.form-control(
+                    type="text"
+                    readonly
+                    value=`Giảm mã: ${(orderDetail.discount || 0).toLocaleString('vi-VN')} đ | Giảm điểm: ${(orderDetail.pointDiscount || 0).toLocaleString('vi-VN')} đ`
+                  )
+              .col-md-4
+                .mb-3
+                  label.form-label Tổng thanh toán
+                  input.form-control.fw-bold.text-danger(
+                    type="text"
+                    readonly
+                    value=`${(orderDetail.total || 0).toLocaleString('vi-VN')} đ`
+                  )
+              .col-md-4
+                .mb-3
+                  label.form-label Trạng thái thanh toán
+                  select.form-select(name="paymentStatus")
+                    option(value="unpaid" selected=(orderDetail.paymentStatus == "unpaid")) Chưa thanh toán
+                    option(value="paid" selected=(orderDetail.paymentStatus == "paid")) Đã thanh toán
+                    option(value="refunded" selected=(orderDetail.paymentStatus == "refunded")) Đã hoàn tiền
+              .col-md-4
+                .mb-3
+                  label.form-label Trạng thái đơn hàng
+                  select.form-select(name="orderStatus")
+                    option(value="pending" selected=(orderDetail.orderStatus == "pending")) Chờ xác nhận
+                    option(value="confirmed" selected=(orderDetail.orderStatus == "confirmed")) Đã xác nhận
+                    option(value="shipping" selected=(orderDetail.orderStatus == "shipping")) Đang giao (Xuất kho)
+                    option(value="completed" selected=(orderDetail.orderStatus == "completed")) Hoàn thành (Đã xuất kho)
+                    option(value="returned" selected=(orderDetail.orderStatus == "returned")) Trả hàng (Hoàn kho)
+                    option(value="cancelled" selected=(orderDetail.orderStatus == "cancelled")) Hủy (Hoàn kho)
+              .col-12
+                .mb-3
+                  label.form-label Ghi chú đơn hàng
+                  textarea.form-control(name="note" rows="2")= orderDetail.note
+
+            button.btn.btn-primary(type="submit") Cập nhật
+            a.btn.btn-danger.ms-1(href=`/${pathAdmin}/order/list`) Hủy

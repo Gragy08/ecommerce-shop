@@ -8,7 +8,24 @@ const schema = new mongoose.Schema(
       ref: "Customer",
       default: null
     },
-    code: String, // Mã đơn hàng (VD: AB000001)
+    channel: {
+      type: String,
+      enum: ["online", "pos"],
+      default: "online"
+    },
+    cashierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AccountAdmin"
+    },
+    cashierName: {
+      type: String,
+      default: ""
+    },
+    stockDeducted: {
+      type: Boolean,
+      default: false
+    },
+    code: String, // Mã đơn hàng (VD: AB000001 hoặc HD-20261108-12345)
     fullName: String,
     phone: String,
     address: String,
@@ -18,9 +35,36 @@ const schema = new mongoose.Schema(
     items: [
       {
         productId: String,
+        variantId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "ProductVariant"
+        },
+        variantSku: String,
+        inventoryType: {
+          type: String,
+          enum: ["imei", "quantity", "custom"],
+          default: "quantity"
+        },
+        isCustomItem: {
+          type: Boolean,
+          default: false
+        },
+        customItemType: {
+          type: String,
+          enum: ["custom_product", "custom_service"],
+          default: "custom_product"
+        },
+        purchasePrice: {
+          type: Number,
+          default: 0
+        },
         quantity: Number,
         price: Number,
-        variant: [String], // Một mảng các label (Ví dụ: ["Kích cỡ: Size M", "Màu sắc: Đen"])
+        discount: {
+          type: Number,
+          default: 0
+        },
+        variant: [String], // Một mảng các label (Ví dụ: ["Dung lượng: 128GB", "Màu sắc: Đen"])
         identifiers: [String], // Danh sách mã IMEI đã xuất cho đơn hàng
         image: String,
         name: String
@@ -33,9 +77,12 @@ const schema = new mongoose.Schema(
     paymentMethod: { // Phương thức thanh toán
       type: String,
       enum: [
-        "money", // Tiền mặt
-        "vnpay", // VNPay
-        "zalopay" // ZaloPay
+        "money",         // Tiền mặt (COD / Tại quầy)
+        "vnpay",         // VNPay
+        "zalopay",       // ZaloPay
+        "bank_transfer", // Chuyển khoản ngân hàng
+        "credit_card",   // Quẹt thẻ POS
+        "installment"    // Trả góp
       ],
       default: "money"
     },

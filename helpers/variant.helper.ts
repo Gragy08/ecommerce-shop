@@ -214,17 +214,38 @@ export const syncStockToProduct = async (productId: string): Promise<number> => 
     return 0;
   }
 
-  const variants = await ProductVariant.find({
-    productId: productId,
-    status: "active"
-  });
+  const [product, variants] = await Promise.all([
+    Product.findById(productId),
+    ProductVariant.find({
+      productId: productId,
+      status: "active"
+    })
+  ]);
 
   const totalStock = variants.reduce((total: number, v: any) => total + (Number(v.stock) || 0), 0);
 
-  await Product.updateOne(
-    { _id: productId },
-    { stock: totalStock }
-  );
+  if (product) {
+    const stockBySku = new Map<string, number>();
+    const stockById = new Map<string, number>();
+    for (const v of variants) {
+      if (v.sku) stockBySku.set(String(v.sku), Number(v.stock) || 0);
+      stockById.set(String(v._id), Number(v.stock) || 0);
+    }
+
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      product.variants = product.variants.map((pv: any) => {
+        const plain = pv.toObject ? pv.toObject() : { ...pv };
+        if (plain.variantId && stockById.has(String(plain.variantId))) {
+          plain.stock = stockById.get(String(plain.variantId));
+        } else if (plain.sku && stockBySku.has(String(plain.sku))) {
+          plain.stock = stockBySku.get(String(plain.sku));
+        }
+        return plain;
+      }) as any;
+    }
+    product.stock = totalStock;
+    await product.save();
+  }
 
   return totalStock;
 };
