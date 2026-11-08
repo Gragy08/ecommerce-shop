@@ -11,6 +11,7 @@ import Review from '../../models/review.model';
 import Product from '../../models/product.model';
 import WarrantyTicket from '../../models/warranty-ticket.model';
 import InventoryItem from '../../models/inventory-item.model';
+import Customer from '../../models/customer.model';
 import moment from 'moment';
 import { syncAccountUserToCustomer } from '../admin/customer.controller';
 
@@ -621,13 +622,40 @@ export const warrantyList = async (req: Request, res: Response): Promise<void> =
   try {
     const accountUser = res.locals.accountUser;
     const userId = accountUser.id || accountUser._id;
-    const userPhone = accountUser.phone || "";
+    const userPhone = accountUser.phone ? String(accountUser.phone).replace(/\D/g, "") : "";
+
+    // 1. Tìm hồ sơ khách hàng CRM liên kết với tài khoản này
+    const customer: any = await Customer.findOne({
+      $or: [
+        { accountUserId: userId },
+        ...(accountUser.email ? [{ email: String(accountUser.email).trim().toLowerCase() }] : []),
+        ...(userPhone.length >= 9 ? [{ phone: userPhone }, { phone: new RegExp(userPhone.slice(-9)) }] : [])
+      ],
+      deleted: false
+    }).lean();
+
+    const phonesToSearch = new Set<string>();
+    if (userPhone && userPhone.length >= 9) phonesToSearch.add(userPhone);
+    if (customer && customer.phone) {
+      const custClean = String(customer.phone).replace(/\D/g, "");
+      if (custClean.length >= 9) phonesToSearch.add(custClean);
+    }
+
+    // 2. Tìm tất cả đơn hàng liên quan (qua userId, customerId hoặc phone)
+    const orOrderQuery: any[] = [
+      { userId: userId },
+      { userId: String(userId) }
+    ];
+    if (customer) {
+      orOrderQuery.push({ customerId: customer._id });
+    }
+    for (const ph of phonesToSearch) {
+      orOrderQuery.push({ phone: ph });
+      orOrderQuery.push({ phone: new RegExp(ph.slice(-9)) });
+    }
 
     const userOrders = await Order.find({
-      $or: [
-        { userId: userId },
-        ...(userPhone ? [{ phone: new RegExp(userPhone.replace(/\D/g, "").slice(-9)) }] : [])
-      ],
+      $or: orOrderQuery,
       deleted: false,
       orderStatus: { $ne: "cancelled" }
     })
@@ -640,12 +668,15 @@ export const warrantyList = async (req: Request, res: Response): Promise<void> =
       if (Array.isArray(ord.items)) {
         for (const item of ord.items) {
           if (Array.isArray(item.identifiers)) {
-            orderImeis.push(...item.identifiers);
+            for (const id of item.identifiers) {
+              if (id && String(id).trim()) orderImeis.push(String(id).trim().toUpperCase());
+            }
           }
         }
       }
     }
 
+    // 3. Tìm bản ghi kho InventoryItem tương ứng
     const inventoryDocs: any[] =
       orderIds.length > 0 || orderImeis.length > 0
         ? await InventoryItem.find({
@@ -696,45 +727,95 @@ export const warrantyList = async (req: Request, res: Response): Promise<void> =
       });
     }
 
+    // Bổ sung thiết bị và sản phẩm từ đơn hàng
     for (const ord of userOrders) {
       for (const item of ord.items || []) {
-        for (const imei of item.identifiers || []) {
-          if (!seenImeis.has(imei)) {
-            seenImeis.add(imei);
+        const itemImeis = Array.isArray(item.identifiers) ? item.identifiers : [];
+        if (itemImeis.length > 0) {
+          for (const imei of itemImeis) {
+            const cleanImei = String(imei).trim().toUpperCase();
+            if (cleanImei && !seenImeis.has(cleanImei)) {
+              seenImeis.add(cleanImei);
+              const warrantyMonths = 12;
+              const soldDate = ord.createdAt;
+              const warrantyExpireDate = moment(soldDate).add(warrantyMonths, "months").toDate();
+              const remainingDays = moment(warrantyExpireDate).diff(moment(), "days");
+              devices.push({
+                identifier: cleanImei,
+                productName: item.name,
+                variantName: Array.isArray(item.variant) ? item.variant.join(" / ") : "",
+                soldAt: soldDate,
+                warrantyMonths,
+                warrantyExpireDate,
+                isUnderWarranty: remainingDays >= 0,
+                remainingDays
+              });
+            }
+          }
+        } else {
+          const itemKey = `${ord.code}-${item.productId || item.name}`;
+          if (!seenImeis.has(itemKey)) {
+            seenImeis.add(itemKey);
             const warrantyMonths = 12;
             const soldDate = ord.createdAt;
             const warrantyExpireDate = moment(soldDate).add(warrantyMonths, "months").toDate();
             const remainingDays = moment(warrantyExpireDate).diff(moment(), "days");
             devices.push({
-              identifier: imei,
+              identifier: ord.code || "Theo số lượng",
               productName: item.name,
-              variantName: Array.isArray(item.variant) ? item.variant.join(" / ") : "",
+              variantName: Array.isArray(item.variant) ? item.variant.join(" / ") : (item.quantity ? `SL: ${item.quantity}` : ""),
               soldAt: soldDate,
               warrantyMonths,
               warrantyExpireDate,
               isUnderWarranty: remainingDays >= 0,
-              remainingDays
+              remainingDays,
+              isOrderProduct: true
             });
           }
         }
       }
     }
 
+    // 4. Tìm các phiếu bảo hành
     const allImeis = Array.from(seenImeis);
-    const phoneDigits = userPhone.replace(/\D/g, "");
-    const ticketFilter: Record<string, any> = { deleted: false };
     const orConditions: any[] = [];
+    if (customer) {
+      orConditions.push({ customerId: customer._id });
+    }
+    for (const ph of phonesToSearch) {
+      orConditions.push({ "customerInfo.phone": ph });
+      orConditions.push({ "customerInfo.phone": new RegExp(ph.slice(-9)) });
+    }
     if (allImeis.length > 0) {
       orConditions.push({ identifier: { $in: allImeis } });
-    }
-    if (phoneDigits.length >= 9) {
-      orConditions.push({ "customerInfo.phone": new RegExp(phoneDigits.slice(-9)) });
     }
 
     let tickets: any[] = [];
     if (orConditions.length > 0) {
-      ticketFilter.$or = orConditions;
-      tickets = await WarrantyTicket.find(ticketFilter).sort({ createdAt: -1 }).lean();
+      tickets = await WarrantyTicket.find({
+        $or: orConditions,
+        deleted: false
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+
+    // Bổ sung thiết bị từ phiếu bảo hành (nếu chưa có trong danh sách thiết bị)
+    for (const tk of tickets) {
+      if (tk.identifier && !seenImeis.has(tk.identifier)) {
+        seenImeis.add(tk.identifier);
+        devices.push({
+          identifier: tk.identifier,
+          productName: tk.productName,
+          variantName: tk.variantName,
+          soldAt: tk.createdAt,
+          warrantyMonths: 12,
+          warrantyExpireDate: null,
+          isUnderWarranty: tk.status !== "returned" && tk.status !== "cancelled",
+          remainingDays: 0,
+          fromTicket: true
+        });
+      }
     }
 
     res.render("client/pages/dashboard-warranty-list", {
