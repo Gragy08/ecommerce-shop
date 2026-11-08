@@ -181,3 +181,46 @@ block main
                         else
                           | #{dev.orderCode}
                       td #{dev.soldAtFormat}
+
+          label.form-label.fw-bold.mt-4.mb-2 Lịch sử Bảo hành & Sửa chữa (#{warrantyTickets ? warrantyTickets.length : 0})
+          .table-responsive
+            table.table.table-bordered.align-middle.mb-0
+              thead.table-light
+                tr
+                  th(style="width: 50px") STT
+                  th Mã phiếu
+                  th Thiết bị / Mã IMEI
+                  th Lỗi tiếp nhận
+                  th.text-end Chi phí
+                  th Trạng thái
+                  th Ngày nhận
+              tbody
+                if (warrantyTickets && warrantyTickets.length > 0)
+                  each wt, idx in warrantyTickets
+                    tr
+                      td.text-center #{idx + 1}
+                      td
+                        a.fw-bold.text-primary(href=`/${pathAdmin}/warranty/detail/${wt._id}`) #{wt.ticketCode}
+                      td
+                        .fw-semibold #{wt.productName}
+                        code #{wt.identifier}
+                      td #{wt.issueDescription}
+                      td.text-end.fw-semibold #{wt.totalAmountFormatted}
+                      td
+                        case wt.status
+                          when "received"
+                            span.badge.bg-secondary Mới tiếp nhận
+                          when "inspecting"
+                            span.badge.bg-info.text-dark Đang kiểm tra / sửa
+                          when "waiting_parts"
+                            span.badge.bg-warning.text-dark Chờ linh kiện
+                          when "completed"
+                            span.badge.bg-primary Đã xong - Chờ trả
+                          when "returned"
+                            span.badge.bg-success Đã trả khách
+                          when "cancelled"
+                            span.badge.bg-danger Đã hủy
+                      td #{wt.createdAtFormat}
+                else
+                  tr
+                    td.text-center.text-muted.py-3(colspan="7") Khách hàng chưa có lịch sử bảo hành / sửa chữa nào.

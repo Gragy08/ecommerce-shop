@@ -110,9 +110,8 @@ block main
             label.form-label Phương thức thanh toán
             select#posPaymentMethod.form-select
               option(value="money") Tiền mặt
-              option(value="bank_transfer") Chuyển khoản ngân hàng
-              option(value="credit_card") Quẹt thẻ POS
-              option(value="installment") Trả góp
+              option(value="bank_transfer") Chuyển khoản
+              option(value="installment") Trả góp (Qua đơn vị tài chính)
 
           #cashTenderSection
             .mb-2
@@ -123,6 +122,77 @@ block main
             .d-flex.justify-content-between.align-items-center.p-2.bg-light.rounded.mb-3
               span.text-muted Tiền thừa trả khách:
               strong#changeAmountDisplay.text-success 0 đ
+
+          // Khối thông tin Trả góp qua đơn vị tài chính (chỉ hiện khi chọn Trả góp)
+          #installmentSection.p-3.rounded.mb-3.border.border-warning.bg-warning-subtle.bg-opacity-10(style="display: none;")
+            .d-flex.align-items-center.justify-content-between.mb-2
+              strong.text-dark
+                i.fa-solid.fa-file-contract.text-warning.me-1
+                | Hồ sơ trả góp
+              span.badge.bg-warning.text-dark Đối tác tài chính
+
+            .mb-2
+              label.form-label.small.fw-semibold.mb-1(for="installmentProvider") Đơn vị tài chính *
+              select#installmentProvider.form-select.form-select-sm
+                option(value="home_credit") Home Credit
+                option(value="mirae_asset") Mirae Asset
+                option(value="hd_saison") HD Saison
+
+            .row.g-2.mb-2
+              .col-7
+                label.form-label.small.fw-semibold.mb-1(for="installmentCccd") Số CCCD / CMND *
+                input#installmentCccd.form-control.form-control-sm(
+                  type="text"
+                  maxlength="12"
+                )
+              .col-5
+                label.form-label.small.fw-semibold.mb-1(for="installmentTerm") Kỳ hạn vay *
+                select#installmentTerm.form-select.form-select-sm
+                  option(value="3") 3 tháng
+                  option(value="6" selected) 6 tháng
+                  option(value="9") 9 tháng
+                  option(value="12") 12 tháng
+                  option(value="15") 15 tháng
+                  option(value="18") 18 tháng
+                  option(value="24") 24 tháng
+
+            .mb-2
+              label.form-label.small.fw-semibold.mb-1(for="installmentContractCode") Mã hợp đồng trả góp
+              input#installmentContractCode.form-control.form-control-sm(
+                type="text"
+              )
+
+            .mb-2
+              .d-flex.justify-content-between.align-items-center.mb-1
+                label.form-label.small.fw-semibold.mb-0(for="installmentDownPayment") Khách trả trước tại quầy (VNĐ)
+                .d-flex.gap-1
+                  button.btn.btn-outline-secondary.btn-sm.py-0.px-1.btn-downpayment-percent(type="button" data-percent="0" style="font-size: 11px;") 0đ
+                  button.btn.btn-outline-secondary.btn-sm.py-0.px-1.btn-downpayment-percent(type="button" data-percent="10" style="font-size: 11px;") 10%
+                  button.btn.btn-outline-secondary.btn-sm.py-0.px-1.btn-downpayment-percent(type="button" data-percent="20" style="font-size: 11px;") 20%
+                  button.btn.btn-outline-secondary.btn-sm.py-0.px-1.btn-downpayment-percent(type="button" data-percent="30" style="font-size: 11px;") 30%
+                  button.btn.btn-outline-secondary.btn-sm.py-0.px-1.btn-downpayment-percent(type="button" data-percent="50" style="font-size: 11px;") 50%
+              input#installmentDownPayment.form-control.form-control-sm.text-end.fw-bold(
+                type="number"
+                min="0"
+                step="1000"
+                value="0"
+              )
+
+            .mb-2
+              label.form-label.small.fw-semibold.mb-1(for="installmentDownPaymentMethod") Hình thức thu tiền trả trước
+              select#installmentDownPaymentMethod.form-select.form-select-sm
+                option(value="money") Tiền mặt tại quầy
+                option(value="bank_transfer") Chuyển khoản ngân hàng
+
+            .d-flex.justify-content-between.align-items-center.p-2.bg-white.rounded.border.mb-2
+              span.small.text-muted Khoản vay (Đối tác giải ngân):
+              strong#installmentLoanAmountDisplay.text-primary.fs-6 0 đ
+
+            .mb-0
+              label.form-label.small.fw-semibold.mb-1(for="installmentNote") Ghi chú hồ sơ trả góp
+              input#installmentNote.form-control.form-control-sm(
+                type="text"
+              )
 
           .mb-3
             label.form-label(for="orderNote") Ghi chú đơn hàng

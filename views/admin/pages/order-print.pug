@@ -143,6 +143,30 @@ block main
               .d-flex.justify-content-between.border-top.pt-2.mt-2
                 span.fw-bold Tổng thanh toán:
                 h5.fw-bold.text-danger.mb-0 #{(order.total || 0).toLocaleString('vi-VN')} đ
+              if order.paymentMethod === "installment" && order.installmentInfo
+                - const provNameA4 = order.installmentInfo.provider === 'home_credit' ? 'Home Credit' : order.installmentInfo.provider === 'mirae_asset' ? 'Mirae Asset' : 'HD Saison';
+                .border.rounded.p-2.mt-2.bg-light.small
+                  .d-flex.justify-content-between
+                    span Đơn vị trả góp:
+                    strong #{provNameA4} (#{order.installmentInfo.termMonths || 6} tháng)
+                  if order.installmentInfo.contractCode
+                    .d-flex.justify-content-between
+                      span Mã hợp đồng:
+                      strong #{order.installmentInfo.contractCode}
+                  .d-flex.justify-content-between
+                    span Khách trả trước:
+                    strong #{(order.installmentInfo.downPayment || 0).toLocaleString('vi-VN')} đ
+                  .d-flex.justify-content-between.text-primary
+                    span Khoản vay giải ngân:
+                    strong #{(order.installmentInfo.loanAmount || 0).toLocaleString('vi-VN')} đ
+              else if order.paymentMethod === "money" && order.paidAmount > 0
+                .d-flex.justify-content-between.mt-1.small
+                  span Tiền khách đưa:
+                  span #{(order.paidAmount || 0).toLocaleString('vi-VN')} đ
+                if order.changeAmount > 0
+                  .d-flex.justify-content-between.small
+                    span Tiền thừa trả khách:
+                    span #{(order.changeAmount || 0).toLocaleString('vi-VN')} đ
 
           .row.mt-5.text-center
             .col-6
@@ -194,6 +218,30 @@ block main
             .d-flex.justify-content-between.fw-bold.fs-14.border-top.pt-1.mt-1
               span TỔNG CỘNG:
               span #{(order.total || 0).toLocaleString('vi-VN')} đ
+            if order.paymentMethod === "installment" && order.installmentInfo
+              - const provNameK80 = order.installmentInfo.provider === 'home_credit' ? 'Home Credit' : order.installmentInfo.provider === 'mirae_asset' ? 'Mirae Asset' : 'HD Saison';
+              .border-top.pt-1.mt-1.small
+                .d-flex.justify-content-between
+                  span Trả góp:
+                  strong #{provNameK80} (#{order.installmentInfo.termMonths || 6}T)
+                if order.installmentInfo.contractCode
+                  .d-flex.justify-content-between
+                    span Mã HĐ:
+                    span #{order.installmentInfo.contractCode}
+                .d-flex.justify-content-between
+                  span Trả trước:
+                  span #{(order.installmentInfo.downPayment || 0).toLocaleString('vi-VN')} đ
+                .d-flex.justify-content-between
+                  span Khoản vay:
+                  strong #{(order.installmentInfo.loanAmount || 0).toLocaleString('vi-VN')} đ
+            else if order.paymentMethod === "money" && order.paidAmount > 0
+              .d-flex.justify-content-between.small
+                span Khách đưa:
+                span #{(order.paidAmount || 0).toLocaleString('vi-VN')} đ
+              if order.changeAmount > 0
+                .d-flex.justify-content-between.small
+                  span Tiền thừa:
+                  span #{(order.changeAmount || 0).toLocaleString('vi-VN')} đ
 
           .text-center.border-top.pt-2.mt-2.small
             div Cảm ơn Quý khách & Hẹn gặp lại!

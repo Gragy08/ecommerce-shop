@@ -163,3 +163,40 @@ block main
                                 td #{log.updatedBy ? log.updatedBy.fullName : 'Hệ thống'}
                     else
                       p.text-muted.mb-0 Thiết bị chưa có lịch sử thay đổi trạng thái nào sau khi nhập kho.
+
+              // Lịch sử Bảo hành & Sửa chữa của thiết bị này
+              .col-12.mt-3
+                .card.border
+                  .card-header.bg-light.d-flex.justify-content-between.align-items-center
+                    h6.card-title.mb-0 Lịch sử Bảo hành & Sửa chữa (#{warrantyTickets ? warrantyTickets.length : 0})
+                    a.btn.btn-sm.btn-outline-primary(href=`/${pathAdmin}/warranty/create`)
+                      i.fa-solid.fa-plus.me-1
+                      | Tiếp nhận bảo hành
+                  .card-body
+                    if warrantyTickets && warrantyTickets.length > 0
+                      .table-responsive
+                        table.table.table-bordered.align-middle.mb-0
+                          thead.table-light
+                            tr
+                              th STT
+                              th Mã phiếu
+                              th Khách hàng
+                              th Lỗi tiếp nhận
+                              th Kết quả xử lý
+                              th.text-end Chi phí
+                              th Trạng thái
+                              th Ngày nhận
+                          tbody
+                            each wt, idx in warrantyTickets
+                              tr
+                                td #{idx + 1}
+                                td
+                                  a.fw-bold.text-primary(href=`/${pathAdmin}/warranty/detail/${wt._id}`) #{wt.ticketCode}
+                                td #{wt.customerInfo ? `${wt.customerInfo.fullName} (${wt.customerInfo.phone})` : '-'}
+                                td #{wt.issueDescription}
+                                td #{wt.resolutionNote || '-'}
+                                td.text-end #{wt.totalAmountFormatted}
+                                td #{wt.status}
+                                td #{wt.createdAtFormat}
+                    else
+                      p.text-muted.mb-0 Thiết bị này chưa phát sinh phiếu bảo hành / sửa chữa nào.

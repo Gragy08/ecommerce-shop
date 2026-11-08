@@ -1,5 +1,59 @@
 import mongoose from "mongoose";
 
+const installmentInfoSchema = new mongoose.Schema(
+  {
+    provider: {
+      type: String,
+      enum: ["home_credit", "mirae_asset", "hd_saison"],
+      default: "home_credit"
+    },
+    contractCode: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    cccd: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    termMonths: {
+      type: Number,
+      default: 6
+    },
+    downPayment: {
+      type: Number,
+      default: 0
+    },
+    downPaymentMethod: {
+      type: String,
+      enum: ["money", "cash", "bank_transfer"],
+      default: "money"
+    },
+    loanAmount: {
+      type: Number,
+      default: 0
+    },
+    settlementStatus: {
+      type: String,
+      enum: ["pending", "settled"],
+      default: "pending"
+    },
+    settledAt: {
+      type: Date
+    },
+    settledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AccountAdmin"
+    },
+    note: {
+      type: String,
+      default: ""
+    }
+  },
+  { _id: false }
+);
+
 const schema = new mongoose.Schema(
   {
     userId: String,
@@ -74,6 +128,14 @@ const schema = new mongoose.Schema(
     coupon: String, // Mã giảm giá
     discount: Number, // Số tiền được giảm
     total: Number, // Tổng phải thanh toán sau tất cả
+    paidAmount: {
+      type: Number,
+      default: 0
+    },
+    changeAmount: {
+      type: Number,
+      default: 0
+    },
     paymentMethod: { // Phương thức thanh toán
       type: String,
       enum: [
@@ -81,10 +143,14 @@ const schema = new mongoose.Schema(
         "vnpay",         // VNPay
         "zalopay",       // ZaloPay
         "bank_transfer", // Chuyển khoản ngân hàng
-        "credit_card",   // Quẹt thẻ POS
-        "installment"    // Trả góp
+        "credit_card",   // Quẹt thẻ POS (legacy)
+        "installment"    // Trả góp qua đơn vị tài chính
       ],
       default: "money"
+    },
+    installmentInfo: {
+      type: installmentInfoSchema,
+      default: null
     },
     paymentStatus: { // Trạng thái thanh toán
       type: String,
@@ -106,6 +172,33 @@ const schema = new mongoose.Schema(
         "returned",     // Trả hàng
       ],
       default: "pending",
+    },
+    cancelReason: {
+      type: String,
+      default: ""
+    },
+    cancelledAt: {
+      type: Date
+    },
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AccountAdmin"
+    },
+    returnReason: {
+      type: String,
+      default: ""
+    },
+    returnItemStatus: {
+      type: String,
+      enum: ["available", "damaged"],
+      default: "available"
+    },
+    returnedAt: {
+      type: Date
+    },
+    returnedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AccountAdmin"
     },
     shipping: {
       goshipOrderId: String,

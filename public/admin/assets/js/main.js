@@ -2413,12 +2413,16 @@ if (orderEditForm) {
 
       const imeiInputs = orderEditForm.querySelectorAll(".order-item-imei");
       const itemIdentifiers = Array.from(imeiInputs).map((el) => el.value || "");
+      const returnItemStatusEl = orderEditForm.querySelector("#inlineReturnItemStatus");
+      const returnReasonEl = orderEditForm.querySelector("#inlineReturnReason");
 
       const data = {
         orderStatus: orderStatus,
         paymentStatus: paymentStatus,
         note: note,
-        itemIdentifiers: itemIdentifiers
+        itemIdentifiers: itemIdentifiers,
+        returnItemStatus: returnItemStatusEl ? returnItemStatusEl.value : "available",
+        returnReason: returnReasonEl ? returnReasonEl.value : ""
       };
 
       fetch(`/${pathAdmin}/order/edit/${id}`, {

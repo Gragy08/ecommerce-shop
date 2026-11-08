@@ -8,7 +8,7 @@ block main
           .row.align-items-center
             .col
               h4.card-title #{pageTitle}: #{orderDetail.code}
-            .col-auto.d-flex.gap-2
+            .col-auto.d-flex.gap-2.flex-wrap
               a.btn.btn-primary(href=`/${pathAdmin}/order/print/${orderDetail.id}`)
                 i.fa-solid.fa-print.me-1
                 | In hóa đơn
@@ -16,6 +16,10 @@ block main
                 a.btn.btn-outline-primary(href=`/${pathAdmin}/customer/detail/${orderDetail.customerId}`)
                   i.fa-solid.fa-user.me-1
                   | Hồ sơ khách hàng
+              if (!["cancelled", "returned"].includes(orderDetail.orderStatus))
+                button.btn.btn-outline-danger(type="button" data-bs-toggle="modal" data-bs-target="#returnOrderModal")
+                  i.fa-solid.fa-rotate-left.me-1
+                  | #{orderDetail.orderStatus == 'completed' ? 'Trả hàng & Hoàn tiền (RMA)' : 'Hủy đơn / Trả hàng'}
               a.btn.btn-outline-secondary(href=`/${pathAdmin}/order/list`)
                 i.fa-solid.fa-arrow-left.me-1
                 | Quay lại danh sách
@@ -174,13 +178,46 @@ block main
               .col-md-4
                 .mb-3
                   label.form-label Trạng thái đơn hàng
-                  select.form-select(name="orderStatus")
+                  select#orderStatusSelect.form-select(name="orderStatus")
                     option(value="pending" selected=(orderDetail.orderStatus == "pending")) Chờ xác nhận
                     option(value="confirmed" selected=(orderDetail.orderStatus == "confirmed")) Đã xác nhận
                     option(value="shipping" selected=(orderDetail.orderStatus == "shipping")) Đang giao (Xuất kho)
                     option(value="completed" selected=(orderDetail.orderStatus == "completed")) Hoàn thành (Đã xuất kho)
                     option(value="returned" selected=(orderDetail.orderStatus == "returned")) Trả hàng (Hoàn kho)
                     option(value="cancelled" selected=(orderDetail.orderStatus == "cancelled")) Hủy (Hoàn kho)
+
+              #inlineReturnOptions.col-12(style="display: none;")
+                .p-3.rounded.border.border-danger.bg-danger-subtle.bg-opacity-10.mb-3
+                  .row.g-3
+                    .col-md-5
+                      label.form-label.fw-semibold Tình trạng sản phẩm nhận lại kho *
+                      select#inlineReturnItemStatus.form-select(name="returnItemStatus")
+                        option(value="available" selected=(orderDetail.returnItemStatus != "damaged")) Nhập lại kho bán tiếp (Máy nguyên vẹn / Khả dụng)
+                        option(value="damaged" selected=(orderDetail.returnItemStatus == "damaged")) Nhập kho máy lỗi / hỏng (Không bán tiếp)
+                    .col-md-7
+                      label.form-label.fw-semibold Lý do trả hàng / hủy đơn
+                      input#inlineReturnReason.form-control(
+                        type="text"
+                        name="returnReason"
+                        value=(orderDetail.returnReason || orderDetail.cancelReason || "")
+                      )
+
+              if (orderDetail.orderStatus == "returned" || orderDetail.orderStatus == "cancelled")
+                .col-12
+                  .alert.alert-warning.mb-3
+                    strong
+                      i.fa-solid.fa-circle-info.me-1
+                      | #{orderDetail.orderStatus == 'returned' ? 'Thông tin Trả hàng & Hoàn tiền (RMA):' : 'Thông tin Hủy đơn hàng:'}
+                    .mt-1
+                      span Lý do: 
+                      strong #{orderDetail.returnReason || orderDetail.cancelReason || 'Không ghi nhận'}
+                      if orderDetail.orderStatus == "returned"
+                        span.ms-3 | Tình trạng hoàn kho: 
+                        if orderDetail.returnItemStatus == "damaged"
+                          span.badge.bg-danger Máy lỗi / hỏng (damaged)
+                        else
+                          span.badge.bg-success Nhập kho bán tiếp (available)
+
               .col-12
                 .mb-3
                   label.form-label Ghi chú đơn hàng
@@ -188,3 +225,268 @@ block main
 
             button.btn.btn-primary(type="submit") Cập nhật
             a.btn.btn-danger.ms-1(href=`/${pathAdmin}/order/list`) Hủy
+
+      if (orderDetail.paymentMethod == "installment")
+        - const inst = orderDetail.installmentInfo || {};
+        - const provLabel = inst.provider == 'home_credit' ? 'Home Credit' : inst.provider == 'mirae_asset' ? 'Mirae Asset' : 'HD Saison';
+        .card.mt-3.border-warning
+          .card-header.bg-warning-subtle.bg-opacity-25
+            .row.align-items-center
+              .col
+                h4.card-title.mb-0
+                  i.fa-solid.fa-file-contract.text-warning.me-2
+                  | Hồ sơ trả góp qua đơn vị tài chính
+              .col-auto.d-flex.gap-2.flex-wrap
+                button.btn.btn-outline-primary.btn-sm(type="button" data-bs-toggle="modal" data-bs-target="#editInstallmentModal")
+                  i.fa-solid.fa-pen-to-square.me-1
+                  | Cập nhật hồ sơ trả góp
+                if (inst.settlementStatus != "settled")
+                  button.btn.btn-success.btn-sm(type="button" data-bs-toggle="modal" data-bs-target="#settleInstallmentModal")
+                    i.fa-solid.fa-check-double.me-1
+                    | Xác nhận đối tác đã giải ngân
+          .card-body
+            .row.g-3
+              .col-md-3.col-6
+                .text-muted.small Đơn vị tài chính
+                .fw-bold.fs-6 #{provLabel}
+              .col-md-3.col-6
+                .text-muted.small Mã hợp đồng trả góp
+                .fw-bold #{inst.contractCode || 'Chưa cập nhật'}
+              .col-md-3.col-6
+                .text-muted.small Số CCCD / CMND
+                .fw-bold #{inst.cccd || '-'}
+              .col-md-3.col-6
+                .text-muted.small Kỳ hạn trả góp
+                .fw-bold #{inst.termMonths || 6} tháng
+              .col-md-3.col-6
+                .text-muted.small Khách trả trước tại quầy
+                .fw-bold.text-success
+                  | #{Number(inst.downPayment || 0).toLocaleString('vi-VN')} đ
+                  small.text-muted.ms-1 (#{inst.downPaymentMethod == 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt'})
+              .col-md-3.col-6
+                .text-muted.small Khoản vay đối tác giải ngân
+                .fw-bold.text-primary.fs-6 #{Number(inst.loanAmount || 0).toLocaleString('vi-VN')} đ
+              .col-md-3.col-6
+                .text-muted.small Trạng thái đối soát giải ngân
+                if (inst.settlementStatus == "settled")
+                  span.badge.bg-success Đã tất toán giải ngân 100%
+                else
+                  span.badge.bg-warning.text-dark Chờ đối tác giải ngân
+              .col-md-3.col-6
+                .text-muted.small Ghi chú hồ sơ
+                div #{inst.note || '-'}
+
+  // Modal Cập nhật hồ sơ trả góp
+  if (orderDetail.paymentMethod == "installment")
+    - const instModal = orderDetail.installmentInfo || {};
+    #editInstallmentModal.modal.fade(tabindex="-1" aria-hidden="true")
+      .modal-dialog.modal-dialog-centered
+        .modal-content
+          .modal-header
+            h5.modal-title Cập nhật hồ sơ trả góp (#{orderDetail.code})
+            button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+          .modal-body
+            .mb-3
+              label.form-label Đơn vị tài chính *
+              select#modalInstProvider.form-select
+                option(value="home_credit" selected=(instModal.provider == "home_credit")) Home Credit
+                option(value="mirae_asset" selected=(instModal.provider == "mirae_asset")) Mirae Asset
+                option(value="hd_saison" selected=(instModal.provider == "hd_saison")) HD Saison
+            .row.g-2.mb-3
+              .col-7
+                label.form-label Số CCCD / CMND *
+                input#modalInstCccd.form-control(type="text" maxlength="12" value=(instModal.cccd || ""))
+              .col-5
+                label.form-label Kỳ hạn vay *
+                select#modalInstTerm.form-select
+                  each t in [3, 6, 9, 12, 15, 18, 24]
+                    option(value=t selected=((instModal.termMonths || 6) == t)) #{t} tháng
+            .mb-3
+              label.form-label Mã hợp đồng trả góp
+              input#modalInstContractCode.form-control(type="text" value=(instModal.contractCode || ""))
+            .row.g-2.mb-3
+              .col-7
+                label.form-label Khách trả trước (VNĐ)
+                input#modalInstDownPayment.form-control(type="number" min="0" step="1000" value=(instModal.downPayment || 0))
+              .col-5
+                label.form-label Hình thức trả trước
+                select#modalInstDownPaymentMethod.form-select
+                  option(value="money" selected=(instModal.downPaymentMethod != "bank_transfer")) Tiền mặt
+                  option(value="bank_transfer" selected=(instModal.downPaymentMethod == "bank_transfer")) Chuyển khoản
+            .mb-0
+              label.form-label Ghi chú hồ sơ
+              input#modalInstNote.form-control(type="text" value=(instModal.note || ""))
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Đóng
+            button#btnSaveInstallmentInfo.btn.btn-primary(type="button" data-order-id=orderDetail.id) Lưu cập nhật
+
+    #settleInstallmentModal.modal.fade(tabindex="-1" aria-hidden="true")
+      .modal-dialog.modal-dialog-centered
+        .modal-content
+          .modal-header
+            h5.modal-title Xác nhận đối tác tất toán giải ngân
+            button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+          .modal-body
+            p.mb-3
+              | Xác nhận đơn vị tài chính đã giải ngân đủ khoản vay 
+              strong.text-danger #{Number(instModal.loanAmount || 0).toLocaleString('vi-VN')} đ
+              |  cho đơn hàng 
+              strong #{orderDetail.code}
+              | ?
+            .mb-3
+              label.form-label Mã hợp đồng trả góp (bổ sung nếu có)
+              input#settleInstContractCode.form-control(type="text" value=(instModal.contractCode || ""))
+            .mb-0
+              label.form-label Ghi chú đối soát giải ngân
+              input#settleInstNote.form-control(type="text" value=(instModal.note || ""))
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+            button#btnConfirmSettleInstallment.btn.btn-success(type="button" data-order-id=orderDetail.id) Xác nhận đã giải ngân
+
+  // Modal Trả hàng & Hoàn tiền (RMA) / Hủy đơn
+  #returnOrderModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header
+          h5.modal-title Nghiệp vụ Trả hàng & Hoàn tiền (RMA) / Hủy đơn
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        .modal-body
+          .mb-3
+            label.form-label Hình thức xử lý *
+            select#modalReturnActionType.form-select
+              if (orderDetail.orderStatus == "completed")
+                option(value="returned" selected) Khách trả hàng & Hoàn tiền (RMA)
+              else
+                option(value="cancelled" selected) Hủy đơn hàng & Hoàn kho
+                option(value="returned") Khách trả hàng & Hoàn tiền (RMA)
+          .mb-3
+            label.form-label Tình trạng thiết bị IMEI / sản phẩm khi nhận lại kho *
+            select#modalReturnItemStatus.form-select
+              option(value="available" selected) Nhập lại kho bán tiếp (Máy nguyên vẹn / Khả dụng)
+              option(value="damaged") Nhập kho máy lỗi / hỏng (Chuyển trạng thái Lỗi - Không bán tiếp)
+            small.text-muted.d-block.mt-1 Hệ thống sẽ tự động cập nhật trạng thái từng mã IMEI, tính lại tồn kho biến thể và trừ doanh thu CRM của khách.
+          .mb-0
+            label.form-label Lý do trả hàng / hủy đơn *
+            textarea#modalReturnReason.form-control(rows="2")
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Đóng
+          button#btnConfirmReturnOrder.btn.btn-danger(type="button" data-order-id=orderDetail.id) Xác nhận thực hiện
+
+block script
+  script.
+    (function () {
+      const statusSelect = document.querySelector("#orderStatusSelect");
+      const inlineReturnOptions = document.querySelector("#inlineReturnOptions");
+      const syncInlineReturnUI = () => {
+        if (!statusSelect || !inlineReturnOptions) return;
+        const val = statusSelect.value;
+        inlineReturnOptions.style.display = (val === "returned" || val === "cancelled") ? "block" : "none";
+      };
+      if (statusSelect) {
+        statusSelect.addEventListener("change", syncInlineReturnUI);
+        syncInlineReturnUI();
+      }
+
+      // Lưu cập nhật hồ sơ trả góp
+      const btnSaveInst = document.querySelector("#btnSaveInstallmentInfo");
+      if (btnSaveInst) {
+        btnSaveInst.addEventListener("click", async () => {
+          const orderId = btnSaveInst.getAttribute("data-order-id");
+          const payload = {
+            provider: document.querySelector("#modalInstProvider")?.value || "home_credit",
+            cccd: document.querySelector("#modalInstCccd")?.value || "",
+            termMonths: document.querySelector("#modalInstTerm")?.value || 6,
+            contractCode: document.querySelector("#modalInstContractCode")?.value || "",
+            downPayment: document.querySelector("#modalInstDownPayment")?.value || 0,
+            downPaymentMethod: document.querySelector("#modalInstDownPaymentMethod")?.value || "money",
+            note: document.querySelector("#modalInstNote")?.value || ""
+          };
+          btnSaveInst.disabled = true;
+          try {
+            const res = await fetch(`/${pathAdmin}/order/installment/${orderId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.code === "success") {
+              if (typeof drawNotify === "function") drawNotify("success", data.message);
+              window.location.reload();
+            } else {
+              if (typeof notyf !== "undefined") notyf.error(data.message);
+              btnSaveInst.disabled = false;
+            }
+          } catch (e) {
+            if (typeof notyf !== "undefined") notyf.error("Lỗi kết nối máy chủ!");
+            btnSaveInst.disabled = false;
+          }
+        });
+      }
+
+      // Xác nhận tất toán giải ngân trả góp
+      const btnSettleInst = document.querySelector("#btnConfirmSettleInstallment");
+      if (btnSettleInst) {
+        btnSettleInst.addEventListener("click", async () => {
+          const orderId = btnSettleInst.getAttribute("data-order-id");
+          const payload = {
+            contractCode: document.querySelector("#settleInstContractCode")?.value || "",
+            note: document.querySelector("#settleInstNote")?.value || ""
+          };
+          btnSettleInst.disabled = true;
+          try {
+            const res = await fetch(`/${pathAdmin}/order/settle-installment/${orderId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.code === "success") {
+              if (typeof drawNotify === "function") drawNotify("success", data.message);
+              window.location.reload();
+            } else {
+              if (typeof notyf !== "undefined") notyf.error(data.message);
+              btnSettleInst.disabled = false;
+            }
+          } catch (e) {
+            if (typeof notyf !== "undefined") notyf.error("Lỗi kết nối máy chủ!");
+            btnSettleInst.disabled = false;
+          }
+        });
+      }
+
+      // Xác nhận Trả hàng & Hoàn tiền (RMA) / Hủy đơn
+      const btnReturnOrder = document.querySelector("#btnConfirmReturnOrder");
+      if (btnReturnOrder) {
+        btnReturnOrder.addEventListener("click", async () => {
+          const orderId = btnReturnOrder.getAttribute("data-order-id");
+          const actionType = document.querySelector("#modalReturnActionType")?.value || "returned";
+          const returnItemStatus = document.querySelector("#modalReturnItemStatus")?.value || "available";
+          const reason = (document.querySelector("#modalReturnReason")?.value || "").trim();
+
+          if (!reason) {
+            if (typeof notyf !== "undefined") notyf.error("Vui lòng nhập lý do trả hàng / hủy đơn!");
+            return;
+          }
+
+          btnReturnOrder.disabled = true;
+          try {
+            const res = await fetch(`/${pathAdmin}/order/return/${orderId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ actionType, returnItemStatus, reason })
+            });
+            const data = await res.json();
+            if (data.code === "success") {
+              if (typeof drawNotify === "function") drawNotify("success", data.message);
+              window.location.reload();
+            } else {
+              if (typeof notyf !== "undefined") notyf.error(data.message);
+              btnReturnOrder.disabled = false;
+            }
+          } catch (e) {
+            if (typeof notyf !== "undefined") notyf.error("Lỗi kết nối máy chủ!");
+            btnReturnOrder.disabled = false;
+          }
+        });
+      }
+    })();

@@ -7,6 +7,7 @@ import Product from "../../models/product.model";
 import ProductVariant from "../../models/product-variant.model";
 import InventoryItem from "../../models/inventory-item.model";
 import AttributeProduct from "../../models/attribute-product.model";
+import Customer from "../../models/customer.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { upsertCustomerFromOrder, syncCustomerOrdersByPhone } from "./customer.controller";
 import { syncStockToProduct } from "../../helpers/variant.helper";
@@ -80,7 +81,7 @@ const createPosOrderCode = (): string => {
 // [GET] /admin/order/pos
 export const pos = async (_req: Request, res: Response): Promise<void> => {
   res.render("admin/pages/order-pos", {
-    pageTitle: "Bán hàng tại quầy (POS)"
+    pageTitle: "Bán hàng tại quầy"
   });
 };
 
@@ -275,7 +276,7 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
     const customerInfo = req.body.customerInfo || {};
     const itemsInput: any[] = req.body.items || [];
     const rawPaymentMethod = String(req.body.paymentMethod || "money");
-    const paymentMethod = ["money", "cash", "bank_transfer", "credit_card", "installment"].includes(rawPaymentMethod)
+    const paymentMethod = ["money", "cash", "bank_transfer", "installment"].includes(rawPaymentMethod)
       ? rawPaymentMethod === "cash"
         ? "money"
         : rawPaymentMethod
@@ -439,6 +440,78 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
         ? customerInfo.address.trim()
         : "Mua trực tiếp tại quầy";
 
+    let paidAmount = total;
+    let changeAmount = 0;
+    let installmentInfoData: any = null;
+
+    if (paymentMethod === "money") {
+      const rawPaid = parseFloat(String(req.body.paidAmount));
+      paidAmount = !isNaN(rawPaid) && rawPaid >= total ? rawPaid : total;
+      changeAmount = Math.max(0, paidAmount - total);
+    } else if (paymentMethod === "installment") {
+      if (cleanPhone.length < 9) {
+        res.json({
+          code: "error",
+          message: "Đơn trả góp bắt buộc phải có Số điện thoại khách hàng hợp lệ!"
+        });
+        return;
+      }
+      if (!fullName || fullName === "Khách lẻ tại quầy") {
+        res.json({
+          code: "error",
+          message: "Đơn trả góp bắt buộc phải nhập Họ và tên thật của khách hàng!"
+        });
+        return;
+      }
+
+      const rawInst = req.body.installmentInfo || {};
+      const provider = ["home_credit", "mirae_asset", "hd_saison"].includes(String(rawInst.provider))
+        ? String(rawInst.provider)
+        : "home_credit";
+      const cleanCccd = String(rawInst.cccd || "").replace(/\D/g, "");
+      if (cleanCccd.length < 9 || cleanCccd.length > 12) {
+        res.json({
+          code: "error",
+          message: "Vui lòng nhập Số CCCD / CMND hợp lệ (9 - 12 chữ số) cho hồ sơ trả góp!"
+        });
+        return;
+      }
+
+      const allowedTerms = [3, 6, 9, 12, 15, 18, 24];
+      const parsedTerm = parseInt(String(rawInst.termMonths), 10) || 6;
+      const termMonths = allowedTerms.includes(parsedTerm) ? parsedTerm : 6;
+
+      const downPayment = Math.max(0, parseFloat(String(rawInst.downPayment)) || 0);
+      if (downPayment >= total) {
+        res.json({
+          code: "error",
+          message: "Số tiền trả trước phải nhỏ hơn tổng tiền đơn hàng (Khoản vay phải lớn hơn 0đ)!"
+        });
+        return;
+      }
+
+      const downPaymentMethod =
+        rawInst.downPaymentMethod === "bank_transfer" ? "bank_transfer" : "money";
+      const loanAmount = Math.max(0, total - downPayment);
+      const contractCode = typeof rawInst.contractCode === "string" ? rawInst.contractCode.trim() : "";
+      const instNote = typeof rawInst.note === "string" ? rawInst.note.trim() : "";
+
+      paidAmount = downPayment;
+      changeAmount = 0;
+
+      installmentInfoData = {
+        provider,
+        contractCode,
+        cccd: cleanCccd,
+        termMonths,
+        downPayment,
+        downPaymentMethod,
+        loanAmount,
+        settlementStatus: "pending",
+        note: instNote
+      };
+    }
+
     const rawAdminId = (req as any).adminId;
     const validAdminObjectId =
       rawAdminId && mongoose.isValidObjectId(rawAdminId)
@@ -462,7 +535,10 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
       subTotal: calculatedSubTotal,
       discount: orderDiscount,
       total,
+      paidAmount,
+      changeAmount,
       paymentMethod,
+      installmentInfo: installmentInfoData,
       paymentStatus: "paid",
       orderStatus: "completed"
     });
@@ -533,6 +609,7 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
         fullName,
         phone: cleanPhone,
         address,
+        cccd: installmentInfoData?.cccd || undefined,
         source: "pos"
       });
       if (customer) {
@@ -617,6 +694,25 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       find.orderStatus = orderStatus;
     }
 
+    const paymentMethod = typeof req.query.paymentMethod === "string" ? req.query.paymentMethod.trim() : "";
+    if (["money", "bank_transfer", "installment", "vnpay", "zalopay"].includes(paymentMethod)) {
+      find.paymentMethod = paymentMethod;
+    }
+
+    const installmentProvider =
+      typeof req.query.installmentProvider === "string" ? req.query.installmentProvider.trim() : "";
+    if (["home_credit", "mirae_asset", "hd_saison"].includes(installmentProvider)) {
+      find.paymentMethod = "installment";
+      find["installmentInfo.provider"] = installmentProvider;
+    }
+
+    const settlementStatus =
+      typeof req.query.settlementStatus === "string" ? req.query.settlementStatus.trim() : "";
+    if (["pending", "settled"].includes(settlementStatus)) {
+      find.paymentMethod = "installment";
+      find["installmentInfo.settlementStatus"] = settlementStatus;
+    }
+
     const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim() : "";
     if (keyword) {
       const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
@@ -628,7 +724,9 @@ export const list = async (req: Request, res: Response): Promise<void> => {
           { phone: regex },
           { "items.identifiers": regex },
           { "items.name": regex },
-          { "items.variantSku": regex }
+          { "items.variantSku": regex },
+          { "installmentInfo.contractCode": regex },
+          { "installmentInfo.cccd": regex }
         ]
       });
     }
@@ -639,7 +737,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       page = parseInt(String(req.query.page));
     }
 
-    const [totalRecord, totalOrders, completedOrders, revenueAgg] = await Promise.all([
+    const [totalRecord, totalOrders, completedOrders, revenueAgg, pendingInstallmentAgg] = await Promise.all([
       Order.countDocuments(find),
       Order.countDocuments({ deleted: false }),
       Order.countDocuments({ deleted: false, orderStatus: "completed" }),
@@ -655,6 +753,23 @@ export const list = async (req: Request, res: Response): Promise<void> => {
           $group: {
             _id: null,
             totalRevenue: { $sum: "$total" }
+          }
+        }
+      ]),
+      Order.aggregate([
+        {
+          $match: {
+            deleted: false,
+            paymentMethod: "installment",
+            orderStatus: { $nin: ["cancelled", "returned"] },
+            "installmentInfo.settlementStatus": "pending"
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            pendingCount: { $sum: 1 },
+            pendingLoanTotal: { $sum: "$installmentInfo.loanAmount" }
           }
         }
       ])
@@ -686,6 +801,10 @@ export const list = async (req: Request, res: Response): Promise<void> => {
     }
 
     const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
+    const pendingInstallmentCount =
+      pendingInstallmentAgg.length > 0 ? pendingInstallmentAgg[0].pendingCount : 0;
+    const pendingInstallmentLoanTotal =
+      pendingInstallmentAgg.length > 0 ? pendingInstallmentAgg[0].pendingLoanTotal : 0;
 
     res.render("admin/pages/order-list", {
       pageTitle: "Quản lý đơn hàng",
@@ -694,12 +813,18 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       filters: {
         keyword,
         channel,
-        orderStatus
+        orderStatus,
+        paymentMethod,
+        installmentProvider,
+        settlementStatus
       },
       stats: {
         totalOrders,
         completedOrders,
-        totalRevenueFormatted: Number(totalRevenue || 0).toLocaleString("vi-VN") + " đ"
+        totalRevenueFormatted: Number(totalRevenue || 0).toLocaleString("vi-VN") + " đ",
+        pendingInstallmentCount,
+        pendingInstallmentLoanTotalFormatted:
+          Number(pendingInstallmentLoanTotal || 0).toLocaleString("vi-VN") + " đ"
       }
     });
   } catch (error) {
@@ -780,9 +905,16 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { orderStatus, paymentStatus, note, itemIdentifiers } = req.body;
+    const {
+      orderStatus,
+      paymentStatus,
+      note,
+      itemIdentifiers,
+      returnItemStatus,
+      returnReason
+    } = req.body;
 
-    const order = await Order.findOne({
+    const order: any = await Order.findOne({
       _id: id,
       deleted: false
     });
@@ -876,7 +1008,7 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
             const invDoc = await InventoryItem.findOne({
               identifier: imei,
               deleted: false
-            });
+            }).lean();
 
             if (!invDoc) {
               res.json({
@@ -908,21 +1040,29 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
             const invDoc = await InventoryItem.findOne({
               identifier: imei,
               deleted: false
-            });
+            }).lean();
             if (invDoc && invDoc.status !== "sold") {
-              const prevStatus = invDoc.status;
-              invDoc.status = "sold";
-              invDoc.soldOrderId = order._id;
-              invDoc.soldAt = new Date();
-              invDoc.statusLogs.push({
+              const prevStatus = invDoc.status || "available";
+              const logEntry: any = {
                 fromStatus: prevStatus,
                 toStatus: "sold",
                 reason: "Xuất bán theo đơn hàng",
                 note: `Đơn hàng ${order.code}`,
-                updatedBy: validAdminObjectId,
                 updatedAt: new Date()
-              } as any);
-              await invDoc.save();
+              };
+              if (validAdminObjectId) logEntry.updatedBy = validAdminObjectId;
+
+              await InventoryItem.updateOne(
+                { _id: invDoc._id },
+                {
+                  $set: {
+                    status: "sold",
+                    soldOrderId: order._id,
+                    soldAt: new Date()
+                  },
+                  $push: { statusLogs: logEntry }
+                }
+              );
             }
           }
 
@@ -953,6 +1093,10 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
     }
 
     // 3. Nếu đơn đã trừ kho mà chuyển sang Hủy (cancelled) hoặc Trả hàng (returned) -> Hoàn kho tự động
+    const targetImeiReturnStatus: "available" | "damaged" =
+      returnItemStatus === "damaged" ? "damaged" : "available";
+    const cleanReason = typeof returnReason === "string" ? returnReason.trim() : "";
+
     if (isMovingToRollback && order.stockDeducted) {
       for (const item of order.items as any[]) {
         if (item.inventoryType === "imei") {
@@ -963,22 +1107,35 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
               ...(imeis.length > 0 ? [{ identifier: { $in: imeis } }] : [])
             ],
             deleted: false
-          });
+          }).lean();
 
           for (const invDoc of invDocs) {
-            if (invDoc.status === "sold") {
-              invDoc.status = "available";
-              invDoc.soldOrderId = null as any;
-              invDoc.soldAt = undefined;
-              invDoc.statusLogs.push({
-                fromStatus: "sold",
-                toStatus: "available",
-                reason: orderStatus === "returned" ? "Khách trả hàng hoàn kho" : "Hủy đơn hàng hoàn kho",
-                note: `Hoàn kho từ đơn hàng ${order.code}`,
-                updatedBy: validAdminObjectId,
+            if (invDoc.status === "sold" || invDoc.status === "warranty") {
+              const logEntry: any = {
+                fromStatus: invDoc.status,
+                toStatus: targetImeiReturnStatus,
+                reason:
+                  orderStatus === "returned"
+                    ? targetImeiReturnStatus === "damaged"
+                      ? "Khách trả hàng (Nhập kho máy lỗi / hỏng)"
+                      : "Khách trả hàng (Nhập kho máy nguyên vẹn bán tiếp)"
+                    : "Hủy đơn hàng hoàn kho",
+                note: `Đơn ${order.code}${cleanReason ? ` - Lý do: ${cleanReason}` : ""}`,
                 updatedAt: new Date()
-              } as any);
-              await invDoc.save();
+              };
+              if (validAdminObjectId) logEntry.updatedBy = validAdminObjectId;
+
+              await InventoryItem.updateOne(
+                { _id: invDoc._id },
+                {
+                  $set: {
+                    status: targetImeiReturnStatus,
+                    soldOrderId: null,
+                    soldAt: null
+                  },
+                  $push: { statusLogs: logEntry }
+                }
+              );
             }
           }
 
@@ -994,13 +1151,15 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
             await syncStockToProduct(String(item.productId));
           }
         } else if (item.inventoryType === "quantity" && item.variantId) {
-          const qty = Number(item.quantity) || 1;
-          await ProductVariant.updateOne(
-            { _id: item.variantId },
-            { $inc: { stock: qty } }
-          );
-          if (item.productId) {
-            await syncStockToProduct(String(item.productId));
+          if (targetImeiReturnStatus === "available") {
+            const qty = Number(item.quantity) || 1;
+            await ProductVariant.updateOne(
+              { _id: item.variantId },
+              { $inc: { stock: qty } }
+            );
+            if (item.productId) {
+              await syncStockToProduct(String(item.productId));
+            }
           }
         }
       }
@@ -1009,8 +1168,19 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
     }
 
     order.orderStatus = orderStatus;
-    order.paymentStatus = paymentStatus;
+    order.paymentStatus = orderStatus === "returned" ? "refunded" : paymentStatus;
     order.note = note;
+
+    if (orderStatus === "returned") {
+      if (cleanReason) order.returnReason = cleanReason;
+      order.returnItemStatus = targetImeiReturnStatus;
+      order.returnedAt = new Date();
+      if (validAdminObjectId) order.returnedBy = validAdminObjectId;
+    } else if (orderStatus === "cancelled") {
+      if (cleanReason) order.cancelReason = cleanReason;
+      order.cancelledAt = new Date();
+      if (validAdminObjectId) order.cancelledBy = validAdminObjectId;
+    }
 
     await order.save();
 
@@ -1024,7 +1194,7 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
 
     await logAdminAction(
       req as any,
-      `Cập nhật đơn hàng ${order.code} (Trạng thái: ${orderStatus}, Thanh toán: ${paymentStatus})`
+      `Cập nhật đơn hàng ${order.code} (Trạng thái: ${orderStatus}, Thanh toán: ${order.paymentStatus})`
     );
 
     res.json({
@@ -1037,6 +1207,337 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
       code: "error",
       message: "Có lỗi xảy ra, vui lòng thử lại!"
     });
+  }
+};
+
+// [PATCH] /admin/order/return/:id — Nghiệp vụ Trả hàng & Hoàn tiền (RMA) / Hủy đơn
+export const returnOrderPatch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = String(req.params.id || "");
+    if (!mongoose.isValidObjectId(id)) {
+      res.json({ code: "error", message: "ID đơn hàng không hợp lệ!" });
+      return;
+    }
+
+    const order: any = await Order.findOne({ _id: id, deleted: false });
+    if (!order) {
+      res.json({ code: "error", message: "Không tìm thấy đơn hàng!" });
+      return;
+    }
+
+    if (["cancelled", "returned"].includes(String(order.orderStatus))) {
+      res.json({
+        code: "error",
+        message: "Đơn hàng này đã ở trạng thái Hủy hoặc Trả hàng trước đó!"
+      });
+      return;
+    }
+
+    await enrichOrderItemsMetadata(order);
+
+    const rawAction = String(req.body.actionType || "");
+    const targetOrderStatus: "returned" | "cancelled" =
+      rawAction === "cancelled"
+        ? "cancelled"
+        : rawAction === "returned"
+        ? "returned"
+        : order.orderStatus === "completed"
+        ? "returned"
+        : "cancelled";
+
+    const returnItemStatus: "available" | "damaged" =
+      req.body.returnItemStatus === "damaged" ? "damaged" : "available";
+    const reason =
+      typeof req.body.reason === "string" && req.body.reason.trim()
+        ? req.body.reason.trim()
+        : targetOrderStatus === "returned"
+        ? "Khách trả hàng & hoàn tiền"
+        : "Hủy đơn hàng";
+
+    const rawAdminId = (req as any).adminId;
+    const validAdminObjectId =
+      rawAdminId && mongoose.isValidObjectId(rawAdminId)
+        ? new mongoose.Types.ObjectId(rawAdminId)
+        : undefined;
+
+    if (order.stockDeducted) {
+      for (const item of order.items as any[]) {
+        if (item.inventoryType === "imei") {
+          const imeis: string[] = Array.isArray(item.identifiers) ? item.identifiers : [];
+          const invDocs = await InventoryItem.find({
+            $or: [
+              { soldOrderId: order._id },
+              ...(imeis.length > 0 ? [{ identifier: { $in: imeis } }] : [])
+            ],
+            deleted: false
+          }).lean();
+
+          for (const invDoc of invDocs) {
+            if (invDoc.status === "sold" || invDoc.status === "warranty") {
+              const logEntry: any = {
+                fromStatus: invDoc.status,
+                toStatus: returnItemStatus,
+                reason:
+                  targetOrderStatus === "returned"
+                    ? returnItemStatus === "damaged"
+                      ? "Khách trả hàng (Nhập kho máy lỗi / hỏng)"
+                      : "Khách trả hàng (Nhập kho máy nguyên vẹn bán tiếp)"
+                    : "Hủy đơn hàng hoàn kho",
+                note: `Đơn ${order.code} - Lý do: ${reason}`,
+                updatedAt: new Date()
+              };
+              if (validAdminObjectId) logEntry.updatedBy = validAdminObjectId;
+
+              await InventoryItem.updateOne(
+                { _id: invDoc._id },
+                {
+                  $set: {
+                    status: returnItemStatus,
+                    soldOrderId: null,
+                    soldAt: null
+                  },
+                  $push: { statusLogs: logEntry }
+                }
+              );
+            }
+          }
+
+          if (item.variantId) {
+            const availCount = await InventoryItem.countDocuments({
+              variantId: item.variantId,
+              status: "available",
+              deleted: false
+            });
+            await ProductVariant.updateOne({ _id: item.variantId }, { stock: availCount });
+          }
+          if (item.productId) {
+            await syncStockToProduct(String(item.productId));
+          }
+        } else if (item.inventoryType === "quantity" && item.variantId) {
+          if (returnItemStatus === "available") {
+            const qty = Number(item.quantity) || 1;
+            await ProductVariant.updateOne(
+              { _id: item.variantId },
+              { $inc: { stock: qty } }
+            );
+            if (item.productId) {
+              await syncStockToProduct(String(item.productId));
+            }
+          }
+        }
+      }
+      order.stockDeducted = false;
+    }
+
+    order.orderStatus = targetOrderStatus;
+    if (targetOrderStatus === "returned") {
+      order.paymentStatus = "refunded";
+      order.returnReason = reason;
+      order.returnItemStatus = returnItemStatus;
+      order.returnedAt = new Date();
+      if (validAdminObjectId) order.returnedBy = validAdminObjectId;
+    } else {
+      order.cancelReason = reason;
+      order.cancelledAt = new Date();
+      if (validAdminObjectId) order.cancelledBy = validAdminObjectId;
+    }
+
+    await order.save();
+
+    if (order.phone || order.customerId) {
+      await syncCustomerOrdersByPhone(order.phone || "", order.customerId || undefined);
+    }
+
+    await logAdminAction(
+      req as any,
+      `${targetOrderStatus === "returned" ? "Trả hàng & hoàn tiền" : "Hủy đơn hàng"} ${order.code} (Tình trạng máy hoàn kho: ${
+        returnItemStatus === "damaged" ? "Máy lỗi/hỏng" : "Nguyên vẹn bán tiếp"
+      }, Lý do: ${reason})`
+    );
+
+    res.json({
+      code: "success",
+      message:
+        targetOrderStatus === "returned"
+          ? `Đã xử lý Trả hàng & Hoàn tiền đơn ${order.code} thành công!`
+          : `Đã hủy đơn hàng ${order.code} và hoàn kho thành công!`
+    });
+  } catch (error) {
+    console.error("Error returnOrderPatch:", error);
+    res.status(500).json({ code: "error", message: "Lỗi hệ thống khi xử lý trả hàng / hủy đơn!" });
+  }
+};
+
+// [PATCH] /admin/order/installment/:id — Cập nhật thông tin hồ sơ trả góp
+export const updateInstallmentInfo = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = String(req.params.id || "");
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ code: "error", message: "Mã đơn hàng không hợp lệ!" });
+      return;
+    }
+
+    const order: any = await Order.findOne({ _id: id, deleted: false });
+    if (!order) {
+      res.status(404).json({ code: "error", message: "Không tìm thấy đơn hàng!" });
+      return;
+    }
+
+    if (order.paymentMethod !== "installment") {
+      res.status(400).json({ code: "error", message: "Đơn hàng này không phải đơn trả góp!" });
+      return;
+    }
+
+    const provider = ["home_credit", "mirae_asset", "hd_saison"].includes(String(req.body.provider))
+      ? String(req.body.provider)
+      : order.installmentInfo?.provider || "home_credit";
+
+    const cleanCccd = String(req.body.cccd || order.installmentInfo?.cccd || "").replace(/\D/g, "");
+    if (cleanCccd.length < 9 || cleanCccd.length > 12) {
+      res.status(400).json({
+        code: "error",
+        message: "Số CCCD / CMND phải từ 9 đến 12 chữ số!"
+      });
+      return;
+    }
+
+    const allowedTerms = [3, 6, 9, 12, 15, 18, 24];
+    const parsedTerm = parseInt(String(req.body.termMonths), 10) || order.installmentInfo?.termMonths || 6;
+    const termMonths = allowedTerms.includes(parsedTerm) ? parsedTerm : 6;
+
+    const total = Number(order.total || 0);
+    const downPayment = Math.max(
+      0,
+      req.body.downPayment !== undefined
+        ? parseFloat(String(req.body.downPayment)) || 0
+        : Number(order.installmentInfo?.downPayment || 0)
+    );
+    if (downPayment >= total) {
+      res.status(400).json({
+        code: "error",
+        message: "Số tiền trả trước phải nhỏ hơn tổng tiền đơn hàng!"
+      });
+      return;
+    }
+
+    const downPaymentMethod =
+      req.body.downPaymentMethod === "bank_transfer"
+        ? "bank_transfer"
+        : req.body.downPaymentMethod === "money" || req.body.downPaymentMethod === "cash"
+        ? "money"
+        : order.installmentInfo?.downPaymentMethod || "money";
+
+    const loanAmount = Math.max(0, total - downPayment);
+    const contractCode =
+      typeof req.body.contractCode === "string"
+        ? req.body.contractCode.trim()
+        : order.installmentInfo?.contractCode || "";
+    const note =
+      typeof req.body.note === "string" ? req.body.note.trim() : order.installmentInfo?.note || "";
+
+    const currentSettlement = order.installmentInfo?.settlementStatus || "pending";
+
+    await Order.updateOne(
+      { _id: order._id },
+      {
+        $set: {
+          paidAmount: currentSettlement === "settled" ? total : downPayment,
+          "installmentInfo.provider": provider,
+          "installmentInfo.contractCode": contractCode,
+          "installmentInfo.cccd": cleanCccd,
+          "installmentInfo.termMonths": termMonths,
+          "installmentInfo.downPayment": downPayment,
+          "installmentInfo.downPaymentMethod": downPaymentMethod,
+          "installmentInfo.loanAmount": loanAmount,
+          "installmentInfo.note": note
+        }
+      }
+    );
+
+    if (order.customerId) {
+      await Customer.updateOne({ _id: order.customerId }, { $set: { cccd: cleanCccd } });
+    } else if (order.phone) {
+      const cleanPhone = String(order.phone).replace(/\D/g, "");
+      if (cleanPhone) {
+        await Customer.updateOne({ phone: cleanPhone, deleted: false }, { $set: { cccd: cleanCccd } });
+      }
+    }
+
+    await logAdminAction(
+      req as any,
+      `Cập nhật hồ sơ trả góp đơn ${order.code} (Mã HĐ: ${contractCode || "Chưa có"}, Khoản vay: ${loanAmount.toLocaleString("vi-VN")} đ)`
+    );
+
+    res.json({
+      code: "success",
+      message: "Đã cập nhật hồ sơ trả góp thành công!"
+    });
+  } catch (error) {
+    console.error("Error updateInstallmentInfo:", error);
+    res.status(500).json({ code: "error", message: "Lỗi hệ thống khi cập nhật hồ sơ trả góp!" });
+  }
+};
+
+// [PATCH] /admin/order/settle-installment/:id — Xác nhận đối tác tài chính đã tất toán giải ngân
+export const settleInstallment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = String(req.params.id || "");
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ code: "error", message: "Mã đơn hàng không hợp lệ!" });
+      return;
+    }
+
+    const order: any = await Order.findOne({ _id: id, deleted: false });
+    if (!order || order.paymentMethod !== "installment" || !order.installmentInfo) {
+      res.status(404).json({ code: "error", message: "Không tìm thấy hồ sơ trả góp của đơn hàng này!" });
+      return;
+    }
+
+    if (order.installmentInfo.settlementStatus === "settled") {
+      res.status(400).json({ code: "error", message: "Hồ sơ trả góp này đã được tất toán giải ngân trước đó!" });
+      return;
+    }
+
+    const contractCode =
+      typeof req.body.contractCode === "string" && req.body.contractCode.trim()
+        ? req.body.contractCode.trim()
+        : order.installmentInfo.contractCode || "";
+    const note =
+      typeof req.body.note === "string" && req.body.note.trim()
+        ? req.body.note.trim()
+        : order.installmentInfo.note || "";
+
+    const rawAdminId = (req as any).adminId;
+    const validAdminObjectId =
+      rawAdminId && mongoose.isValidObjectId(rawAdminId)
+        ? new mongoose.Types.ObjectId(rawAdminId)
+        : undefined;
+
+    const updateSet: Record<string, any> = {
+      paidAmount: Number(order.total || 0),
+      "installmentInfo.settlementStatus": "settled",
+      "installmentInfo.settledAt": new Date(),
+      "installmentInfo.contractCode": contractCode,
+      "installmentInfo.note": note
+    };
+    if (validAdminObjectId) {
+      updateSet["installmentInfo.settledBy"] = validAdminObjectId;
+    }
+
+    await Order.updateOne({ _id: order._id }, { $set: updateSet });
+
+    await logAdminAction(
+      req as any,
+      `Xác nhận đối tác tất toán giải ngân trả góp đơn ${order.code} (${Number(order.installmentInfo.loanAmount || 0).toLocaleString("vi-VN")} đ)`
+    );
+
+    res.json({
+      code: "success",
+      message: `Đã xác nhận đối tác giải ngân khoản vay ${Number(order.installmentInfo.loanAmount || 0).toLocaleString("vi-VN")} đ cho đơn ${order.code}!`
+    });
+  } catch (error) {
+    console.error("Error settleInstallment:", error);
+    res.status(500).json({ code: "error", message: "Lỗi hệ thống khi xác nhận giải ngân trả góp!" });
   }
 };
 

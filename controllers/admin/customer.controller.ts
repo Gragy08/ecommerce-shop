@@ -6,6 +6,7 @@ import Customer from "../../models/customer.model";
 import Order from "../../models/order.model";
 import InventoryItem from "../../models/inventory-item.model";
 import AccountUser from "../../models/account-user.model";
+import WarrantyTicket from "../../models/warranty-ticket.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { logAdminAction } from "../../helpers/log.helper";
 
@@ -199,8 +200,9 @@ export const upsertCustomerFromOrder = async (orderData: {
   fullName?: string;
   phone?: string;
   address?: string;
+  cccd?: string;
   userId?: string;
-  source?: "web" | "pos";
+  source?: "web" | "pos" | "warranty";
 }) => {
   try {
     const cleanPhone = String(orderData.phone || "").replace(/\D/g, "");
@@ -213,6 +215,7 @@ export const upsertCustomerFromOrder = async (orderData: {
 
     const fullName = String(orderData.fullName || "Khách hàng").trim();
     const address = String(orderData.address || "").trim();
+    const cccd = String(orderData.cccd || "").replace(/\D/g, "");
 
     if (!customer) {
       const search = slugify(`${fullName} ${cleanPhone}`, {
@@ -224,6 +227,7 @@ export const upsertCustomerFromOrder = async (orderData: {
         fullName,
         phone: cleanPhone,
         address,
+        cccd,
         source: orderData.source || "web",
         accountUserId:
           orderData.userId && mongoose.isValidObjectId(orderData.userId)
@@ -232,17 +236,31 @@ export const upsertCustomerFromOrder = async (orderData: {
         search
       });
     } else {
+      const updateFields: Record<string, any> = {};
       if (!customer.address && address) {
-        customer.address = address;
+        updateFields.address = address;
+      }
+      if (cccd && cccd.length >= 9) {
+        updateFields.cccd = cccd;
+      }
+      if (
+        fullName &&
+        fullName !== "Khách lẻ tại quầy" &&
+        fullName !== "Khách hàng" &&
+        (customer.fullName === "Khách lẻ tại quầy" || customer.fullName === "Khách hàng")
+      ) {
+        updateFields.fullName = fullName;
       }
       if (
         !customer.accountUserId &&
         orderData.userId &&
         mongoose.isValidObjectId(orderData.userId)
       ) {
-        customer.accountUserId = new mongoose.Types.ObjectId(orderData.userId);
+        updateFields.accountUserId = new mongoose.Types.ObjectId(orderData.userId);
       }
-      await customer.save();
+      if (Object.keys(updateFields).length > 0) {
+        await Customer.updateOne({ _id: customer._id }, { $set: updateFields });
+      }
     }
 
     await syncCustomerOrdersByPhone(cleanPhone, customer._id);
@@ -815,11 +833,28 @@ export const detail = async (req: Request, res: Response): Promise<void> => {
       });
     }
 
+    const warrantyOrQuery: any[] = [{ customerId: customer._id }];
+    if (customer.phone) {
+      warrantyOrQuery.push({ "customerInfo.phone": customer.phone });
+    }
+    const warrantyTickets: any[] = await WarrantyTicket.find({
+      $or: warrantyOrQuery,
+      deleted: false
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    for (const wt of warrantyTickets) {
+      wt.createdAtFormat = wt.createdAt ? moment(wt.createdAt).format("DD/MM/YYYY HH:mm") : "-";
+      wt.totalAmountFormatted = Number(wt.totalAmount || 0).toLocaleString("vi-VN") + " đ";
+    }
+
     res.render("admin/pages/customer-detail", {
       pageTitle: `Chi tiết khách hàng: ${customer.fullName}`,
       customer,
       orders,
-      ownedDevices
+      ownedDevices,
+      warrantyTickets
     });
   } catch (error) {
     console.error("Customer detail error:", error);

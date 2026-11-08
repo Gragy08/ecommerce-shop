@@ -19,6 +19,7 @@ import chatRoutes from "./chat.route";
 import supplierRoutes from "./supplier.route";
 import inventoryRoutes from "./inventory.route";
 import customerRoutes from "./customer.route";
+import warrantyRoutes from "./warranty.route";
 
 import * as authMiddleware from "../../middlewares/admin/authenticate.middleware";
 
@@ -45,6 +46,7 @@ router.use('/supplier', authMiddleware.verifyToken, supplierRoutes);
 router.use('/inventory/supplier', authMiddleware.verifyToken, supplierRoutes);
 router.use('/inventory', authMiddleware.verifyToken, inventoryRoutes);
 router.use('/customer', authMiddleware.verifyToken, customerRoutes);
+router.use('/warranty', authMiddleware.verifyToken, warrantyRoutes);
 
 
 export default router;

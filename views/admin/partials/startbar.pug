@@ -222,9 +222,28 @@
             #sidebarOrder.collapse
               ul.nav.flex-column
                 li.nav-item
-                  a.nav-link(href=`/${pathAdmin}/order/pos`) Bán hàng tại quầy (POS)
+                  a.nav-link(href=`/${pathAdmin}/order/pos`) Bán hàng tại quầy
                 li.nav-item
                   a.nav-link(href=`/${pathAdmin}/order/list`) Danh sách đơn hàng
+          if (permissions.includes("warranty-role") || permissions.includes("warranty-list"))
+            li.nav-item
+              a.nav-link(
+                aria-controls="sidebarWarranty" 
+                aria-expanded="false" 
+                role="button" 
+                data-bs-toggle="collapse" 
+                href="#sidebarWarranty"
+                )
+                i.iconoir-wrench.menu-icon
+                span Bảo hành - Sửa chữa
+              #sidebarWarranty.collapse
+                ul.nav.flex-column
+                  if (permissions.includes("warranty-create"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/warranty/create`) Tiếp nhận bảo hành / sửa chữa
+                  if (permissions.includes("warranty-list"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/warranty/list`) Danh sách phiếu bảo hành
           li.nav-item
             a.nav-link(
               href=`/${pathAdmin}/review/list`

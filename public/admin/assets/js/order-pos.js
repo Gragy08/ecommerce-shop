@@ -484,6 +484,8 @@
     const totEl = document.querySelector("#totalAmountDisplay");
     const paidEl = document.querySelector("#paidAmountInput");
     const changeEl = document.querySelector("#changeAmountDisplay");
+    const downPaymentEl = document.querySelector("#installmentDownPayment");
+    const loanEl = document.querySelector("#installmentLoanAmountDisplay");
 
     if (subEl) subEl.textContent = `${subTotal.toLocaleString("vi-VN")} đ`;
     if (totEl) totEl.textContent = `${total.toLocaleString("vi-VN")} đ`;
@@ -491,10 +493,15 @@
     const paid = Math.max(0, parseFloat(paidEl && paidEl.value !== "" ? paidEl.value : String(total)) || 0);
     const change = Math.max(0, paid - total);
     if (changeEl) changeEl.textContent = `${change.toLocaleString("vi-VN")} đ`;
+
+    const downPayment = Math.max(0, parseFloat(downPaymentEl ? downPaymentEl.value : "0") || 0);
+    const loanAmount = Math.max(0, total - downPayment);
+    if (loanEl) loanEl.textContent = `${loanAmount.toLocaleString("vi-VN")} đ`;
   };
 
   document.querySelector("#orderDiscountInput")?.addEventListener("input", updateTotals);
   document.querySelector("#paidAmountInput")?.addEventListener("input", updateTotals);
+  document.querySelector("#installmentDownPayment")?.addEventListener("input", updateTotals);
   document.querySelector("#btnExactAmount")?.addEventListener("click", () => {
     const { total } = getTotals();
     const paidEl = document.querySelector("#paidAmountInput");
@@ -502,10 +509,46 @@
     updateTotals();
   });
 
+  // Nút chọn nhanh tỷ lệ trả trước (%)
+  document.querySelectorAll(".btn-downpayment-percent").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pct = parseFloat(btn.getAttribute("data-percent") || "0") || 0;
+      const { total } = getTotals();
+      const downPaymentEl = document.querySelector("#installmentDownPayment");
+      if (downPaymentEl) {
+        const computed = pct <= 0 ? 0 : Math.round((total * pct) / 100 / 1000) * 1000;
+        downPaymentEl.value = String(computed);
+        updateTotals();
+      }
+    });
+  });
+
+  // Chuyển đổi phương thức thanh toán (Tiền mặt / Chuyển khoản / Trả góp)
+  const paymentMethodSelect = document.querySelector("#posPaymentMethod");
+  const cashTenderSection = document.querySelector("#cashTenderSection");
+  const installmentSection = document.querySelector("#installmentSection");
+
+  const syncPaymentMethodUI = () => {
+    const method = paymentMethodSelect ? paymentMethodSelect.value : "money";
+    if (cashTenderSection) {
+      cashTenderSection.style.display = method === "money" ? "block" : "none";
+    }
+    if (installmentSection) {
+      installmentSection.style.display = method === "installment" ? "block" : "none";
+    }
+    updateTotals();
+  };
+
+  if (paymentMethodSelect) {
+    paymentMethodSelect.addEventListener("change", syncPaymentMethodUI);
+    syncPaymentMethodUI();
+  }
+
   // Tra cứu tự động khách hàng CRM theo SĐT
   const phoneInput = document.querySelector("#customerPhone");
   const nameInput = document.querySelector("#customerName");
   const addrInput = document.querySelector("#customerAddress");
+  const cccdInput = document.querySelector("#installmentCccd");
   const badgeEl = document.querySelector("#customerLookupBadge");
   let phoneTimer = null;
 
@@ -524,6 +567,9 @@
           if (data.code === "success" && data.found && data.customer) {
             if (nameInput) nameInput.value = data.customer.fullName || "";
             if (addrInput && data.customer.address) addrInput.value = data.customer.address;
+            if (cccdInput && data.customer.cccd && !cccdInput.value.trim()) {
+              cccdInput.value = data.customer.cccd;
+            }
             if (badgeEl) {
               badgeEl.innerHTML = `<span class="badge bg-success">Khách quen: ${data.customer.fullName} (${data.customer.orderCount || 0} đơn)</span>`;
               badgeEl.style.display = "block";
@@ -557,19 +603,99 @@
         }
       }
 
-      const { discount } = getTotals();
+      const { discount, total } = getTotals();
       const paymentMethodEl = document.querySelector("#posPaymentMethod");
+      const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "money";
       const noteEl = document.querySelector("#orderNote");
+      const paidEl = document.querySelector("#paidAmountInput");
+
+      const rawPhone = phoneInput ? phoneInput.value.trim() : "";
+      const cleanPhone = rawPhone.replace(/\D/g, "");
+      const fullName = nameInput ? nameInput.value.trim() : "Khách lẻ tại quầy";
+      const address = addrInput ? addrInput.value.trim() : "";
+
+      let paidAmount = total;
+      let changeAmount = 0;
+      let installmentInfo = null;
+
+      if (paymentMethod === "money") {
+        paidAmount = Math.max(0, parseFloat(paidEl && paidEl.value !== "" ? paidEl.value : String(total)) || 0);
+        if (paidAmount < total) {
+          if (typeof notyf !== "undefined") {
+            notyf.error("Số tiền khách đưa nhỏ hơn tổng tiền cần thanh toán!");
+          }
+          return;
+        }
+        changeAmount = Math.max(0, paidAmount - total);
+      } else if (paymentMethod === "installment") {
+        if (cleanPhone.length < 9) {
+          if (typeof notyf !== "undefined") {
+            notyf.error("Đơn trả góp bắt buộc phải nhập Số điện thoại khách hàng hợp lệ!");
+          }
+          phoneInput?.focus();
+          return;
+        }
+        if (!fullName || fullName === "Khách lẻ tại quầy") {
+          if (typeof notyf !== "undefined") {
+            notyf.error("Đơn trả góp bắt buộc phải nhập Họ và tên thật của khách hàng!");
+          }
+          nameInput?.focus();
+          return;
+        }
+
+        const providerEl = document.querySelector("#installmentProvider");
+        const termEl = document.querySelector("#installmentTerm");
+        const contractCodeEl = document.querySelector("#installmentContractCode");
+        const downPaymentEl = document.querySelector("#installmentDownPayment");
+        const downPaymentMethodEl = document.querySelector("#installmentDownPaymentMethod");
+        const instNoteEl = document.querySelector("#installmentNote");
+
+        const cleanCccd = (cccdInput ? cccdInput.value : "").replace(/\D/g, "");
+        if (cleanCccd.length < 9 || cleanCccd.length > 12) {
+          if (typeof notyf !== "undefined") {
+            notyf.error("Vui lòng nhập Số CCCD / CMND hợp lệ (từ 9 đến 12 chữ số) cho hồ sơ trả góp!");
+          }
+          cccdInput?.focus();
+          return;
+        }
+
+        const downPayment = Math.max(0, parseFloat(downPaymentEl ? downPaymentEl.value : "0") || 0);
+        if (downPayment >= total) {
+          if (typeof notyf !== "undefined") {
+            notyf.error("Số tiền trả trước phải nhỏ hơn tổng tiền đơn hàng (Khoản vay phải lớn hơn 0đ)!");
+          }
+          downPaymentEl?.focus();
+          return;
+        }
+
+        const loanAmount = Math.max(0, total - downPayment);
+        paidAmount = downPayment;
+        changeAmount = 0;
+
+        installmentInfo = {
+          provider: providerEl ? providerEl.value : "home_credit",
+          contractCode: contractCodeEl ? contractCodeEl.value.trim() : "",
+          cccd: cleanCccd,
+          termMonths: parseInt(termEl ? termEl.value : "6", 10) || 6,
+          downPayment,
+          downPaymentMethod: downPaymentMethodEl ? downPaymentMethodEl.value : "money",
+          loanAmount,
+          note: instNoteEl ? instNoteEl.value.trim() : ""
+        };
+      }
 
       const payload = {
         customerInfo: {
-          phone: phoneInput ? phoneInput.value.trim() : "",
-          fullName: nameInput ? nameInput.value.trim() : "Khách lẻ tại quầy",
-          address: addrInput ? addrInput.value.trim() : ""
+          phone: rawPhone,
+          fullName,
+          address
         },
         items: cart,
         discount,
-        paymentMethod: paymentMethodEl ? paymentMethodEl.value : "money",
+        paymentMethod,
+        paidAmount,
+        changeAmount,
+        installmentInfo,
         note: noteEl ? noteEl.value.trim() : ""
       };
 

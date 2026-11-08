@@ -6,6 +6,7 @@ import ProductVariant from "../../models/product-variant.model";
 import StockReceipt from "../../models/stock-receipt.model";
 import Supplier from "../../models/supplier.model";
 import CategoryProduct from "../../models/category-product.model";
+import WarrantyTicket from "../../models/warranty-ticket.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { logAdminAction } from "../../helpers/log.helper";
 import { syncStockToProduct } from "../../helpers/variant.helper";
@@ -730,6 +731,7 @@ export const trackerPage = async (req: Request, res: Response): Promise<void> =>
   try {
     const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim().toUpperCase() : "";
     let matchedItem: any = null;
+    let warrantyTickets: any[] = [];
 
     if (keyword) {
       matchedItem = await InventoryItem.findOne({
@@ -765,12 +767,25 @@ export const trackerPage = async (req: Request, res: Response): Promise<void> =>
           }
         }
       }
+
+      warrantyTickets = await WarrantyTicket.find({
+        $or: [{ identifier: keyword }, { replacementIdentifier: keyword }],
+        deleted: false
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      for (const wt of warrantyTickets) {
+        wt.createdAtFormat = wt.createdAt ? moment(wt.createdAt).format("DD/MM/YYYY HH:mm") : "-";
+        wt.totalAmountFormatted = Number(wt.totalAmount || 0).toLocaleString("vi-VN") + " đ";
+      }
     }
 
     res.render("admin/pages/inventory-tracker", {
       pageTitle: "Tra cứu vòng đời IMEI",
       keyword,
-      item: matchedItem
+      item: matchedItem,
+      warrantyTickets
     });
   } catch (error) {
     console.error("trackerPage error:", error);

@@ -1,0 +1,174 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card.mb-3
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto
+              a.btn.btn-outline-secondary.btn-sm(href=`/${pathAdmin}/warranty/list`)
+                i.fa-solid.fa-arrow-left.me-1
+                | Danh sách phiếu bảo hành
+
+  // 1. Tra cứu nhanh Thiết bị theo IMEI hoặc Số điện thoại khách hàng
+  .card.mb-3
+    .card-header.d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
+      h5.card-title.mb-0 Tra cứu nhanh thiết bị & Lịch sử mua hàng
+      .btn-group.btn-group-sm(role="group")
+        button#btnModeImei.btn.btn-primary(type="button" data-mode="imei")
+          i.fa-solid.fa-barcode.me-1
+          | Quét mã IMEI
+        button#btnModePhone.btn.btn-outline-primary(type="button" data-mode="phone")
+          i.fa-solid.fa-phone.me-1
+          | Tra theo SĐT khách hàng
+    .card-body.pt-0
+      .row.g-2.align-items-center
+        .col-lg-8
+          .input-group
+            span.input-group-text
+              i.fa-solid.fa-magnifying-glass
+            input#identifierLookupInput.form-control(
+              type="text"
+              placeholder="Quét hoặc nhập mã IMEI thiết bị (hoặc SĐT khách hàng)..."
+              autocomplete="off"
+              autofocus
+            )
+            button#btnClearLookup.btn.btn-outline-secondary(type="button" style="display: none;")
+              i.fa-solid.fa-xmark
+            button#btnCheckDevice.btn.btn-primary(type="button")
+              i.fa-solid.fa-magnifying-glass.me-1
+              | Kiểm tra
+        .col-lg-4.text-lg-end
+          button#btnQuickExternalDevice.btn.btn-outline-warning.w-100(type="button")
+            i.fa-solid.fa-screwdriver-wrench.me-1
+            | Tiếp nhận máy ngoài / Không có IMEI
+
+      #deviceCheckResultCard.mt-3(style="display: none;")
+        #deviceCheckResultBody
+
+  // 2. Form lập phiếu tiếp nhận Bảo hành / Sửa chữa
+  form#warrantyCreateForm
+    .row.g-3
+      // Cột trái: Thông tin Thiết bị, Tình trạng lỗi & Linh kiện
+      .col-lg-8
+        .card.mb-3
+          .card-header.d-flex.justify-content-between.align-items-center
+            h5.card-title.mb-0 Thông tin thiết bị & Tình trạng tiếp nhận
+            .form-check.form-switch.mb-0
+              input#isExternalDeviceCheck.form-check-input(type="checkbox")
+              label.form-check-label.small.fw-semibold(for="isExternalDeviceCheck") Máy ngoài cửa hàng (Sửa dịch vụ)
+          .card-body.pt-0
+            .row.g-3
+              .col-md-5
+                label.form-label(for="identifierInput") Mã IMEI / Mã máy
+                .input-group
+                  input#identifierInput.form-control(type="text" name="identifier")
+                  button#btnGenerateTempCode.btn.btn-outline-secondary(type="button" title="Tạo mã máy tạm nếu máy mất IMEI")
+                    | Tạo mã tạm
+              .col-md-4
+                label.form-label(for="productNameInput") Tên dòng máy / Sản phẩm *
+                input#productNameInput.form-control(type="text" name="productName" required)
+              .col-md-3
+                label.form-label(for="variantNameInput") Phiên bản / Màu sắc
+                input#variantNameInput.form-control(type="text" name="variantName")
+
+              .col-md-4
+                label.form-label(for="warrantyTypeSelect") Hình thức tiếp nhận *
+                select#warrantyTypeSelect.form-select(name="warrantyType")
+                  option(value="warranty") Bảo hành tiêu chuẩn
+                  option(value="repair") Sửa chữa dịch vụ (Có tính phí)
+                  option(value="exchange") Bảo hành đổi mới 1-1
+              .col-md-4
+                label.form-label(for="deviceConditionInput") Tình trạng ngoại quan khi nhận
+                input#deviceConditionInput.form-control(type="text" name="deviceCondition")
+              .col-md-4
+                label.form-label(for="accessoriesIncludedInput") Phụ kiện kèm theo
+                input#accessoriesIncludedInput.form-control(type="text" name="accessoriesIncluded" value="Chỉ thân máy")
+
+              .col-12
+                label.form-label(for="issueDescriptionInput") Mô tả chi tiết lỗi của thiết bị *
+                textarea#issueDescriptionInput.form-control(name="issueDescription" rows="3" required)
+
+        // Khối Linh kiện / Phụ tùng thay thế
+        .card.mb-3
+          .card-header.d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
+            h5.card-title.mb-0 Linh kiện / Phụ tùng thay thế (Nếu có)
+            button#btnAddExternalPart.btn.btn-outline-primary.btn-sm(type="button")
+              i.fa-solid.fa-plus.me-1
+              | Thêm linh kiện ngoài
+          .card-body.pt-0
+            .position-relative.mb-3
+              .input-group
+                span.input-group-text
+                  i.fa-solid.fa-magnifying-glass
+                input#partSearchInput.form-control(
+                  type="text"
+                  placeholder="Tìm linh kiện / phụ kiện có sẵn trong kho..."
+                  autocomplete="off"
+                )
+              #partSearchResults.dropdown-menu.w-100.p-2(
+                style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; max-height: 280px; overflow-y: auto; display: none;"
+              )
+
+            .table-responsive
+              table.table.table-bordered.align-middle.mb-0
+                thead.table-light
+                  tr
+                    th Tên linh kiện / Phụ tùng
+                    th(style="width: 120px") Mã SKU
+                    th.text-center(style="width: 95px") Số lượng
+                    th.text-end(style="width: 150px") Đơn giá (VNĐ)
+                    th.text-end(style="width: 140px") Thành tiền
+                    th.text-center(style="width: 50px")
+                tbody#partsTableBody
+                  tr#partsEmptyRow
+                    td.text-center.text-muted.py-3(colspan="6") Chưa chọn linh kiện thay thế nào.
+
+      // Cột phải: Thông tin Khách hàng & Tổng chi phí dự kiến
+      .col-lg-4
+        .card.mb-3
+          .card-header
+            h5.card-title.mb-0 Thông tin khách hàng
+          .card-body.pt-0
+            .mb-3
+              label.form-label(for="customerPhoneInput") Số điện thoại *
+              input#customerPhoneInput.form-control(type="text" name="customerPhone" required)
+            .mb-3
+              label.form-label(for="customerFullNameInput") Họ và tên khách hàng *
+              input#customerFullNameInput.form-control(type="text" name="customerFullName" required)
+            .mb-3
+              label.form-label(for="customerAddressInput") Địa chỉ
+              input#customerAddressInput.form-control(type="text" name="customerAddress")
+            .mb-0
+              label.form-label(for="estimatedReturnDateInput") Ngày hẹn trả máy dự kiến
+              input#estimatedReturnDateInput.form-control(type="date" name="estimatedReturnDate")
+
+        .card
+          .card-header
+            h5.card-title.mb-0 Chi phí dự kiến & Hoàn tất
+          .card-body.pt-0
+            .d-flex.justify-content-between.align-items-center.mb-2
+              span.text-muted Tiền linh kiện:
+              strong#partsSubtotalDisplay 0 đ
+            .mb-3
+              label.form-label(for="repairCostInput") Phí dịch vụ / Tiền công sửa chữa (VNĐ)
+              input#repairCostInput.form-control.text-end.fw-bold(
+                type="number"
+                min="0"
+                step="1000"
+                value="0"
+              )
+            hr.my-2
+            .d-flex.justify-content-between.align-items-center.mb-3
+              span.fw-bold Tổng chi phí dự kiến:
+              h4#totalAmountDisplay.fw-bold.text-danger.mb-0 0 đ
+
+            button#btnSubmitWarranty.btn.btn-primary.w-100.py-2.fw-bold(type="submit")
+              i.fa-solid.fa-check.me-1
+              | Tạo phiếu tiếp nhận & In biên nhận
+
+block script
+  script(src="/admin/assets/js/warranty-create.js")

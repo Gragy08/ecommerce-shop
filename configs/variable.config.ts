@@ -208,7 +208,7 @@ export const permissionList = [
   // Bán hàng tại quầy (POS)
   {
     id: "order-pos",
-    name: "Bán hàng tại quầy (POS)"
+    name: "Bán hàng tại quầy"
   },
   // Quản lý Khách hàng CRM
   {
