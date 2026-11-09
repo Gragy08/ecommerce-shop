@@ -63,17 +63,20 @@ block main
                   required
                 )
               .col-md-6
-                label.form-label.fw-semibold.small(for="email") Email đăng nhập
+                label.form-label.fw-semibold.small(for="email") Email đăng nhập *
                 input#email.form-control(
                   type="email"
                   name="email"
+                  placeholder="Ví dụ: daily@gmail.com"
                   value=(accountUser ? accountUser.email : "")
+                  required=(!accountUser)
                 )
               .col-md-6
                 label.form-label.fw-semibold.small(for="storeName") Tên Cửa hàng *
                 input#storeName.form-control(
                   type="text"
                   name="storeName"
+                  placeholder="Ví dụ: Cửa hàng điện thoại Di Động Việt"
                   required
                 )
               .col-12
@@ -81,19 +84,41 @@ block main
                 input#businessAddress.form-control(
                   type="text"
                   name="businessAddress"
+                  placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/TP"
                   required
                 )
+              if (!accountUser)
+                .col-md-6
+                  label.form-label.fw-semibold.small(for="password") Mật khẩu đăng nhập *
+                  input#password.form-control(
+                    type="password"
+                    name="password"
+                    placeholder="Tối thiểu 6 ký tự"
+                    minlength="6"
+                    required
+                  )
+                .col-md-6
+                  label.form-label.fw-semibold.small(for="confirmPassword") Xác nhận mật khẩu *
+                  input#confirmPassword.form-control(
+                    type="password"
+                    name="confirmPassword"
+                    placeholder="Nhập lại mật khẩu"
+                    minlength="6"
+                    required
+                  )
               .col-md-6
                 label.form-label.fw-semibold.small(for="taxCode") Mã số thuế (MST)
                 input#taxCode.form-control(
                   type="text"
                   name="taxCode"
+                  placeholder="Bỏ trống nếu không có"
                 )
               .col-md-6
                 label.form-label.fw-semibold.small(for="note") Ghi chú
                 input#note.form-control(
                   type="text"
                   name="note"
+                  placeholder="Ghi chú thêm nếu có..."
                 )
 
             .mt-4.pt-2.d-flex.align-items-center.justify-content-between.flex-wrap.gap-2
@@ -130,6 +155,25 @@ block main
           btn.disabled = true;
           btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
 
+          var passInput = document.getElementById("password");
+          var confirmInput = document.getElementById("confirmPassword");
+          if (passInput) {
+            var pass = (passInput.value || "").trim();
+            var confirmPass = (confirmInput ? confirmInput.value : "").trim();
+            if (!pass || pass.length < 6) {
+              showToast("error", "Mật khẩu phải có ít nhất 6 ký tự!");
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+              return;
+            }
+            if (pass !== confirmPass) {
+              showToast("error", "Mật khẩu xác nhận không khớp!");
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+              return;
+            }
+          }
+
           var formData = new FormData(regForm);
           var payload = {
             fullName: formData.get("fullName"),
@@ -138,7 +182,9 @@ block main
             storeName: formData.get("storeName"),
             businessAddress: formData.get("businessAddress"),
             taxCode: formData.get("taxCode"),
-            note: formData.get("note")
+            note: formData.get("note"),
+            password: formData.get("password") || "",
+            confirmPassword: formData.get("confirmPassword") || ""
           };
 
           try {

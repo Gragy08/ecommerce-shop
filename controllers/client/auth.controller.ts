@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import AccountUser from "../../models/account-user.model";
+import WholesaleRegistration from "../../models/wholesale-registration.model";
 import bcrypt from "bcryptjs";
 import slugify from "slugify";
 import jwt from "jsonwebtoken";
@@ -52,6 +53,32 @@ export const registerPost = async (req: Request, res: Response) => {
     const newAccount = new AccountUser(req.body);
     await newAccount.save();
 
+    // Tự động liên kết và nâng cấp nếu SĐT đã có hồ sơ đại lý được duyệt trước
+    const cleanUserPhone = String(newAccount.phone || "").replace(/\D/g, "");
+    if (cleanUserPhone) {
+      const wholesaleReg = await WholesaleRegistration.findOne({
+        phone: cleanUserPhone,
+        deleted: false
+      }).sort({ createdAt: -1 });
+
+      if (wholesaleReg) {
+        wholesaleReg.accountUserId = newAccount._id;
+        await wholesaleReg.save();
+        if (wholesaleReg.status === "approved") {
+          newAccount.userType = "wholesale";
+          newAccount.wholesaleStatus = "approved";
+          newAccount.storeName = wholesaleReg.storeName;
+          newAccount.businessAddress = wholesaleReg.businessAddress;
+          newAccount.taxCode = wholesaleReg.taxCode;
+          newAccount.wholesaleApprovedAt = wholesaleReg.approvedAt || new Date();
+          await newAccount.save();
+        } else if (wholesaleReg.status === "pending") {
+          newAccount.wholesaleStatus = "pending";
+          await newAccount.save();
+        }
+      }
+    }
+
     await syncAccountUserToCustomer(newAccount._id);
 
     const tokenUser = jwt.sign(
@@ -92,11 +119,16 @@ export const login = async (req: Request, res: Response) => {
 export const loginPost = async (req: Request, res: Response) => {
   try {
     const { email, password, rememberPassword } = req.body;
+    const rawLogin = String(email || "").trim();
+    const cleanPhone = rawLogin.replace(/\D/g, "");
 
     const existAccount = await AccountUser.findOne({
-      email: email,
+      $or: [
+        { email: rawLogin.toLowerCase() },
+        ...(cleanPhone.length >= 9 ? [{ phone: cleanPhone }] : [])
+      ],
       deleted: false
-    })
+    });
 
     if(!existAccount) {
       res.json({

@@ -48,11 +48,18 @@ block main
       .confirm-card.p-4.p-md-5
         // Header thông báo xét duyệt
         .text-center.mb-4
-          .mb-3
-            i.fas.fa-clock.text-warning(style="font-size: 60px;")
-          h3.fw-bold.text-dark Hồ sơ của bạn đang được xét duyệt!
-          p.text-muted.mb-0(style="max-width: 580px; margin: 0 auto;")
-            | Bộ phận kinh doanh đã tiếp nhận thông tin và sẽ liên hệ xác nhận kích hoạt trong vòng 24 giờ. Khi được duyệt, bạn chỉ cần đăng nhập tài khoản là sẽ tự động được áp dụng bảng giá sỉ.
+          if (existingRegistration && existingRegistration.status === "approved")
+            .mb-3
+              i.fas.fa-check-circle.text-success(style="font-size: 60px;")
+            h3.fw-bold.text-dark Hồ sơ đại lý của bạn đã được phê duyệt!
+            p.text-muted.mb-0(style="max-width: 580px; margin: 0 auto;")
+              | Tài khoản của bạn đã được kích hoạt quyền Đại lý chính thức. Bạn có thể đăng nhập ngay để xem bảng giá sỉ và đặt hàng.
+          else
+            .mb-3
+              i.fas.fa-clock.text-warning(style="font-size: 60px;")
+            h3.fw-bold.text-dark Hồ sơ của bạn đang được xét duyệt!
+            p.text-muted.mb-0(style="max-width: 580px; margin: 0 auto;")
+              | Bộ phận kinh doanh đã tiếp nhận thông tin và sẽ liên hệ xác nhận kích hoạt trong vòng 24 giờ. Khi được duyệt, bạn chỉ cần đăng nhập tài khoản là sẽ tự động được áp dụng bảng giá sỉ.
 
         if (existingRegistration)
           .p-3.bg-light.rounded-3.border.mb-4.mx-auto(style="max-width: 580px;")
@@ -68,7 +75,12 @@ block main
                 strong.text-dark #{existingRegistration.phone}
               .col-sm-6
                 span.text-muted Trạng thái: 
-                span.badge.bg-warning.text-dark Đang thẩm định
+                if (existingRegistration.status === "approved")
+                  span.badge.bg-success Đã phê duyệt
+                else if (existingRegistration.status === "rejected")
+                  span.badge.bg-danger Từ chối
+                else
+                  span.badge.bg-warning.text-dark Đang thẩm định
 
         // 3 Quyền lợi đại lý
         .mb-4
@@ -105,6 +117,15 @@ block main
 
         // Nút hành động & liên kết bài viết
         .text-center.d-flex.justify-content-center.flex-wrap.gap-2
+          if (existingRegistration && existingRegistration.status === "approved")
+            if (accountUser && accountUser.isWholesale)
+              a.btn.btn-primary.rounded-pill.px-4.py-2.small(href="/product")
+                i.fas.fa-shopping-cart.me-1
+                | Khám phá giá sỉ
+            else
+              a.btn.btn-primary.rounded-pill.px-4.py-2.small(href="/auth/login")
+                i.fas.fa-sign-in-alt.me-1
+                | Đăng nhập ngay
           a.btn.btn-outline-primary.rounded-pill.px-3.py-2.small(href="/article/detail/chinh-sach-mua-hang-dai-ly")
             i.fas.fa-file-alt.me-1
             | Chính sách mua hàng
