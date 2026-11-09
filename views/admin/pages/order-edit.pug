@@ -24,13 +24,35 @@ block main
                 i.fa-solid.fa-arrow-left.me-1
                 | Quay lại danh sách
         .card-body.pt-0
+          if (orderDetail.orderType === 'wholesale' || orderDetail.priceTypeApplied === 'wholesale')
+            .alert.alert-warning.border-warning.d-flex.align-items-center.justify-content-between.p-3.mb-3.rounded-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-warning.text-white.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.fa-solid.fa-crown.fs-4
+                div
+                  h5.alert-heading.mb-1.fw-bold ĐƠN HÀNG ĐẠI LÝ / KHÁCH SỈ (B2B WHOLESALE)
+                  p.mb-0.small
+                    | Đơn hàng này được áp dụng chính sách bảng giá sỉ & chiết khấu đại lý.
+                    if orderDetail.storeName
+                      |  Đại diện đơn vị: 
+                      strong.text-dark #{orderDetail.storeName}
+              if orderDetail.storeName
+                span.badge.bg-dark.fs-6.px-3.py-2
+                  i.fa-solid.fa-store.me-1
+                  | #{orderDetail.storeName}
+
           form(id="orderEditForm")
             input(type="hidden" name="id" value=orderDetail.id)
             .row
               .col-md-6.col-lg-6
                 .mb-3
                   label.form-label Mã đơn hàng
-                  input.form-control(type="text" value=orderDetail.code readonly)
+                  .input-group
+                    input.form-control(type="text" value=orderDetail.code readonly)
+                    if (orderDetail.orderType === 'wholesale')
+                      span.input-group-text.bg-warning.text-dark.fw-semibold
+                        i.fa-solid.fa-crown.me-1
+                        | Đơn sỉ
               .col-md-6.col-lg-6
                 .mb-3
                   label.form-label Kênh bán & Ngày tạo
@@ -47,6 +69,16 @@ block main
                 .mb-3
                   label.form-label Số điện thoại
                   input.form-control(type="text" value=orderDetail.phone readonly)
+              if orderDetail.storeName
+                .col-md-6.col-lg-6
+                  .mb-3
+                    label.form-label.fw-bold Tên Cửa hàng / Doanh nghiệp đại lý
+                    input.form-control.border-warning.fw-semibold.bg-warning-subtle.text-dark(type="text" value=orderDetail.storeName readonly)
+              if orderDetail.taxCode
+                .col-md-6.col-lg-6
+                  .mb-3
+                    label.form-label Mã số thuế (MST)
+                    input.form-control(type="text" value=orderDetail.taxCode readonly)
               .col-12
                 .mb-4
                   label.form-label Địa chỉ giao hàng
@@ -84,7 +116,12 @@ block main
                         else
                           span.badge.bg-secondary Số lượng
                       td.text-center.fw-bold #{p.quantity}
-                      td.text-end #{(p.price || 0).toLocaleString('vi-VN')} đ
+                      td.text-end
+                        div #{(p.price || 0).toLocaleString('vi-VN')} đ
+                        if (orderDetail.orderType === 'wholesale' || orderDetail.priceTypeApplied === 'wholesale')
+                          span.badge.bg-warning-subtle.text-dark.border.border-warning.mt-1(style="font-size: 11px;")
+                            i.fa-solid.fa-tag.me-1
+                            | Giá sỉ
                       td.text-end.fw-bold.text-danger #{((p.price || 0) * (p.quantity || 1)).toLocaleString('vi-VN')} đ
                       td
                         if p.inventoryType === "imei"

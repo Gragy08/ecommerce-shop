@@ -9,6 +9,8 @@ import ProductVariant from "../../models/product-variant.model";
 import InventoryItem from "../../models/inventory-item.model";
 import AttributeProduct from "../../models/attribute-product.model";
 import Customer from "../../models/customer.model";
+import AccountUser from "../../models/account-user.model";
+import WholesaleRegistration from "../../models/wholesale-registration.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { upsertCustomerFromOrder, syncCustomerOrdersByPhone } from "./customer.controller";
 import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
@@ -665,9 +667,22 @@ export const printInvoice = async (req: Request, res: Response): Promise<void> =
     }
 
     order.id = String(order._id);
+    order.channel = order.channel || "online";
+    order.orderType = order.orderType || "retail";
     order.createdAtFormat = order.createdAt
       ? moment(order.createdAt).format("DD/MM/YYYY HH:mm")
       : "-";
+
+    let storeName = "";
+    if (order.userId && mongoose.isValidObjectId(order.userId)) {
+      const userDoc: any = await AccountUser.findById(order.userId).select("storeName").lean();
+      if (userDoc?.storeName) storeName = userDoc.storeName;
+    }
+    if (!storeName && order.phone) {
+      const regDoc: any = await WholesaleRegistration.findOne({ phone: order.phone, deleted: false }).select("storeName").lean();
+      if (regDoc?.storeName) storeName = regDoc.storeName;
+    }
+    order.storeName = storeName;
 
     res.render("admin/pages/order-print", {
       pageTitle: `In hóa đơn: ${order.code}`,
@@ -693,6 +708,16 @@ export const list = async (req: Request, res: Response): Promise<void> => {
         find.$and.push({ $or: [{ channel: "online" }, { channel: { $exists: false } }] });
       } else {
         find.channel = "pos";
+      }
+    }
+
+    const orderType = typeof req.query.orderType === "string" ? req.query.orderType.trim() : "";
+    if (["retail", "wholesale"].includes(orderType)) {
+      if (orderType === "wholesale") {
+        find.orderType = "wholesale";
+      } else {
+        find.$and = find.$and || [];
+        find.$and.push({ $or: [{ orderType: "retail" }, { orderType: { $exists: false } }] });
       }
     }
 
@@ -723,19 +748,29 @@ export const list = async (req: Request, res: Response): Promise<void> => {
     const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim() : "";
     if (keyword) {
       const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
+      // Tìm thêm SĐT của đại lý có tên cửa hàng hoặc tên người đại diện khớp keyword
+      const matchedDealers = await WholesaleRegistration.find({
+        $or: [{ storeName: regex }, { fullName: regex }],
+        deleted: false
+      }).select("phone").lean();
+      const matchedPhones = matchedDealers.map((d: any) => d.phone).filter(Boolean);
+
       find.$and = find.$and || [];
-      find.$and.push({
-        $or: [
-          { code: regex },
-          { fullName: regex },
-          { phone: regex },
-          { "items.identifiers": regex },
-          { "items.name": regex },
-          { "items.variantSku": regex },
-          { "installmentInfo.contractCode": regex },
-          { "installmentInfo.cccd": regex }
-        ]
-      });
+      const orConditions: any[] = [
+        { code: regex },
+        { fullName: regex },
+        { phone: regex },
+        { "items.identifiers": regex },
+        { "items.name": regex },
+        { "items.variantSku": regex },
+        { "installmentInfo.contractCode": regex },
+        { "installmentInfo.cccd": regex }
+      ];
+      if (matchedPhones.length > 0) {
+        orConditions.push({ phone: { $in: matchedPhones } });
+      }
+      find.$and.push({ $or: orConditions });
     }
 
     const limitItems = 15;
@@ -744,10 +779,11 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       page = parseInt(String(req.query.page));
     }
 
-    const [totalRecord, totalOrders, completedOrders, revenueAgg, pendingInstallmentAgg] = await Promise.all([
+    const [totalRecord, totalOrders, completedOrders, wholesaleOrdersCount, revenueAgg, pendingInstallmentAgg] = await Promise.all([
       Order.countDocuments(find),
       Order.countDocuments({ deleted: false }),
       Order.countDocuments({ deleted: false, orderStatus: "completed" }),
+      Order.countDocuments({ deleted: false, orderType: "wholesale" }),
       Order.aggregate([
         {
           $match: {
@@ -798,13 +834,40 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       .sort({ createdAt: "desc" })
       .lean();
 
+    const wholesaleUserIds = recordList
+      .filter((o: any) => o.userId && mongoose.isValidObjectId(o.userId))
+      .map((o: any) => o.userId);
+    const orderPhones = recordList
+      .map((o: any) => o.phone)
+      .filter(Boolean);
+
+    const [accountUsers, wholesaleRegistrations] = await Promise.all([
+      wholesaleUserIds.length > 0
+        ? AccountUser.find({ _id: { $in: wholesaleUserIds } }).select("storeName fullName phone").lean()
+        : [],
+      orderPhones.length > 0
+        ? WholesaleRegistration.find({ phone: { $in: orderPhones }, deleted: false }).select("storeName phone fullName").lean()
+        : []
+    ]);
+
+    const userMap = new Map<string, any>();
+    accountUsers.forEach((u: any) => userMap.set(String(u._id), u));
+
+    const regPhoneMap = new Map<string, any>();
+    wholesaleRegistrations.forEach((r: any) => regPhoneMap.set(String(r.phone), r));
+
     for (const item of recordList) {
       item.id = String(item._id);
       item.channel = item.channel || "online";
+      item.orderType = item.orderType || "retail";
       item.totalFormatted = Number(item.total || 0).toLocaleString("vi-VN") + " đ";
       item.createdAtFormat = item.createdAt
         ? moment(item.createdAt).format("DD/MM/YYYY HH:mm")
         : "-";
+
+      const matchedUser = item.userId ? userMap.get(String(item.userId)) : null;
+      const matchedReg = item.phone ? regPhoneMap.get(String(item.phone)) : null;
+      item.storeName = matchedUser?.storeName || matchedReg?.storeName || "";
     }
 
     const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
@@ -820,6 +883,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       filters: {
         keyword,
         channel,
+        orderType,
         orderStatus,
         paymentMethod,
         installmentProvider,
@@ -828,6 +892,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       stats: {
         totalOrders,
         completedOrders,
+        wholesaleOrdersCount,
         totalRevenueFormatted: Number(totalRevenue || 0).toLocaleString("vi-VN") + " đ",
         pendingInstallmentCount,
         pendingInstallmentLoanTotalFormatted:
@@ -867,9 +932,35 @@ export const edit = async (req: Request, res: Response): Promise<void> => {
     const orderDetail: any = orderDoc.toObject();
     orderDetail.id = String(orderDetail._id);
     orderDetail.channel = orderDetail.channel || "online";
+    orderDetail.orderType = orderDetail.orderType || "retail";
     orderDetail.createdAtFormat = orderDetail.createdAt
       ? moment(orderDetail.createdAt).format("DD/MM/YYYY HH:mm")
       : "-";
+
+    // Lấy thông tin đại lý nếu là đơn sỉ hoặc có đăng ký đại lý
+    let dealerStoreName = "";
+    let dealerTaxCode = "";
+    let dealerBusinessAddress = "";
+
+    if (orderDetail.userId && mongoose.isValidObjectId(orderDetail.userId)) {
+      const userDoc: any = await AccountUser.findById(orderDetail.userId).select("storeName phone email").lean();
+      if (userDoc?.storeName) {
+        dealerStoreName = userDoc.storeName;
+      }
+    }
+
+    if (orderDetail.phone) {
+      const regDoc: any = await WholesaleRegistration.findOne({ phone: orderDetail.phone, deleted: false }).lean();
+      if (regDoc) {
+        dealerStoreName = dealerStoreName || regDoc.storeName || "";
+        dealerTaxCode = regDoc.taxCode || "";
+        dealerBusinessAddress = regDoc.businessAddress || "";
+      }
+    }
+
+    orderDetail.storeName = dealerStoreName;
+    orderDetail.taxCode = dealerTaxCode;
+    orderDetail.businessAddress = dealerBusinessAddress;
 
     // Lấy danh sách IMEI đang có sẵn trong kho cho từng dòng sản phẩm loại IMEI
     if (Array.isArray(orderDetail.items)) {

@@ -14,7 +14,12 @@ block main
                   i.las.la-shopping-bag.fs-3.text-primary
                 div
                   h6.text-muted.mb-1 Tổng đơn hàng
-                  h4.mb-0 #{stats ? stats.totalOrders : 0}
+                  .d-flex.align-items-baseline.gap-2
+                    h4.mb-0 #{stats ? stats.totalOrders : 0}
+                    if stats && stats.wholesaleOrdersCount
+                      span.badge.bg-warning.text-dark(title="Đơn sỉ đại lý")
+                        i.las.la-crown.me-1
+                        | #{stats.wholesaleOrdersCount} đơn sỉ
         .col-md-3.col-sm-6
           .card.mb-0.h-100
             .card-body.p-3
@@ -62,8 +67,13 @@ block main
                 type="text"
                 name="keyword"
                 value=(filters && filters.keyword ? filters.keyword : "")
-                placeholder="Tìm mã đơn, tên KH, SĐT, IMEI, mã HĐ..."
+                placeholder="Tìm mã đơn, tên KH, đại lý, SĐT, IMEI..."
               )
+            .col-lg-2.col-md-3.col-6
+              select.form-select(name="orderType")
+                option(value="" selected=(!filters || !filters.orderType)) Tất cả loại đơn
+                option(value="wholesale" selected=(filters && filters.orderType == "wholesale")) 👑 Đại lý (Sỉ)
+                option(value="retail" selected=(filters && filters.orderType == "retail")) Khách lẻ
             .col-lg-2.col-md-3.col-6
               select.form-select(name="channel")
                 option(value="" selected=(!filters || !filters.channel)) Tất cả kênh bán
@@ -91,7 +101,7 @@ block main
                 option(value="" selected=(!filters || !filters.settlementStatus)) Giải ngân trả góp
                 option(value="pending" selected=(filters && filters.settlementStatus == "pending")) Chờ đối tác giải ngân
                 option(value="settled" selected=(filters && filters.settlementStatus == "settled")) Đã giải ngân
-              button.btn.btn-primary.px-3(type="submit")
+              button.btn.btn-primary.px-3(type="submit" title="Tìm kiếm & Lọc")
                 i.fa-solid.fa-magnifying-glass
               a.btn.btn-light.border(href=`/${pathAdmin}/order/list` title="Xóa bộ lọc")
                 i.fa-solid.fa-rotate-left
@@ -115,7 +125,12 @@ block main
                     tr
                       td #{pagination.skip + index + 1}
                       td
-                        a.fw-bold.text-primary.text-decoration-none(href=`/${pathAdmin}/order/edit/${item.id}`) #{item.code}
+                        .d-flex.align-items-center.flex-wrap.gap-1
+                          a.fw-bold.text-primary.text-decoration-none(href=`/${pathAdmin}/order/edit/${item.id}`) #{item.code}
+                          if (item.orderType === "wholesale")
+                            span.badge.bg-warning.text-dark(title="Đơn hàng đại lý sỉ")
+                              i.las.la-crown.me-1
+                              | Đơn sỉ
                       td
                         if (item.channel == "pos")
                           span.badge.bg-info Tại quầy POS
@@ -126,7 +141,11 @@ block main
                           a.fw-semibold.text-dark.text-decoration-none.d-block(href=`/${pathAdmin}/customer/detail/${item.customerId}`) #{item.fullName}
                         else
                           div.fw-semibold #{item.fullName}
-                        small.text-muted #{item.phone}
+                        if (item.storeName)
+                          span.badge.bg-warning-subtle.text-dark.border.border-warning.d-inline-flex.align-items-center.gap-1.my-1
+                            i.las.la-store.text-warning-emphasis
+                            span.fw-semibold #{item.storeName}
+                        small.text-muted.d-block #{item.phone}
                       td.text-end.fw-bold.text-danger #{item.totalFormatted}
                       td
                         case item.paymentMethod

@@ -64,9 +64,15 @@ block main
               div.text-muted.small Địa chỉ: 509 Nguyễn Trung Trực, Rạch Giá, Kiên Giang
               div.text-muted.small Điện thoại: 0982.887.761
             .text-end
-              h4.fw-bold.text-primary.mb-1 HÓA ĐƠN BÁN HÀNG
+              h4.fw-bold.text-primary.mb-1
+                if order.orderType === 'wholesale'
+                  | HÓA ĐƠN BÁN SỈ (B2B)
+                else
+                  | HÓA ĐƠN BÁN HÀNG
               div.small Mã HĐ: 
                 strong #{order.code}
+              if order.orderType === 'wholesale'
+                div.badge.bg-warning.text-dark.mb-1 Đơn sỉ đại lý
               div.small Ngày lập: #{order.createdAtFormat}
               if order.cashierName
                 div.small Thu ngân: #{order.cashierName}
@@ -75,6 +81,8 @@ block main
             .col-6
               div.small.text-muted Khách hàng:
               strong #{order.fullName}
+              if order.storeName
+                div.small.fw-bold.text-dark Cửa hàng / Đại lý: #{order.storeName}
               if order.phone
                 div.small SĐT: #{order.phone}
               if order.address
@@ -184,12 +192,20 @@ block main
             .fw-bold.fs-16 TY PHU QUY SHOP
             div 509 Nguyễn Trung Trực, Rạch Giá
             div SĐT: 0982.887.761
-            .fw-bold.mt-2 HÓA ĐƠN BÁN LẺ
+            .fw-bold.mt-2
+              if order.orderType === 'wholesale'
+                | HÓA ĐƠN BÁN SỈ (B2B)
+              else
+                | HÓA ĐƠN BÁN LẺ
             div Mã: #{order.code}
+            if order.orderType === 'wholesale'
+              div [ĐƠN SỈ ĐẠI LÝ]
             div Ngày: #{order.createdAtFormat}
 
           .border-bottom.pb-2.mb-2
             div Khách: #{order.fullName}
+            if order.storeName
+              div Cửa hàng: #{order.storeName}
             if order.phone
               div SĐT: #{order.phone}
             if order.cashierName
