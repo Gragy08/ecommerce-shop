@@ -50,6 +50,7 @@ export const confirmation = async (req: Request, res: Response): Promise<void> =
   try {
     const accountUser = res.locals.accountUser || null;
     const policy = await getWholesalePolicy();
+    const queryPhone = typeof req.query.phone === "string" ? req.query.phone.replace(/\D/g, "") : "";
 
     let existingRegistration: any = null;
     if (accountUser) {
@@ -59,6 +60,15 @@ export const confirmation = async (req: Request, res: Response): Promise<void> =
           ...(accountUser.id ? [{ accountUserId: accountUser.id }] : []),
           ...(cleanPhone ? [{ phone: cleanPhone }] : [])
         ],
+        deleted: false
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+
+    if (!existingRegistration && queryPhone) {
+      existingRegistration = await WholesaleRegistration.findOne({
+        phone: queryPhone,
         deleted: false
       })
         .sort({ createdAt: -1 })
@@ -80,6 +90,7 @@ export const confirmation = async (req: Request, res: Response): Promise<void> =
 // [POST] /dang-ky-dai-ly
 export const registerPost = async (req: Request, res: Response): Promise<void> => {
   try {
+    const isJson = req.xhr || Boolean(req.headers["content-type"]?.includes("application/json"));
     const { fullName, phone, email, storeName, businessAddress, taxCode, note } = req.body;
 
     const cleanFullName = String(fullName || "").trim();
@@ -91,6 +102,10 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
     const cleanNote = String(note || "").trim();
 
     if (!cleanFullName || !cleanStoreName || !cleanAddress || !cleanPhone) {
+      if (!isJson) {
+        res.redirect("/dang-ky-dai-ly");
+        return;
+      }
       res.json({
         code: "error",
         message: "Vui lòng nhập đầy đủ: Họ tên, Số điện thoại, Tên cửa hàng và Địa chỉ kinh doanh!"
@@ -99,6 +114,10 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
     }
 
     if (cleanPhone.length < 9 || cleanPhone.length > 11) {
+      if (!isJson) {
+        res.redirect("/dang-ky-dai-ly");
+        return;
+      }
       res.json({
         code: "error",
         message: "Số điện thoại không hợp lệ (cần từ 9 - 11 chữ số)!"
@@ -115,16 +134,24 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
 
     if (existingActive) {
       if (existingActive.status === "approved") {
+        if (!isJson) {
+          res.redirect(`/dang-ky-dai-ly/cho-xac-nhan?phone=${cleanPhone}`);
+          return;
+        }
         res.json({
           code: "error",
           message: `Số điện thoại ${cleanPhone} đã được duyệt làm đại lý! Bạn hãy đăng nhập để được áp dụng giá sỉ.`
         });
         return;
       }
+      if (!isJson) {
+        res.redirect(`/dang-ky-dai-ly/cho-xac-nhan?phone=${cleanPhone}`);
+        return;
+      }
       res.json({
         code: "error",
         message: `Số điện thoại ${cleanPhone} đã gửi hồ sơ và đang chờ xét duyệt!`,
-        redirectUrl: "/dang-ky-dai-ly/cho-xac-nhan"
+        redirectUrl: `/dang-ky-dai-ly/cho-xac-nhan?phone=${cleanPhone}`
       });
       return;
     }
@@ -185,10 +212,15 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
 
     await registration.save();
 
+    if (!isJson) {
+      res.redirect(`/dang-ky-dai-ly/cho-xac-nhan?phone=${cleanPhone}`);
+      return;
+    }
+
     res.json({
       code: "success",
       message: "Gửi hồ sơ đăng ký đại lý thành công!",
-      redirectUrl: "/dang-ky-dai-ly/cho-xac-nhan"
+      redirectUrl: `/dang-ky-dai-ly/cho-xac-nhan?phone=${cleanPhone}`
     });
   } catch (error) {
     console.error("Error client wholesale registerPost:", error);

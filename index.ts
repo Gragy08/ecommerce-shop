@@ -27,8 +27,9 @@ const io = new Server(server);
 // Kết nối đến cơ sở dữ liệu
 connectDB();
 
-// Cho phép gửi data lên dạng json
+// Cho phép gửi data lên dạng json & urlencoded
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Middleware tắt cache (áp dụng cho tất cả GET request)
 app.use((req, res, next) => {
