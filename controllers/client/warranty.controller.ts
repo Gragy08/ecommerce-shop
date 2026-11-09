@@ -23,15 +23,27 @@ const maskName = (name: string): string => {
 /**
  * Kiểm tra xem người dùng hiện tại có phải chính chủ phiếu bảo hành không
  */
-const checkIsOwner = (customerPhone: string, customerName: string, accountUser?: any): boolean => {
+const checkIsOwner = (
+  customerPhone: string,
+  customerName: string,
+  accountUser?: any,
+  ticketCustomerId?: any,
+  customerEmail?: string
+): boolean => {
   if (!accountUser) return false;
-  const userPhone = (accountUser.phone || "").replace(/\D/g, "");
-  const targetPhone = (customerPhone || "").replace(/\D/g, "");
+  const userPhone = String(accountUser.phone || "").replace(/\D/g, "");
+  const targetPhone = String(customerPhone || "").replace(/\D/g, "");
 
   if (userPhone && targetPhone && userPhone.length >= 9 && targetPhone.length >= 9) {
     if (userPhone.endsWith(targetPhone.slice(-9)) || targetPhone.endsWith(userPhone.slice(-9))) {
       return true;
     }
+  }
+
+  const userEmail = String(accountUser.email || "").trim().toLowerCase();
+  const targetEmail = String(customerEmail || "").trim().toLowerCase();
+  if (userEmail && targetEmail && userEmail === targetEmail) {
+    return true;
   }
 
   if (accountUser.fullName && customerName) {
@@ -293,7 +305,13 @@ export const executeLookup = async (rawKeyword: string, accountUser?: any): Prom
         break;
     }
 
-    const isOwner = checkIsOwner(ticket.customerInfo?.phone || "", ticket.customerInfo?.fullName || "", accountUser);
+    const isOwner = checkIsOwner(
+      ticket.customerInfo?.phone || "",
+      ticket.customerInfo?.fullName || "",
+      accountUser,
+      ticket.customerId,
+      ticket.customerInfo?.email || ""
+    );
 
     return {
       mode: "ticket",

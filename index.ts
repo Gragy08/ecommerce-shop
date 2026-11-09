@@ -82,11 +82,37 @@ configureFacebookPassport(passport);
 app.use(`/${pathAdmin}`, adminRoutes);
 app.use("/", clientRoutes);
 
+// Middleware xử lý lỗi tập trung tránh crash server
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Unhandled Route Error:", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  const isJson = req.xhr || (req.headers.accept && req.headers.accept.includes("application/json"));
+  if (isJson) {
+    res.status(500).json({
+      code: "error",
+      message: "Có lỗi máy chủ nội bộ xảy ra!"
+    });
+  } else {
+    res.status(500).send("<div style='text-align:center;padding:50px;font-family:sans-serif;'><h2>500 - Có lỗi xảy ra</h2><p>Hệ thống đang được xử lý, vui lòng quay lại sau ít phút hoặc liên hệ quản trị viên.</p><a href='/'>Quay về trang chủ</a></div>");
+  }
+});
+
 // Khởi tạo Socket bên Server
 initSocket(io);
 
 // Gọi job
 startJobs();
+
+// Bắt lỗi toàn cục tránh crash tiến trình
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+});
 
 server.listen(port, "127.0.0.1", () => {
   console.log(`Website đang chạy trên cổng ${port}`);

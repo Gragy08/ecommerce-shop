@@ -8,13 +8,12 @@ export const logAdminAction = async (req: RequestAccount, title: String) => {
       method: req.method,
       route: req.originalUrl,
       title: title,
-      expireAt: Date.now() + 30*24*60*60*1000 // 30 ngày
+      expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 ngày
     };
 
-    console.log("go to here", dataFinal);
     const newRecord = new AdminLog(dataFinal);
     await newRecord.save();
   } catch (error) {
-    console.log(error);
+    console.error("Lỗi ghi logAdminAction:", error);
   }
 }

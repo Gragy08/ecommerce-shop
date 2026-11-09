@@ -70,75 +70,85 @@ export const syncWholesaleToAccountAndCustomer = async (
 
   // 2. Tìm hoặc khởi tạo Customer (CRM)
   let customer: any = null;
-  if (registration.customerId && mongoose.isValidObjectId(registration.customerId)) {
-    customer = await Customer.findOne({
-      _id: registration.customerId,
-      deleted: false
-    });
-  }
-  if (!customer && cleanPhone) {
-    customer = await Customer.findOne({
-      phone: cleanPhone,
-      deleted: false
-    });
-  }
-  if (!customer && accountUser) {
-    customer = await Customer.findOne({
-      accountUserId: accountUser._id,
-      deleted: false
-    });
-  }
-
-  if (registration.status === "approved") {
-    const storeNote = `Đại lý: ${registration.storeName}${registration.taxCode ? ` - MST: ${registration.taxCode}` : ""}`;
-    if (!customer && cleanPhone) {
-      const search = slugify(
-        `${registration.fullName} ${cleanPhone} ${cleanEmail} ${registration.storeName}`,
-        { replacement: " ", lower: true }
-      );
-      customer = await Customer.create({
-        fullName: registration.fullName,
-        phone: cleanPhone,
-        email: cleanEmail,
-        address: registration.businessAddress || "",
-        customerGroup: "wholesale",
-        source: "web",
-        notes: storeNote,
-        accountUserId: accountUser ? accountUser._id : undefined,
-        search,
-        createdBy: adminObjectId
+  try {
+    if (registration.customerId && mongoose.isValidObjectId(registration.customerId)) {
+      customer = await Customer.findOne({
+        _id: registration.customerId
       });
-    } else if (customer) {
-      customer.customerGroup = "wholesale";
-      if (!customer.address && registration.businessAddress) {
-        customer.address = registration.businessAddress;
-      }
-      if (!customer.email && cleanEmail) {
-        customer.email = cleanEmail;
-      }
-      if (accountUser && !customer.accountUserId) {
-        customer.accountUserId = accountUser._id;
-      }
-      if (registration.storeName && !String(customer.notes || "").includes(registration.storeName)) {
-        customer.notes = customer.notes
-          ? `${customer.notes} | ${storeNote}`
-          : storeNote;
-      }
-      if (adminObjectId) {
-        customer.updatedBy = adminObjectId;
-      }
-      await customer.save();
+    }
+    if (!customer && cleanPhone) {
+      customer = await Customer.findOne({
+        phone: cleanPhone
+      });
+    }
+    if (!customer && accountUser) {
+      customer = await Customer.findOne({
+        accountUserId: accountUser._id
+      });
     }
 
-    if (customer) {
-      registration.customerId = customer._id;
-      await syncCustomerOrdersByPhone(cleanPhone, customer._id);
+    if (customer && customer.deleted) {
+      customer.deleted = false;
+      customer.deletedAt = undefined;
     }
-  } else if (registration.status === "rejected" && customer) {
-    if (customer.customerGroup === "wholesale") {
-      customer.customerGroup = (customer.totalSpent || 0) >= 50000000 ? "vip" : "retail";
-      await customer.save();
+
+    if (registration.status === "approved") {
+      const storeNote = `Đại lý: ${registration.storeName}${registration.taxCode ? ` - MST: ${registration.taxCode}` : ""}`;
+      if (!customer && cleanPhone) {
+        const search = slugify(
+          `${registration.fullName} ${cleanPhone} ${cleanEmail} ${registration.storeName}`,
+          { replacement: " ", lower: true }
+        );
+        customer = await Customer.create({
+          fullName: registration.fullName,
+          phone: cleanPhone,
+          email: cleanEmail,
+          address: registration.businessAddress || "",
+          customerGroup: "wholesale",
+          source: "web",
+          notes: storeNote,
+          accountUserId: accountUser ? accountUser._id : undefined,
+          search,
+          createdBy: adminObjectId
+        });
+      } else if (customer) {
+        customer.customerGroup = "wholesale";
+        if (!customer.address && registration.businessAddress) {
+          customer.address = registration.businessAddress;
+        }
+        if (!customer.email && cleanEmail) {
+          customer.email = cleanEmail;
+        }
+        if (accountUser && !customer.accountUserId) {
+          customer.accountUserId = accountUser._id;
+        }
+        if (registration.storeName && !String(customer.notes || "").includes(registration.storeName)) {
+          customer.notes = customer.notes
+            ? `${customer.notes} | ${storeNote}`
+            : storeNote;
+        }
+        if (adminObjectId) {
+          customer.updatedBy = adminObjectId;
+        }
+        await customer.save();
+      }
+
+      if (customer) {
+        registration.customerId = customer._id;
+        try {
+          await syncCustomerOrdersByPhone(cleanPhone, customer._id);
+        } catch (syncErr) {
+          console.error("Lỗi syncCustomerOrdersByPhone:", syncErr);
+        }
+      }
+    } else if (registration.status === "rejected" && customer) {
+      if (customer.customerGroup === "wholesale") {
+        customer.customerGroup = (customer.totalSpent || 0) >= 50000000 ? "vip" : "retail";
+        await customer.save();
+      }
     }
+  } catch (custErr) {
+    console.error("Lỗi đồng bộ Customer trong syncWholesaleToAccountAndCustomer:", custErr);
   }
 };
 
