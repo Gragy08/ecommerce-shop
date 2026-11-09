@@ -22,6 +22,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       })
         .sort({ createdAt: -1 })
         .lean();
+
+      // Nếu hồ sơ đang chờ duyệt, chuyển thẳng đến trang chờ xác nhận
+      if (
+        (existingRegistration && existingRegistration.status === "pending") ||
+        accountUser.wholesaleStatus === "pending"
+      ) {
+        res.redirect("/dang-ky-dai-ly/cho-xac-nhan");
+        return;
+      }
     }
 
     res.render("client/pages/wholesale-register", {
@@ -33,6 +42,38 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error("Error client wholesale register:", error);
     res.redirect("/");
+  }
+};
+
+// [GET] /dang-ky-dai-ly/cho-xac-nhan
+export const confirmation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const accountUser = res.locals.accountUser || null;
+    const policy = await getWholesalePolicy();
+
+    let existingRegistration: any = null;
+    if (accountUser) {
+      const cleanPhone = String(accountUser.phone || "").replace(/\D/g, "");
+      existingRegistration = await WholesaleRegistration.findOne({
+        $or: [
+          ...(accountUser.id ? [{ accountUserId: accountUser.id }] : []),
+          ...(cleanPhone ? [{ phone: cleanPhone }] : [])
+        ],
+        deleted: false
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+
+    res.render("client/pages/wholesale-confirmation", {
+      pageTitle: "Hồ sơ đại lý đang chờ xét duyệt",
+      policy,
+      accountUser,
+      existingRegistration
+    });
+  } catch (error) {
+    console.error("Error client wholesale confirmation:", error);
+    res.redirect("/dang-ky-dai-ly");
   }
 };
 
@@ -82,7 +123,8 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
       }
       res.json({
         code: "error",
-        message: `Số điện thoại ${cleanPhone} đã gửi hồ sơ và đang chờ xét duyệt! Nhân viên sẽ liên hệ với bạn sớm.`
+        message: `Số điện thoại ${cleanPhone} đã gửi hồ sơ và đang chờ xét duyệt!`,
+        redirectUrl: "/dang-ky-dai-ly/cho-xac-nhan"
       });
       return;
     }
@@ -145,7 +187,8 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
 
     res.json({
       code: "success",
-      message: "Gửi hồ sơ đăng ký đại lý thành công! Bộ phận kinh doanh sỉ sẽ thẩm định và liên hệ kích hoạt trong vòng 24h."
+      message: "Gửi hồ sơ đăng ký đại lý thành công!",
+      redirectUrl: "/dang-ky-dai-ly/cho-xac-nhan"
     });
   } catch (error) {
     console.error("Error client wholesale registerPost:", error);
