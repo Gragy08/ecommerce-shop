@@ -33,7 +33,7 @@ block main
                 .small.text-muted.mt-1 Địa chỉ:
                 .text-dark.small #{accountUser.businessAddress}
           div
-            a.btn.btn-primary.px-4.py-2.rounded-pill(href="/product")
+            a.btn.btn-primary.px-4.py-2.rounded-pill(href="/product/category")
               i.fas.fa-shopping-cart.me-1
               | Khám phá giá sỉ & Mua sắm
             a.btn.btn-outline-secondary.px-4.py-2.rounded-pill.ms-2(href="/dashboard")
@@ -67,7 +67,6 @@ block main
                 input#email.form-control(
                   type="email"
                   name="email"
-                  placeholder="Ví dụ: daily@gmail.com"
                   value=(accountUser ? accountUser.email : "")
                   required=(!accountUser)
                 )
@@ -76,7 +75,6 @@ block main
                 input#storeName.form-control(
                   type="text"
                   name="storeName"
-                  placeholder="Ví dụ: Cửa hàng điện thoại Di Động Việt"
                   required
                 )
               .col-12
@@ -84,7 +82,6 @@ block main
                 input#businessAddress.form-control(
                   type="text"
                   name="businessAddress"
-                  placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/TP"
                   required
                 )
               if (!accountUser)
@@ -111,14 +108,12 @@ block main
                 input#taxCode.form-control(
                   type="text"
                   name="taxCode"
-                  placeholder="Bỏ trống nếu không có"
                 )
               .col-md-6
                 label.form-label.fw-semibold.small(for="note") Ghi chú
                 input#note.form-control(
                   type="text"
                   name="note"
-                  placeholder="Ghi chú thêm nếu có..."
                 )
 
             .mt-4.pt-2.d-flex.align-items-center.justify-content-between.flex-wrap.gap-2

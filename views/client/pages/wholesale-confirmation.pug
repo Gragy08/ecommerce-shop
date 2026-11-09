@@ -59,7 +59,7 @@ block main
               i.fas.fa-clock.text-warning(style="font-size: 60px;")
             h3.fw-bold.text-dark Hồ sơ của bạn đang được xét duyệt!
             p.text-muted.mb-0(style="max-width: 580px; margin: 0 auto;")
-              | Bộ phận kinh doanh đã tiếp nhận thông tin và sẽ liên hệ xác nhận kích hoạt trong vòng 24 giờ. Khi được duyệt, bạn chỉ cần đăng nhập tài khoản là sẽ tự động được áp dụng bảng giá sỉ.
+              | Bộ phận kinh doanh đã tiếp nhận thông tin và sẽ liên hệ xác nhận kích hoạt trong vòng 24 giờ. Khi được duyệt, bạn chỉ cần đăng nhập tài khoản và bắt đầu tạo đơn hàng.
 
         if (existingRegistration)
           .p-3.bg-light.rounded-3.border.mb-4.mx-auto(style="max-width: 580px;")
@@ -80,7 +80,7 @@ block main
                 else if (existingRegistration.status === "rejected")
                   span.badge.bg-danger Từ chối
                 else
-                  span.badge.bg-warning.text-dark Đang thẩm định
+                  span.badge.bg-warning.text-dark Đang xét duyệt
 
         // 3 Quyền lợi đại lý
         .mb-4
@@ -90,21 +90,21 @@ block main
               .benefit-icon-wrapper.bg-primary.text-white
                 i.fas.fa-tags
               .fw-bold.text-dark.mb-1 Giá sỉ độc quyền
-              small.text-muted.d-block Tự động áp dụng mức giá chiết khấu tốt nhất khi đăng nhập.
+              small.text-muted.d-block Hỗ trợ áp dụng mức giá chiết khấu tốt nhất khi đăng nhập.
             .benefit-box
               .benefit-icon-wrapper.bg-success.text-white
                 i.fas.fa-shield-alt
               .fw-bold.text-dark.mb-1 Bảo hành ưu tiên
-              small.text-muted.d-block Tiếp nhận sửa chữa nhanh, hỗ trợ linh kiện thay thế giá gốc.
+              small.text-muted.d-block Tiếp nhận sửa chữa nhanh, hỗ trợ linh kiện thay thế giá tốt.
             .benefit-box
               .benefit-icon-wrapper.bg-info.text-white
                 i.fas.fa-shipping-fast
               .fw-bold.text-dark.mb-1 Giao hàng linh hoạt
-              small.text-muted.d-block Hỗ trợ giao hỏa tốc hoặc nhận máy trực tiếp tại quầy POS.
+              small.text-muted.d-block Hỗ trợ giao hàng miễn phí đến tận nơi, nhanh chóng và an toàn.
 
         // Ràng buộc đơn hàng
         .p-3.border.rounded-3.bg-light-subtle.mb-4.mx-auto(style="max-width: 680px;")
-          .d-flex.align-items-start.gap-2
+          .d-flex.flex-column.align-items-start.gap-2
             i.fas.fa-info-circle.text-primary.mt-1
             div
               .fw-bold.text-dark.small Ràng buộc đơn sỉ hiện hành:
@@ -113,13 +113,18 @@ block main
                 strong.text-dark #{policy.minQuantity} máy
                 |  hoặc tổng đơn từ 
                 strong.text-dark #{policy.minOrderTotal ? policy.minOrderTotal.toLocaleString("vi-VN") + " đ" : "20.000.000 đ"}
-                |  (áp dụng khi đặt Online & mua tại quầy POS).
+                |  (áp dụng khi đặt Online & mua tại cửa hàng).
+            div
+              .fw-bold.text-dark.small Nếu có thắc mắc xin liên hệ:
+              small.text-muted
+                | Hotline:
+                strong.text-dark 0918.669.099 (chị Phương)
 
         // Nút hành động & liên kết bài viết
         .text-center.d-flex.justify-content-center.flex-wrap.gap-2
           if (existingRegistration && existingRegistration.status === "approved")
             if (accountUser && accountUser.isWholesale)
-              a.btn.btn-primary.rounded-pill.px-4.py-2.small(href="/product")
+              a.btn.btn-primary.rounded-pill.px-4.py-2.small(href="/product/category")
                 i.fas.fa-shopping-cart.me-1
                 | Khám phá giá sỉ
             else

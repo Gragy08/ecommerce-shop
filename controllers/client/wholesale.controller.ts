@@ -288,13 +288,13 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
           });
 
           if (!isJson) {
-            res.redirect("/product");
+            res.redirect("/product/category");
             return;
           }
           res.json({
             code: "success",
             message: "Hồ sơ đại lý của bạn đã được quản trị viên duyệt trước đó. Tài khoản đã kích hoạt thành công, hệ thống đã tự động đăng nhập!",
-            redirectUrl: "/product"
+            redirectUrl: "/product/category"
           });
           return;
         }
@@ -338,13 +338,13 @@ export const registerPost = async (req: Request, res: Response): Promise<void> =
         await syncWholesaleToAccountAndCustomer(existingActive);
 
         if (!isJson) {
-          res.redirect("/product");
+          res.redirect("/product/category");
           return;
         }
         res.json({
           code: "success",
           message: "Tài khoản của bạn đã được kích hoạt quyền đại lý thành công!",
-          redirectUrl: "/product"
+          redirectUrl: "/product/category"
         });
         return;
       }

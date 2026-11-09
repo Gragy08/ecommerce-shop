@@ -3,6 +3,8 @@ import * as productController from "../../controllers/client/product.controller"
 
 const router = Router();
 
+router.get('/', (req, res) => res.redirect('/product/category'));
+
 router.get('/category', productController.productByCategory);
 
 router.get('/category/:slug', productController.productByCategory);
