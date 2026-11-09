@@ -206,15 +206,14 @@
                 span Kênh Đại lý (Bán sỉ)
               #sidebarWholesale.collapse
                 ul.nav.flex-column
+                  li.nav-item
+                    a.nav-link(href=`/${pathAdmin}/wholesale/list`) Danh sách đại lý
                   if (permissions.includes("wholesale-registration-list") || permissions.includes("wholesale-approval"))
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/wholesale/registrations`) Duyệt hồ sơ đại lý
                   if (permissions.includes("wholesale-setting"))
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/wholesale/settings`) Chính sách & Ràng buộc sỉ
-                  if (permissions.includes("customer-list"))
-                    li.nav-item
-                      a.nav-link(href=`/${pathAdmin}/customer/list?customerGroup=wholesale`) Danh sách đại lý
           if (permissions.includes("coupon-role"))
             li.nav-item
               a.nav-link(

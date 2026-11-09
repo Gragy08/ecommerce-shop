@@ -238,6 +238,18 @@ export const registrationList = async (req: Request, res: Response): Promise<voi
   }
 };
 
+// [GET] /admin/wholesale/registrations/create
+export const registrationCreate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    res.render("admin/pages/wholesale-registration-create", {
+      pageTitle: "Thêm hồ sơ đại lý"
+    });
+  } catch (error) {
+    console.error("Error wholesale registrationCreate:", error);
+    res.redirect("/admin/wholesale/registrations");
+  }
+};
+
 // [POST] /admin/wholesale/registrations/create
 export const registrationCreatePost = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -624,5 +636,136 @@ export const settingsPatch = async (req: Request, res: Response): Promise<void> 
       code: "error",
       message: "Lỗi hệ thống khi lưu chính sách bán sỉ!"
     });
+  }
+};
+
+// [GET] /admin/wholesale/list - Danh sách Đại lý Chính thức
+export const dealerList = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim() : "";
+    const find: any = {
+      deleted: false,
+      customerGroup: "wholesale"
+    };
+
+    if (keyword) {
+      const cleanPhone = keyword.replace(/\D/g, "");
+      const keywordRegex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      const searchSlug = slugify(keyword, { replacement: " ", lower: true });
+      const orConditions: any[] = [
+        { fullName: keywordRegex },
+        { email: keywordRegex },
+        { address: keywordRegex },
+        { notes: keywordRegex },
+        { search: new RegExp(searchSlug, "i") }
+      ];
+      if (cleanPhone) {
+        orConditions.push({ phone: new RegExp(cleanPhone, "i") });
+      }
+      find.$or = orConditions;
+    }
+
+    const limitItems = 15;
+    let page = 1;
+    if (req.query.page && parseInt(String(req.query.page), 10) > 0) {
+      page = parseInt(String(req.query.page), 10);
+    }
+
+    const [totalRecord, totalDealers, webAccountsCount, revenueAgg] = await Promise.all([
+      Customer.countDocuments(find),
+      Customer.countDocuments({ deleted: false, customerGroup: "wholesale" }),
+      Customer.countDocuments({ deleted: false, customerGroup: "wholesale", accountUserId: { $ne: null } }),
+      Customer.aggregate([
+        { $match: { deleted: false, customerGroup: "wholesale" } },
+        { $group: { _id: null, totalSpent: { $sum: "$totalSpent" }, totalOrders: { $sum: "$orderCount" } } }
+      ])
+    ]);
+
+    const totalRevenue = revenueAgg[0]?.totalSpent || 0;
+    const totalOrders = revenueAgg[0]?.totalOrders || 0;
+
+    const totalPage = Math.ceil(totalRecord / limitItems) || 1;
+    if (page > totalPage) page = totalPage;
+    const skip = (page - 1) * limitItems;
+
+    const recordList = await Customer.find(find)
+      .populate("accountUserId", "fullName email phone status userType wholesaleStatus")
+      .sort({ createdAt: -1 })
+      .limit(limitItems)
+      .skip(skip)
+      .lean();
+
+    for (const item of recordList as any[]) {
+      item.totalSpentFormatted = `${Number(item.totalSpent || 0).toLocaleString("vi-VN")} đ`;
+      item.createdAtFormat = item.createdAt ? moment(item.createdAt).format("DD/MM/YYYY") : "---";
+    }
+
+    res.render("admin/pages/wholesale-dealer-list", {
+      pageTitle: "Danh sách Đại lý (Khách sỉ)",
+      recordList,
+      stats: {
+        totalDealers,
+        webAccountsCount,
+        totalRevenueFormatted: `${totalRevenue.toLocaleString("vi-VN")} đ`,
+        totalOrders
+      },
+      filters: {
+        keyword
+      },
+      pagination: {
+        totalRecord,
+        totalPage,
+        currentPage: page,
+        skip
+      }
+    });
+  } catch (error) {
+    console.error("Error dealerList:", error);
+    res.redirect("/admin/dashboard");
+  }
+};
+
+// [PATCH] /admin/wholesale/revoke/:id
+export const revokeDealerPatch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = String(req.params.id || "");
+    if (!mongoose.isValidObjectId(id)) {
+      res.json({ code: "error", message: "ID không hợp lệ!" });
+      return;
+    }
+    const customer = await Customer.findOne({ _id: id, deleted: false });
+    if (!customer) {
+      res.json({ code: "error", message: "Không tìm thấy khách hàng!" });
+      return;
+    }
+    customer.customerGroup = "retail";
+    await customer.save();
+
+    if (customer.accountUserId) {
+      await AccountUser.updateOne(
+        { _id: customer.accountUserId },
+        {
+          $set: {
+            userType: "retail",
+            wholesaleStatus: "none"
+          }
+        }
+      );
+    }
+    await WholesaleRegistration.updateMany(
+      { phone: customer.phone, deleted: false },
+      { $set: { status: "rejected", rejectedReason: "Thu hồi quyền đại lý" } }
+    );
+
+    const rawAdminId = (req as any).adminId;
+    await logAdminAction(
+      req as any,
+      `Thu hồi quyền đại lý: ${customer.fullName} (${customer.phone})`
+    );
+
+    res.json({ code: "success", message: `Đã thu hồi quyền đại lý của "${customer.fullName}"!` });
+  } catch (error) {
+    console.error("Error revokeDealerPatch:", error);
+    res.json({ code: "error", message: "Lỗi hệ thống khi thu hồi quyền đại lý!" });
   }
 };

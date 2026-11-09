@@ -53,7 +53,7 @@ block main
                 a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/settings`)
                   i.las.la-cog.me-1
                   | Chính sách & Ràng buộc sỉ
-              button.btn.btn-primary(type="button" data-bs-toggle="modal" data-bs-target="#createWholesaleModal")
+              a.btn.btn-primary(href=`/${pathAdmin}/wholesale/registrations/create`)
                 i.las.la-plus.me-1
                 | Thêm hồ sơ đại lý
 
@@ -188,47 +188,6 @@ block main
 
           +pagination()
 
-  // Modal Tạo Hồ Sơ Đại Lý Mới
-  #createWholesaleModal.modal.fade(tabindex="-1" aria-hidden="true")
-    .modal-dialog.modal-lg
-      .modal-content
-        form#createWholesaleForm
-          .modal-header
-            h5.modal-title Thêm Hồ Sơ Đại Lý / Khách Sỉ Mới
-            button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
-          .modal-body
-            .row.g-3
-              .col-md-6
-                label.form-label Họ và tên người đại diện *
-                input.form-control(type="text" name="fullName" required)
-              .col-md-6
-                label.form-label Số điện thoại liên hệ *
-                input.form-control(type="text" name="phone" required)
-              .col-md-6
-                label.form-label Email (Tài khoản đăng nhập Web nếu có)
-                input.form-control(type="email" name="email")
-              .col-md-6
-                label.form-label Tên cửa hàng / Doanh nghiệp *
-                input.form-control(type="text" name="storeName" required)
-              .col-md-8
-                label.form-label Địa chỉ cửa hàng / Kinh doanh *
-                input.form-control(type="text" name="businessAddress" required)
-              .col-md-4
-                label.form-label Mã số thuế (Nếu có)
-                input.form-control(type="text" name="taxCode")
-              .col-12
-                label.form-label Ghi chú thẩm định
-                textarea.form-control(name="note" rows="2")
-              if (permissions.includes("wholesale-approval"))
-                .col-12
-                  .form-check.form-switch
-                    input#autoApproveSwitch.form-check-input(type="checkbox" name="autoApprove" checked)
-                    label.form-check-label.fw-semibold.text-success(for="autoApproveSwitch")
-                      | Phê duyệt ngay lập tức (Kích hoạt nhóm Khách sỉ & Bảng giá sỉ ngay sau khi tạo)
-          .modal-footer
-            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
-            button.btn.btn-primary(type="submit") Lưu hồ sơ đại lý
-
   // Modal Từ Chối Hồ Sơ Đại Lý
   #rejectWholesaleModal.modal.fade(tabindex="-1" aria-hidden="true")
     .modal-dialog
@@ -252,42 +211,6 @@ block main
 block script
   script.
     const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
-
-    // Tạo mới hồ sơ đại lý
-    const createForm = document.getElementById('createWholesaleForm');
-    if (createForm) {
-      createForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(createForm);
-        const payload = {
-          fullName: formData.get('fullName'),
-          phone: formData.get('phone'),
-          email: formData.get('email'),
-          storeName: formData.get('storeName'),
-          businessAddress: formData.get('businessAddress'),
-          taxCode: formData.get('taxCode'),
-          note: formData.get('note'),
-          autoApprove: document.getElementById('autoApproveSwitch') ? document.getElementById('autoApproveSwitch').checked : false
-        };
-
-        try {
-          const res = await fetch(`/${pathAdmin}/wholesale/registrations/create`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          if (data.code === 'success') {
-            notyf.success(data.message);
-            setTimeout(() => window.location.reload(), 800);
-          } else {
-            notyf.error(data.message || 'Có lỗi xảy ra!');
-          }
-        } catch (err) {
-          notyf.error('Lỗi kết nối máy chủ!');
-        }
-      });
-    }
 
     // Duyệt hồ sơ đại lý
     async function approveRegistration(id, storeName) {

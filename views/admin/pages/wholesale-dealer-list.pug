@@ -1,0 +1,168 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+
+block main
+  .row
+    .col-12
+      // 4 Thẻ KPI Kênh Đại Lý
+      .row.g-3.mb-3
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-info-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-store-alt.fs-3.text-info
+                div
+                  h6.text-muted.mb-1 Đại lý đang hoạt động
+                  h4.mb-0 #{stats.totalDealers}
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-success-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-user-check.fs-3.text-success
+                div
+                  h6.text-muted.mb-1 Đã có tài khoản Web
+                  h4.mb-0 #{stats.webAccountsCount}
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-primary-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-boxes.fs-3.text-primary
+                div
+                  h6.text-muted.mb-1 Tổng số đơn hàng sỉ
+                  h4.mb-0 #{stats.totalOrders} đơn
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-warning-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-coins.fs-3.text-warning
+                div
+                  h6.text-muted.mb-1 Doanh số kênh bán sỉ
+                  h4.mb-0.text-danger #{stats.totalRevenueFormatted}
+
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto.d-flex.gap-2
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/registrations`)
+                i.las.la-list.me-1
+                | Duyệt hồ sơ đại lý
+              a.btn.btn-primary(href=`/${pathAdmin}/wholesale/registrations/create`)
+                i.las.la-plus.me-1
+                | Thêm hồ sơ đại lý
+
+        .card-body.pt-0
+          // Thanh tìm kiếm
+          .row.mb-3
+            .col-md-6
+              form(action=`/${pathAdmin}/wholesale/list` method="GET")
+                .input-group
+                  input.form-control.form-control-sm(
+                    type="text"
+                    name="keyword"
+                    placeholder="Tìm theo tên đại lý, SĐT, email, địa chỉ..."
+                    value=filters.keyword
+                  )
+                  button.btn.btn-sm.btn-primary(type="submit")
+                    i.las.la-search.me-1
+                    | Tìm kiếm
+                  if filters.keyword
+                    a.btn.btn-sm.btn-outline-secondary(href=`/${pathAdmin}/wholesale/list`) Xóa lọc
+
+          // Bảng danh sách đại lý
+          .table-responsive
+            table.table.table-striped.align-middle.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Tên Đại lý & Người đại diện
+                  th Số điện thoại
+                  th Email
+                  th Tài khoản Web
+                  th.text-center Số đơn sỉ
+                  th.text-end Doanh thu nhập hàng
+                  th.text-end Thao tác
+              tbody
+                if (recordList && recordList.length > 0)
+                  each item, index in recordList
+                    tr
+                      td #{pagination.skip + index + 1}
+                      td
+                        a.fw-bold.text-dark.text-decoration-none(href=`/${pathAdmin}/customer/detail/${item._id}`)
+                          i.las.la-store.text-info.me-1
+                          | #{item.fullName}
+                        if item.notes
+                          div.text-muted.fs-12.mt-1 #{item.notes}
+                        if item.address
+                          div.text-muted.fs-11 #{item.address}
+                      td
+                        span.fw-semibold.text-primary #{item.phone || '-'}
+                      td #{item.email || '-'}
+                      td
+                        if (item.accountUserId)
+                          if (item.accountUserId.status == "active")
+                            span.badge.bg-success-subtle.text-success Đã kích hoạt
+                          else
+                            span.badge.bg-danger-subtle.text-danger Đang khóa
+                          div.text-muted.fs-11.mt-1 Giá sỉ đã mở
+                        else
+                          span.badge.bg-light.text-secondary.border Chưa đăng ký Web
+                      td.text-center
+                        span.badge.bg-light.text-dark.fs-12 #{item.orderCount || 0}
+                      td.text-end.fw-bold.text-danger #{item.totalSpentFormatted}
+                      td.text-end
+                        .d-inline-flex.align-items-center.gap-1
+                          a.btn.btn-sm.btn-outline-info(
+                            href=`/${pathAdmin}/customer/detail/${item._id}`
+                            title="Xem chi tiết hồ sơ CRM"
+                          )
+                            i.las.la-eye
+                          if (permissions.includes("customer-edit"))
+                            a.btn.btn-sm.btn-outline-primary(
+                              href=`/${pathAdmin}/customer/edit/${item._id}`
+                              title="Chỉnh sửa hồ sơ"
+                            )
+                              i.las.la-pen
+                          if (permissions.includes("wholesale-approval"))
+                            button.btn.btn-sm.btn-outline-danger(
+                              type="button"
+                              onclick=`revokeDealer('${item._id}', '${item.fullName}')`
+                              title="Thu hồi quyền đại lý (chuyển về khách lẻ)"
+                            )
+                              i.las.la-user-times
+                else
+                  tr
+                    td.text-center.py-4(colspan="8")
+                      .text-muted Chưa có khách hàng nào thuộc nhóm Đại lý (Bán sỉ).
+
+          +pagination()
+
+block script
+  script.
+    const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
+
+    async function revokeDealer(id, name) {
+      if (!confirm(`Xác nhận THU HỒI quyền đại lý của "${name}"?\nKhách hàng sẽ được chuyển về nhóm Khách lẻ và không còn áp dụng giá sỉ.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/${pathAdmin}/wholesale/revoke/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.code === 'success') {
+          notyf.success(data.message);
+          setTimeout(() => window.location.reload(), 700);
+        } else {
+          notyf.error(data.message || 'Không thể thu hồi!');
+        }
+      } catch (err) {
+        notyf.error('Lỗi kết nối máy chủ!');
+      }
+    }

@@ -1,0 +1,100 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/registrations`)
+                i.las.la-arrow-left.me-1
+                | Danh sách hồ sơ đại lý
+        .card-body.pt-0
+          form#wholesaleCreateForm
+            .row.g-3
+              .col-md-6
+                .mb-3
+                  label.form-label(for="fullName") Họ và tên người đại diện *
+                  input#fullName.form-control(type="text" name="fullName" required)
+              .col-md-6
+                .mb-3
+                  label.form-label(for="phone") Số điện thoại liên hệ *
+                  input#phone.form-control(type="text" name="phone" required)
+              .col-md-6
+                .mb-3
+                  label.form-label(for="email") Email (Tài khoản đăng nhập Web)
+                  input#email.form-control(type="email" name="email")
+              .col-md-6
+                .mb-3
+                  label.form-label(for="storeName") Tên cửa hàng / Doanh nghiệp *
+                  input#storeName.form-control(type="text" name="storeName" required)
+              .col-md-8
+                .mb-3
+                  label.form-label(for="businessAddress") Địa chỉ cửa hàng / Kinh doanh *
+                  input#businessAddress.form-control(type="text" name="businessAddress" required)
+              .col-md-4
+                .mb-3
+                  label.form-label(for="taxCode") Mã số thuế (MST)
+                  input#taxCode.form-control(type="text" name="taxCode")
+              .col-12
+                .mb-3
+                  label.form-label(for="note") Ghi chú thẩm định
+                  textarea#note.form-control(name="note" rows="3")
+              if (permissions.includes("wholesale-approval"))
+                .col-12
+                  .p-3.border.rounded.bg-light-subtle.mb-3
+                    .form-check.form-switch
+                      input#autoApproveSwitch.form-check-input(type="checkbox" name="autoApprove" checked)
+                      label.form-check-label.fw-semibold.text-success(for="autoApproveSwitch")
+                        | Phê duyệt ngay lập tức (Kích hoạt nhóm Khách sỉ & Bảng giá sỉ ngay sau khi tạo)
+                    small.text-muted.d-block.mt-1
+                      | Tự động nâng cấp tài khoản người dùng và hồ sơ CRM sang nhóm Khách sỉ để được hưởng giá đại lý.
+
+            button.btn.btn-primary(type="submit")
+              i.las.la-save.me-1
+              | Tạo mới
+            a.btn.btn-danger.ms-1(href=`/${pathAdmin}/wholesale/registrations`) Hủy
+
+block script
+  script.
+    const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
+    const createForm = document.getElementById('wholesaleCreateForm');
+    if (createForm) {
+      createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(createForm);
+        const autoApproveSwitch = document.getElementById('autoApproveSwitch');
+        const payload = {
+          fullName: formData.get('fullName'),
+          phone: formData.get('phone'),
+          email: formData.get('email'),
+          storeName: formData.get('storeName'),
+          businessAddress: formData.get('businessAddress'),
+          taxCode: formData.get('taxCode'),
+          note: formData.get('note'),
+          autoApprove: autoApproveSwitch ? autoApproveSwitch.checked : false
+        };
+
+        try {
+          const res = await fetch(`/${pathAdmin}/wholesale/registrations/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.code === 'success') {
+            notyf.success(data.message);
+            setTimeout(() => {
+              window.location.href = `/${pathAdmin}/wholesale/registrations`;
+            }, 700);
+          } else {
+            notyf.error(data.message || 'Có lỗi xảy ra!');
+          }
+        } catch (err) {
+          notyf.error('Lỗi kết nối máy chủ!');
+        }
+      });
+    }
