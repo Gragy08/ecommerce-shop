@@ -13,6 +13,7 @@ import orderRoutes from "./order.route";
 import chatRoutes from "./chat.route";
 import locationRoutes from "./location.route";
 import warrantyRoutes from "./warranty.route";
+import wholesaleRoutes from "./wholesale.route";
 import * as categoryMiddleware from "../../middlewares/client/category.middleware";
 import * as attributeMiddleware from "../../middlewares/client/attribute.middleware";
 import * as authMiddleware from "../../middlewares/client/auth.middleware";
@@ -61,5 +62,8 @@ router.use('/chat', chatRoutes);
 router.use('/location', locationRoutes);
 
 router.use('/tra-cuu-bao-hanh', warrantyRoutes);
+
+router.use('/dang-ky-dai-ly', wholesaleRoutes);
+router.use('/auth/registerWholesaler', (req, res) => res.redirect('/dang-ky-dai-ly'));
 
 export default router;

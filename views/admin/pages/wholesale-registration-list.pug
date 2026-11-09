@@ -51,7 +51,6 @@ block main
             .col-auto.d-flex.gap-2
               if (permissions.includes("wholesale-setting"))
                 a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/settings`)
-                  i.las.la-cog.me-1
                   | Chính sách & Ràng buộc sỉ
               a.btn.btn-primary(href=`/${pathAdmin}/wholesale/registrations/create`)
                 i.las.la-plus.me-1
@@ -114,13 +113,11 @@ block main
                       td
                         div.fw-semibold.text-dark #{item.fullName}
                         div.text-primary.fs-13
-                          i.las.la-phone.me-1
                           | #{item.phone}
                         if item.email
                           div.text-muted.fs-12 #{item.email}
                       td
                         div.fw-bold.text-dark
-                          i.las.la-store-alt.text-info.me-1
                           | #{item.storeName}
                         div.text-muted.fs-12 #{item.businessAddress}
                         if item.taxCode
@@ -140,7 +137,7 @@ block main
                         if (item.status === "pending")
                           span.badge.bg-warning.text-dark Chờ xét duyệt
                         else if (item.status === "approved")
-                          span.badge.bg-success Đã phê duyệt (Giá sỉ)
+                          span.badge.bg-success Đã phê duyệt
                           if item.approvedBy
                             div.text-muted.fs-11.mt-1 Duyệt bởi: #{item.approvedBy.fullName}
                           if item.approvedAtFormat

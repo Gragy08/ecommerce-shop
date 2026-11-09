@@ -94,7 +94,6 @@ block main
                       td #{pagination.skip + index + 1}
                       td
                         a.fw-bold.text-dark.text-decoration-none(href=`/${pathAdmin}/customer/detail/${item._id}`)
-                          i.las.la-store.text-info.me-1
                           | #{item.fullName}
                         if item.notes
                           div.text-muted.fs-12.mt-1 #{item.notes}

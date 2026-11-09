@@ -14,6 +14,9 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       return next();
     }
 
+    res.locals.isWholesale = false;
+    res.locals.wholesaleStatus = "none";
+
     const token = req.cookies.tokenUser;
     
     if(token) {
@@ -33,18 +36,32 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
           })
           .sort({
             createdAt: "desc"
-          })
+          });
+
+        const isWholesale = Boolean(
+          existAccount.userType === "wholesale" &&
+          existAccount.wholesaleStatus === "approved"
+        );
+
+        res.locals.isWholesale = isWholesale;
+        res.locals.wholesaleStatus = existAccount.wholesaleStatus || "none";
 
         res.locals.accountUser = {
           id: existAccount.id,
+          _id: existAccount.id,
           fullName: existAccount.fullName,
           email: existAccount.email,
           phone: existAccount.phone,
           avatar: existAccount.avatar,
           addressList: addressList,
           totalPoint: existAccount.totalPoint,
-          usedPoint: existAccount.usedPoint
-
+          usedPoint: existAccount.usedPoint,
+          userType: existAccount.userType || "retail",
+          wholesaleStatus: existAccount.wholesaleStatus || "none",
+          storeName: existAccount.storeName || "",
+          businessAddress: existAccount.businessAddress || "",
+          taxCode: existAccount.taxCode || "",
+          isWholesale: isWholesale
         };
       }
     }

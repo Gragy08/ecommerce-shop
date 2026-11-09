@@ -37,7 +37,7 @@ block main
                           th.ps-4 Dòng máy & Phiên bản
                           th Mã IMEI
                           th Ngày mua
-                          th Hạn bảo hành
+                          th Hạn BH
                           th Tình trạng
                           th.text-center.pe-4 Tra cứu
                       tbody
@@ -56,7 +56,6 @@ block main
                             td.text-center.pe-4
                               a.btn.btn-sm.btn-primary.rounded-pill(href=`/tra-cuu-bao-hanh?keyword=${dev.identifier}`)
                                 i.fas.fa-eye.me-1
-                                | Chi tiết
                 else
                   .p-4.text-center.text-muted
                     i.fas.fa-box-open.fs-2.mb-2.d-block
