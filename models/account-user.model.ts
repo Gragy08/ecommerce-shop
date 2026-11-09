@@ -28,6 +28,45 @@ const schema = new mongoose.Schema(
       type: Number,
       default: 0 // điểm đã sử dụng
     },
+    userType: {
+      type: String,
+      enum: ["retail", "wholesale"], // retail – Khách lẻ, wholesale – Đại lý / Khách sỉ
+      default: "retail"
+    },
+    wholesaleStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none"
+    },
+    storeName: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    businessAddress: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    taxCode: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    wholesaleRegisteredAt: {
+      type: Date
+    },
+    wholesaleApprovedAt: {
+      type: Date
+    },
+    wholesaleApprovedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AccountAdmin"
+    },
+    wholesaleRejectReason: {
+      type: String,
+      default: ""
+    },
     search: String,
     deleted: {
       type: Boolean,

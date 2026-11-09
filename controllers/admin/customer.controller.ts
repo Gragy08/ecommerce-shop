@@ -349,6 +349,11 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       deleted: false
     };
 
+    const filterGroup = typeof req.query.customerGroup === "string" ? req.query.customerGroup : "";
+    if (["retail", "vip", "wholesale"].includes(filterGroup)) {
+      find.customerGroup = filterGroup;
+    }
+
     if (req.query.keyword) {
       const keyword = String(req.query.keyword).trim();
       const cleanPhone = keyword.replace(/\D/g, "");
@@ -657,19 +662,28 @@ export const editPatch = async (req: Request, res: Response): Promise<void> => {
 
     // Đồng bộ ngược lại thông tin sang AccountUser nếu có liên kết
     if (customer.accountUserId) {
+      const accountUpdate: any = {
+        fullName,
+        phone: cleanPhone,
+        ...(email ? { email } : {}),
+        search: slugify(`${fullName} ${email} ${cleanPhone}`, {
+          replacement: " ",
+          lower: true
+        })
+      };
+      if (customerGroup === "wholesale") {
+        accountUpdate.userType = "wholesale";
+        accountUpdate.wholesaleStatus = "approved";
+        accountUpdate.wholesaleApprovedAt = new Date();
+        if (validAdminObjectId) {
+          accountUpdate.wholesaleApprovedBy = validAdminObjectId;
+        }
+      } else {
+        accountUpdate.userType = "retail";
+      }
       await AccountUser.updateOne(
         { _id: customer.accountUserId },
-        {
-          $set: {
-            fullName,
-            phone: cleanPhone,
-            ...(email ? { email } : {}),
-            search: slugify(`${fullName} ${email} ${cleanPhone}`, {
-              replacement: " ",
-              lower: true
-            })
-          }
-        }
+        { $set: accountUpdate }
       );
     }
 

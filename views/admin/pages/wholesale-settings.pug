@@ -1,0 +1,221 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      // 3 Thẻ Thống Kê Kênh Bán Sỉ
+      .row.g-3.mb-3
+        .col-md-4
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-info-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-store-alt.fs-3.text-info
+                div
+                  h6.text-muted.mb-1 Đại lý đang hoạt động
+                  h4.mb-0 #{stats.wholesaleCustomerCount} đại lý
+        .col-md-4
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-primary-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-boxes.fs-3.text-primary
+                div
+                  h6.text-muted.mb-1 Tổng số đơn hàng sỉ
+                  h4.mb-0 #{stats.wholesaleOrderCount} đơn
+        .col-md-4
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-success-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-coins.fs-3.text-success
+                div
+                  h6.text-muted.mb-1 Doanh thu kênh bán sỉ
+                  h4.mb-0.text-success #{stats.wholesaleRevenue.toLocaleString("vi-VN")} đ
+
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto
+              a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/registrations`)
+                i.las.la-arrow-left.me-1
+                | Danh sách hồ sơ đại lý
+
+        .card-body
+          form#wholesaleSettingsForm
+            .row.g-4
+              .col-lg-8
+                .p-3.border.rounded.bg-light-subtle.mb-3
+                  .form-check.form-switch
+                    input#enabledSwitch.form-check-input(
+                      type="checkbox"
+                      name="enabled"
+                      checked=policy.enabled
+                    )
+                    label.form-check-label.fw-bold.fs-15(for="enabledSwitch")
+                      | Kích hoạt Ràng buộc Đơn hàng Kênh Bán Sỉ (B2B)
+                  p.text-muted.fs-12.mb-0.mt-1
+                    | Khi bật, khách hàng đại lý phải đạt mức số lượng máy tối thiểu hoặc tổng hóa đơn tối thiểu dưới đây mới có thể đặt hàng theo bảng giá sỉ.
+
+                .row.g-3
+                  .col-md-6
+                    label.form-label.fw-semibold(for="minQuantity") Số lượng máy tối thiểu trên 1 đơn *
+                    .input-group
+                      input#minQuantity.form-control(
+                        type="number"
+                        name="minQuantity"
+                        min="1"
+                        value=policy.minQuantity
+                        required
+                      )
+                      span.input-group-text máy / thiết bị
+                    small.text-muted Ví dụ: 3 máy trở lên.
+
+                  .col-md-6
+                    label.form-label.fw-semibold(for="minOrderTotal") Tổng giá trị hóa đơn tối thiểu (VNĐ) *
+                    .input-group
+                      input#minOrderTotal.form-control(
+                        type="number"
+                        name="minOrderTotal"
+                        min="0"
+                        step="500000"
+                        value=policy.minOrderTotal
+                        required
+                      )
+                      span.input-group-text VNĐ
+                    small.text-muted Ví dụ: 20.000.000 đ trở lên.
+
+                  .col-md-12
+                    label.form-label.fw-semibold(for="conditionMode") Quy tắc kết hợp điều kiện
+                    select#conditionMode.form-select(name="conditionMode")
+                      option(value="or" selected=policy.conditionMode === "or")
+                        | Thỏa 1 trong 2 điều kiện: Đủ số lượng máy HOẶC Đủ tổng tiền hóa đơn (Khuyên dùng)
+                      option(value="and" selected=policy.conditionMode === "and")
+                        | Bắt buộc cả 2 điều kiện: Phải vừa đủ số lượng máy VÀ vừa đủ tổng tiền hóa đơn
+
+                  .col-md-12
+                    .card.border.shadow-none.mb-0
+                      .card-body.p-3
+                        .form-check.form-switch.mb-3
+                          input#countOnlyImei.form-check-input(
+                            type="checkbox"
+                            name="countOnlyImei"
+                            checked=policy.countOnlyImei
+                          )
+                          label.form-check-label.fw-semibold(for="countOnlyImei")
+                            | Chỉ đếm các thiết bị định danh mã IMEI vào điều kiện số lượng máy
+                          div.text-muted.fs-12
+                            | Nếu bật: Chỉ điện thoại, máy tính bảng, laptop (quản lý theo IMEI) mới được tính vào số lượng máy tối thiểu; các phụ kiện như ốp lưng, cáp sạc sẽ tính theo tổng giá trị đơn hàng.
+
+                        .form-check.form-switch
+                          input#allowPosOverride.form-check-input(
+                            type="checkbox"
+                            name="allowPosOverride"
+                            checked=policy.allowPosOverride
+                          )
+                          label.form-check-label.fw-semibold(for="allowPosOverride")
+                            | Cho phép thu ngân tại quầy POS xuất đơn sỉ ngoại lệ
+                          div.text-muted.fs-12
+                            | Nếu bật: Khi bán hàng tại quầy POS cho đại lý quen chưa đủ 3 máy / 20 triệu, hệ thống sẽ cảnh báo nhưng vẫn cho phép thu ngân xác nhận xuất giá sỉ.
+
+                  .col-md-12
+                    label.form-label.fw-semibold(for="policyNote") Ghi chú chính sách hiển thị cho Đại lý
+                    textarea#policyNote.form-control(name="policyNote" rows="2") #{policy.policyNote}
+
+              .col-lg-4
+                .card.border-primary.bg-primary-subtle.bg-opacity-10.shadow-none.h-100
+                  .card-body
+                    h5.card-title.text-primary.mb-3
+                      i.las.la-shield-alt.me-1
+                      | Tóm tắt Quy tắc Đang Áp Dụng
+                    .p-3.bg-white.rounded.border.mb-3
+                      p.fs-13.mb-2
+                        strong Đối tượng áp dụng:
+                        br
+                        span.text-muted Tài khoản Khách hàng đã được duyệt lên nhóm 
+                        span.badge.bg-info Khách sỉ / Đại lý
+                      hr.my-2
+                      p.fs-13.mb-2
+                        strong Điều kiện đặt hàng:
+                      #liveRulePreview.p-2.rounded.bg-light.text-dark.fs-13.fw-semibold
+                    ul.list-unstyled.fs-12.text-muted.mb-0
+                      li.mb-2
+                        i.las.la-check.text-success.me-1
+                        | Khách vãng lai hoặc khách lẻ luôn chỉ nhìn thấy Giá bán lẻ niêm yết.
+                      li.mb-2
+                        i.las.la-check.text-success.me-1
+                        | Sau khi đăng nhập tài khoản Đại lý đã duyệt, toàn bộ sản phẩm sẽ hiển thị Giá sỉ (`priceWholeSale`).
+                      li
+                        i.las.la-check.text-success.me-1
+                        | Giỏ hàng tự động tính toán và hiển thị thanh tiến độ nhắc đại lý nếu chưa đạt mức tối thiểu.
+
+            .mt-4.pt-3.border-top
+              if (permissions.includes("wholesale-setting"))
+                button.btn.btn-primary(type="submit")
+                  i.las.la-save.me-1
+                  | Lưu cấu hình chính sách
+              a.btn.btn-outline-secondary.ms-2(href=`/${pathAdmin}/wholesale/registrations`) Quay lại
+
+block script
+  script.
+    const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
+
+    const minQtyInput = document.getElementById('minQuantity');
+    const minTotalInput = document.getElementById('minOrderTotal');
+    const modeSelect = document.getElementById('conditionMode');
+    const imeiSwitch = document.getElementById('countOnlyImei');
+    const enabledSwitch = document.getElementById('enabledSwitch');
+    const previewBox = document.getElementById('liveRulePreview');
+
+    function updatePreview() {
+      if (!previewBox) return;
+      if (!enabledSwitch.checked) {
+        previewBox.innerHTML = '<span class="text-warning">Đang tắt ràng buộc: Đại lý có thể đặt số lượng bất kỳ với giá sỉ.</span>';
+        return;
+      }
+      const qty = Number(minQtyInput.value || 3);
+      const total = Number(minTotalInput.value || 20000000).toLocaleString('vi-VN');
+      const modeText = modeSelect.value === 'and' ? '<span class="text-danger">VÀ</span>' : '<span class="text-primary">HOẶC</span>';
+      const unitText = imeiSwitch.checked ? 'thiết bị (IMEI)' : 'sản phẩm bất kỳ';
+      previewBox.innerHTML = `Từ <b>${qty} ${unitText}</b> trở lên ${modeText} Tổng đơn từ <b>${total} đ</b> trở lên.`;
+    }
+
+    [minQtyInput, minTotalInput, modeSelect, imeiSwitch, enabledSwitch].forEach(el => {
+      if (el) el.addEventListener('input', updatePreview);
+      if (el) el.addEventListener('change', updatePreview);
+    });
+    updatePreview();
+
+    const settingsForm = document.getElementById('wholesaleSettingsForm');
+    if (settingsForm) {
+      settingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          enabled: enabledSwitch.checked,
+          minQuantity: Number(minQtyInput.value),
+          minOrderTotal: Number(minTotalInput.value),
+          conditionMode: modeSelect.value,
+          countOnlyImei: imeiSwitch.checked,
+          allowPosOverride: document.getElementById('allowPosOverride').checked,
+          policyNote: document.getElementById('policyNote').value
+        };
+
+        try {
+          const res = await fetch(`/${pathAdmin}/wholesale/settings`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.code === 'success') {
+            notyf.success(data.message);
+          } else {
+            notyf.error(data.message || 'Không thể lưu cấu hình!');
+          }
+        } catch (err) {
+          notyf.error('Lỗi kết nối máy chủ!');
+        }
+      });
+    }

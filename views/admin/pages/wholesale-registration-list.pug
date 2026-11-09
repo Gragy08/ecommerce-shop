@@ -1,0 +1,367 @@
+extends ../layouts/default.pug
+include ../mixins/pagination.pug
+
+block main
+  .row
+    .col-12
+      // 4 Thẻ KPI Tổng Quan Hồ Sơ Đại Lý
+      .row.g-3.mb-3
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-primary-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-store.fs-3.text-primary
+                div
+                  h6.text-muted.mb-1 Tổng hồ sơ đại lý
+                  h4.mb-0 #{kpis.totalCount}
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-warning-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-hourglass-half.fs-3.text-warning
+                div
+                  h6.text-muted.mb-1 Đang chờ xét duyệt
+                  h4.mb-0.text-warning #{kpis.pendingCount}
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-success-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-check-circle.fs-3.text-success
+                div
+                  h6.text-muted.mb-1 Đại lý chính thức
+                  h4.mb-0.text-success #{kpis.approvedCount}
+        .col-sm-6.col-xl-3
+          .card.mb-0
+            .card-body.p-3
+              .d-flex.align-items-center
+                .avatar-sm.bg-danger-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
+                  i.las.la-times-circle.fs-3.text-danger
+                div
+                  h6.text-muted.mb-1 Hồ sơ bị từ chối
+                  h4.mb-0.text-danger #{kpis.rejectedCount}
+
+      .card
+        .card-header
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto.d-flex.gap-2
+              if (permissions.includes("wholesale-setting"))
+                a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/settings`)
+                  i.las.la-cog.me-1
+                  | Chính sách & Ràng buộc sỉ
+              button.btn.btn-primary(type="button" data-bs-toggle="modal" data-bs-target="#createWholesaleModal")
+                i.las.la-plus.me-1
+                | Thêm hồ sơ đại lý
+
+        .card-body.pt-0
+          // Bộ lọc Trạng thái & Tìm kiếm
+          .row.g-2.align-items-center.mb-3
+            .col-lg-6
+              .btn-group(role="group")
+                a.btn.btn-sm(
+                  class=filters.status === "all" ? "btn-primary" : "btn-outline-secondary"
+                  href=`/${pathAdmin}/wholesale/registrations?status=all${filters.keyword ? `&keyword=${encodeURIComponent(filters.keyword)}` : ""}`
+                ) Tất cả (#{kpis.totalCount})
+                a.btn.btn-sm(
+                  class=filters.status === "pending" ? "btn-warning text-dark fw-semibold" : "btn-outline-secondary"
+                  href=`/${pathAdmin}/wholesale/registrations?status=pending${filters.keyword ? `&keyword=${encodeURIComponent(filters.keyword)}` : ""}`
+                ) Chờ duyệt (#{kpis.pendingCount})
+                a.btn.btn-sm(
+                  class=filters.status === "approved" ? "btn-success" : "btn-outline-secondary"
+                  href=`/${pathAdmin}/wholesale/registrations?status=approved${filters.keyword ? `&keyword=${encodeURIComponent(filters.keyword)}` : ""}`
+                ) Đã duyệt (#{kpis.approvedCount})
+                a.btn.btn-sm(
+                  class=filters.status === "rejected" ? "btn-danger" : "btn-outline-secondary"
+                  href=`/${pathAdmin}/wholesale/registrations?status=rejected${filters.keyword ? `&keyword=${encodeURIComponent(filters.keyword)}` : ""}`
+                ) Từ chối (#{kpis.rejectedCount})
+            .col-lg-6
+              form(action=`/${pathAdmin}/wholesale/registrations` method="GET")
+                input(type="hidden" name="status" value=filters.status)
+                .input-group
+                  input.form-control.form-control-sm(
+                    type="text"
+                    name="keyword"
+                    placeholder="Tìm theo tên, SĐT, tên cửa hàng, địa chỉ..."
+                    value=filters.keyword
+                  )
+                  button.btn.btn-sm.btn-primary(type="submit")
+                    i.las.la-search.me-1
+                    | Tìm kiếm
+                  if filters.keyword
+                    a.btn.btn-sm.btn-outline-secondary(href=`/${pathAdmin}/wholesale/registrations?status=${filters.status}`) Xóa lọc
+
+          // Bảng danh sách hồ sơ
+          .table-responsive
+            table.table.table-striped.align-middle.mb-0
+              thead.table-light
+                tr
+                  th STT
+                  th Người đại diện
+                  th Thông tin Cửa hàng / Đại lý
+                  th Tài khoản Web
+                  th Trạng thái xét duyệt
+                  th Ngày đăng ký
+                  th.text-end Thao tác
+              tbody
+                if (registrations && registrations.length > 0)
+                  each item, index in registrations
+                    tr
+                      td #{pagination.skip + index + 1}
+                      td
+                        div.fw-semibold.text-dark #{item.fullName}
+                        div.text-primary.fs-13
+                          i.las.la-phone.me-1
+                          | #{item.phone}
+                        if item.email
+                          div.text-muted.fs-12 #{item.email}
+                      td
+                        div.fw-bold.text-dark
+                          i.las.la-store-alt.text-info.me-1
+                          | #{item.storeName}
+                        div.text-muted.fs-12 #{item.businessAddress}
+                        if item.taxCode
+                          span.badge.bg-light.text-dark.border.mt-1 MST: #{item.taxCode}
+                        if item.note
+                          div.text-muted.fs-12.fst-italic.mt-1 Ghi chú: #{item.note}
+                      td
+                        if item.accountUserId
+                          span.badge.bg-success-subtle.text-success
+                            i.las.la-check.me-1
+                            | Đã liên kết tài khoản
+                          div.text-muted.fs-11.mt-1 #{item.accountUserId.email || item.accountUserId.phone}
+                        else
+                          span.badge.bg-light.text-secondary.border Chưa có TK Web
+                          div.text-muted.fs-11.mt-1 Tự động khớp khi khách ĐK cùng SĐT
+                      td
+                        if (item.status === "pending")
+                          span.badge.bg-warning.text-dark Chờ xét duyệt
+                        else if (item.status === "approved")
+                          span.badge.bg-success Đã phê duyệt (Giá sỉ)
+                          if item.approvedBy
+                            div.text-muted.fs-11.mt-1 Duyệt bởi: #{item.approvedBy.fullName}
+                          if item.approvedAtFormat
+                            div.text-muted.fs-11 #{item.approvedAtFormat}
+                        else
+                          span.badge.bg-danger Đã từ chối
+                          if item.rejectedReason
+                            div.text-danger.fs-11.mt-1 Lý do: #{item.rejectedReason}
+                      td
+                        span.fs-13 #{item.createdAtFormat}
+                      td.text-end
+                        .d-inline-flex.align-items-center.gap-1
+                          if (permissions.includes("wholesale-approval"))
+                            if (item.status !== "approved")
+                              button.btn.btn-sm.btn-success(
+                                type="button"
+                                onclick=`approveRegistration('${item._id}', '${item.storeName}')`
+                                title="Duyệt hồ sơ & Kích hoạt Giá sỉ"
+                              )
+                                i.las.la-check.me-1
+                                | Duyệt
+                            if (item.status !== "rejected")
+                              button.btn.btn-sm.btn-outline-danger(
+                                type="button"
+                                onclick=`openRejectModal('${item._id}', '${item.storeName}')`
+                                title="Từ chối / Thu hồi quyền đại lý"
+                              )
+                                i.las.la-ban
+                          if item.customerId
+                            a.btn.btn-sm.btn-outline-info(
+                              href=`/${pathAdmin}/customer/detail/${item.customerId}`
+                              title="Xem hồ sơ khách hàng CRM"
+                            )
+                              i.las.la-user-tag
+                          button.btn.btn-sm.btn-outline-secondary(
+                            type="button"
+                            onclick=`deleteRegistration('${item._id}', '${item.storeName}')`
+                            title="Xóa hồ sơ"
+                          )
+                            i.las.la-trash
+                else
+                  tr
+                    td.text-center.py-4(colspan="7")
+                      .text-muted Chưa có hồ sơ đăng ký đại lý nào phù hợp.
+
+          +pagination()
+
+  // Modal Tạo Hồ Sơ Đại Lý Mới
+  #createWholesaleModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        form#createWholesaleForm
+          .modal-header
+            h5.modal-title Thêm Hồ Sơ Đại Lý / Khách Sỉ Mới
+            button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+          .modal-body
+            .row.g-3
+              .col-md-6
+                label.form-label Họ và tên người đại diện *
+                input.form-control(type="text" name="fullName" required)
+              .col-md-6
+                label.form-label Số điện thoại liên hệ *
+                input.form-control(type="text" name="phone" required)
+              .col-md-6
+                label.form-label Email (Tài khoản đăng nhập Web nếu có)
+                input.form-control(type="email" name="email")
+              .col-md-6
+                label.form-label Tên cửa hàng / Doanh nghiệp *
+                input.form-control(type="text" name="storeName" required)
+              .col-md-8
+                label.form-label Địa chỉ cửa hàng / Kinh doanh *
+                input.form-control(type="text" name="businessAddress" required)
+              .col-md-4
+                label.form-label Mã số thuế (Nếu có)
+                input.form-control(type="text" name="taxCode")
+              .col-12
+                label.form-label Ghi chú thẩm định
+                textarea.form-control(name="note" rows="2")
+              if (permissions.includes("wholesale-approval"))
+                .col-12
+                  .form-check.form-switch
+                    input#autoApproveSwitch.form-check-input(type="checkbox" name="autoApprove" checked)
+                    label.form-check-label.fw-semibold.text-success(for="autoApproveSwitch")
+                      | Phê duyệt ngay lập tức (Kích hoạt nhóm Khách sỉ & Bảng giá sỉ ngay sau khi tạo)
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+            button.btn.btn-primary(type="submit") Lưu hồ sơ đại lý
+
+  // Modal Từ Chối Hồ Sơ Đại Lý
+  #rejectWholesaleModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog
+      .modal-content
+        form#rejectWholesaleForm
+          input#rejectRegId(type="hidden")
+          .modal-header
+            h5.modal-title Từ chối / Thu hồi Hồ sơ Đại lý
+            button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+          .modal-body
+            p.mb-2
+              | Cửa hàng: 
+              strong#rejectStoreName.text-danger
+            .mb-3
+              label.form-label Lý do từ chối / thu hồi *
+              textarea#rejectReasonInput.form-control(rows="3" required) Thông tin cửa hàng chưa đủ điều kiện xác thực đại lý bán sỉ.
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Đóng
+            button.btn.btn-danger(type="submit") Xác nhận từ chối
+
+block script
+  script.
+    const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
+
+    // Tạo mới hồ sơ đại lý
+    const createForm = document.getElementById('createWholesaleForm');
+    if (createForm) {
+      createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(createForm);
+        const payload = {
+          fullName: formData.get('fullName'),
+          phone: formData.get('phone'),
+          email: formData.get('email'),
+          storeName: formData.get('storeName'),
+          businessAddress: formData.get('businessAddress'),
+          taxCode: formData.get('taxCode'),
+          note: formData.get('note'),
+          autoApprove: document.getElementById('autoApproveSwitch') ? document.getElementById('autoApproveSwitch').checked : false
+        };
+
+        try {
+          const res = await fetch(`/${pathAdmin}/wholesale/registrations/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.code === 'success') {
+            notyf.success(data.message);
+            setTimeout(() => window.location.reload(), 800);
+          } else {
+            notyf.error(data.message || 'Có lỗi xảy ra!');
+          }
+        } catch (err) {
+          notyf.error('Lỗi kết nối máy chủ!');
+        }
+      });
+    }
+
+    // Duyệt hồ sơ đại lý
+    async function approveRegistration(id, storeName) {
+      if (!confirm(`Xác nhận PHÊ DUYỆT đại lý "${storeName}"?\nKhách hàng sẽ được chuyển sang nhóm Khách sỉ và nhìn thấy Giá sỉ khi đăng nhập.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/${pathAdmin}/wholesale/registrations/approve/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.code === 'success') {
+          notyf.success(data.message);
+          setTimeout(() => window.location.reload(), 800);
+        } else {
+          notyf.error(data.message || 'Không thể phê duyệt!');
+        }
+      } catch (err) {
+        notyf.error('Lỗi kết nối máy chủ!');
+      }
+    }
+
+    // Mở Modal từ chối
+    function openRejectModal(id, storeName) {
+      document.getElementById('rejectRegId').value = id;
+      document.getElementById('rejectStoreName').textContent = storeName;
+      const modal = new bootstrap.Modal(document.getElementById('rejectWholesaleModal'));
+      modal.show();
+    }
+
+    const rejectForm = document.getElementById('rejectWholesaleForm');
+    if (rejectForm) {
+      rejectForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('rejectRegId').value;
+        const rejectedReason = document.getElementById('rejectReasonInput').value;
+        try {
+          const res = await fetch(`/${pathAdmin}/wholesale/registrations/reject/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rejectedReason })
+          });
+          const data = await res.json();
+          if (data.code === 'success') {
+            notyf.success(data.message);
+            setTimeout(() => window.location.reload(), 800);
+          } else {
+            notyf.error(data.message || 'Có lỗi xảy ra!');
+          }
+        } catch (err) {
+          notyf.error('Lỗi kết nối máy chủ!');
+        }
+      });
+    }
+
+    // Xóa hồ sơ
+    async function deleteRegistration(id, storeName) {
+      if (!confirm(`Bạn có chắc chắn muốn xóa hồ sơ đăng ký của "${storeName}"?`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/${pathAdmin}/wholesale/registrations/delete/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.code === 'success') {
+          notyf.success(data.message);
+          setTimeout(() => window.location.reload(), 700);
+        } else {
+          notyf.error(data.message || 'Không thể xóa hồ sơ!');
+        }
+      } catch (err) {
+        notyf.error('Lỗi kết nối máy chủ!');
+      }
+    }

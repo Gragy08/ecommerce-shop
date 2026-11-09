@@ -251,6 +251,23 @@ export const permissionList = [
   {
     id: "warranty-delete",
     name: "Xóa phiếu bảo hành"
+  },
+  // Quản lý Kênh Đại lý / Bán sỉ
+  {
+    id: "wholesale-role",
+    name: "Quản lý Kênh Đại lý / Bán sỉ"
+  },
+  {
+    id: "wholesale-registration-list",
+    name: "Xem hồ sơ đăng ký đại lý"
+  },
+  {
+    id: "wholesale-approval",
+    name: "Duyệt / Từ chối hồ sơ đại lý"
+  },
+  {
+    id: "wholesale-setting",
+    name: "Cấu hình chính sách bán sỉ"
   }
 ];
 

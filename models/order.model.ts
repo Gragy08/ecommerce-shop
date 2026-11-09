@@ -67,6 +67,16 @@ const schema = new mongoose.Schema(
       enum: ["online", "pos"],
       default: "online"
     },
+    orderType: {
+      type: String,
+      enum: ["retail", "wholesale"],
+      default: "retail"
+    },
+    priceTypeApplied: {
+      type: String,
+      enum: ["retail", "wholesale"],
+      default: "retail"
+    },
     cashierId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AccountAdmin"
