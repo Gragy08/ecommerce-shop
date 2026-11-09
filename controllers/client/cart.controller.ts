@@ -4,13 +4,18 @@ import AttributeProduct from '../../models/attribute-product.model';
 import axios from 'axios';
 import { getInfoAddress } from '../../helpers/location.helper';
 import { pointConfig } from '../../configs/variable.config';
-import { getApiShipping } from '../../configs/setting.config';
+import { getApiShipping, getWholesalePolicy } from '../../configs/setting.config';
 
 export const list = async (req: Request, res: Response) => {
   try {
     const { cart, userAddress } = req.body;
+    const isWholesale = Boolean(res.locals.isWholesale);
+    const policy = await getWholesalePolicy();
 
+    let totalImeiQuantity = 0;
+    let totalCartAmount = 0;
     const cartDetail: any[] = [];
+
     for (const item of cart) {
       const productDetail = await Product.findOne({
         _id: item.productId,
@@ -26,14 +31,52 @@ export const list = async (req: Request, res: Response) => {
           .select("id name")
           .lean();
 
+        let activePriceNew = Number(productDetail.priceNew) || 0;
+        let activePriceOld = Number(productDetail.priceOld) || 0;
+        let isItemWholesale = false;
+
+        // Nếu sản phẩm có variant
+        if (
+          item.variant &&
+          Array.isArray(item.variant) &&
+          item.variant.length > 0 &&
+          Array.isArray(productDetail.variants)
+        ) {
+          const matchedVariant = productDetail.variants.find((v: any) =>
+            v.attributeValue &&
+            v.attributeValue.every((a: any) =>
+              item.variant.some((iv: any) => iv.attrId === a.attrId && iv.value === a.value)
+            )
+          );
+          if (matchedVariant) {
+            activePriceOld = matchedVariant.priceOld || activePriceOld;
+            activePriceNew = matchedVariant.priceNew || activePriceNew;
+            if (isWholesale && matchedVariant.priceWholeSale && matchedVariant.priceWholeSale > 0) {
+              activePriceNew = matchedVariant.priceWholeSale;
+              isItemWholesale = true;
+            }
+          }
+        } else if (isWholesale && productDetail.priceWholeSale && productDetail.priceWholeSale > 0) {
+          activePriceNew = productDetail.priceWholeSale;
+          isItemWholesale = true;
+        }
+
+        const quantity = Number(item.quantity) || 1;
+        if (item.checked !== false) {
+          totalCartAmount += activePriceNew * quantity;
+          totalImeiQuantity += quantity;
+        }
+
         cartDetail.push({
           ...item,
           detail: {
             images: productDetail.images,
             slug: productDetail.slug,
             name: productDetail.name,
-            priceNew: productDetail.priceNew,
-            priceOld: productDetail.priceOld,
+            priceNew: activePriceNew,
+            priceOld: activePriceOld,
+            isWholesalePrice: isItemWholesale,
+            inventoryType: productDetail.inventoryType || "quantity",
             stock: productDetail.stock,
             attributeList: attributeList,
             variants: productDetail.variants
@@ -41,6 +84,21 @@ export const list = async (req: Request, res: Response) => {
         });
       }
     }
+
+    const minQuantity = policy.minQuantity || 4;
+    const minOrderTotal = policy.minOrderTotal || 20000000;
+    const isQualified = isWholesale ? (totalImeiQuantity >= minQuantity || totalCartAmount >= minOrderTotal) : true;
+
+    const wholesaleConstraint = {
+      isWholesale,
+      minQuantity,
+      minOrderTotal,
+      currentQuantity: totalImeiQuantity,
+      currentTotal: totalCartAmount,
+      isQualified,
+      missingQuantity: Math.max(0, minQuantity - totalImeiQuantity),
+      missingTotal: Math.max(0, minOrderTotal - totalCartAmount)
+    };
 
     let shippingOptions = null;
     let shippingError = null;
@@ -114,7 +172,9 @@ export const list = async (req: Request, res: Response) => {
       cart: cartDetail,
       shippingOptions: shippingOptions,
       shippingError: shippingError,
-      point: point
+      point: point,
+      isWholesale: isWholesale,
+      wholesaleConstraint: wholesaleConstraint
     });
   } catch (error) {
     res.json({
@@ -125,7 +185,11 @@ export const list = async (req: Request, res: Response) => {
 }
 
 export const cart = async (req: Request, res: Response) => {
+  const isWholesale = Boolean(res.locals.isWholesale);
+  const policy = await getWholesalePolicy();
   res.render("client/pages/cart", {
-    pageTitle: "Giỏ hàng"
+    pageTitle: "Giỏ hàng",
+    isWholesale,
+    policy
   });
-}
+};

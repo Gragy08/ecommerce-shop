@@ -9,7 +9,10 @@ mixin product-item-2(item)
         )
       ul(class="discount_list")
         //- li.new new
-        if (item.discount > 0)
+        if (item.isWholesalePrice)
+          li.discount(style="background: #f59e0b; color: #fff;")
+            b Sỉ
+        else if (item.discount > 0)
           li.discount
             b -
             | #{item.discount}%
@@ -35,6 +38,8 @@ mixin product-item-2(item)
     div(class="product_text")
       a.title(href=`/product/detail/${item.slug}`) #{item.name}
       p.price
+        if (item.isWholesalePrice)
+          span.badge.bg-warning.text-dark.me-1.fw-semibold(style="font-size: 11px; padding: 2px 6px; border-radius: 4px;") Giá sỉ
         if (item.priceNew)
           | #{item.priceNew.toLocaleString("vi-VN")}đ
         if (item.priceOld)

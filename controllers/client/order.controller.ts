@@ -14,11 +14,12 @@ import fs from "fs";
 import { addPointAfterPayment } from '../../helpers/point.helper';
 import { pointConfig } from '../../configs/variable.config';
 import AccountUser from '../../models/account-user.model';
-import { getApiPayment, getApiShipping, getGeneral } from '../../configs/setting.config';
+import { getApiPayment, getApiShipping, getGeneral, getWholesalePolicy } from '../../configs/setting.config';
 import { upsertCustomerFromOrder } from '../admin/customer.controller';
 
 
 export const createPost = async (req: Request, res: Response) => {
+  const isWholesale = Boolean(res.locals.isWholesale);
   const dataFinal: any = {};
 
   // Thêm userId
@@ -78,7 +79,9 @@ export const createPost = async (req: Request, res: Response) => {
           );
         });
         if (variantMatched) {
-          price = variantMatched.priceNew || 0;
+          price = (isWholesale && variantMatched.priceWholeSale && variantMatched.priceWholeSale > 0)
+            ? variantMatched.priceWholeSale
+            : (variantMatched.priceNew || 0);
           variantId = variantMatched.variantId || undefined;
           variantSku = variantMatched.sku || variantSku;
           purchasePrice = variantMatched.purchasePrice || purchasePrice;
@@ -100,7 +103,9 @@ export const createPost = async (req: Request, res: Response) => {
           variant.push(`${attribute ? attribute.name : ''}: ${v.label}`);
         };
       } else {
-        price = productDetail.priceNew || 0;
+        price = (isWholesale && productDetail.priceWholeSale && productDetail.priceWholeSale > 0)
+          ? productDetail.priceWholeSale
+          : (productDetail.priceNew || 0);
       }
 
       const itemFinal = {
@@ -118,6 +123,29 @@ export const createPost = async (req: Request, res: Response) => {
       };
       dataFinal.items.push(itemFinal);
     }
+  }
+
+  // Kiểm tra ràng buộc điều kiện đơn hàng đại lý
+  if (isWholesale) {
+    const policy = await getWholesalePolicy();
+    const totalQuantity = dataFinal.items.reduce((sum: number, it: any) => sum + (Number(it.quantity) || 1), 0);
+    const totalItemsAmount = dataFinal.items.reduce((sum: number, it: any) => sum + (it.price * (Number(it.quantity) || 1)), 0);
+    const minQty = policy.minQuantity || 4;
+    const minTotal = policy.minOrderTotal || 20000000;
+
+    if (totalQuantity < minQty && totalItemsAmount < minTotal) {
+      res.json({
+        code: "error",
+        message: `Đơn hàng đại lý chưa đạt điều kiện tối thiểu (tối thiểu ${minQty} máy hoặc tổng đơn từ ${minTotal.toLocaleString("vi-VN")} đ)!`
+      });
+      return;
+    }
+
+    dataFinal.orderType = "wholesale";
+    dataFinal.priceTypeApplied = "wholesale";
+  } else {
+    dataFinal.orderType = "retail";
+    dataFinal.priceTypeApplied = "retail";
   }
 
   // Trường subTotal

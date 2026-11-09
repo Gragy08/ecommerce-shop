@@ -7,6 +7,7 @@ import Block from "../models/block.model";
 import { getBlogByCategory, getProductByCategory } from "./product.helper";
 
 export const renderHTML = async (req: Request, res: Response, blockList: any) => {
+  const isWholesale = Boolean(res.locals.isWholesale);
   const blocksHtml: string[] = [];
   for(const block of blockList) {
     const blockPath = path.join(process.cwd(), "views", "client", "blocks", `${block.fileName}`);
@@ -14,7 +15,7 @@ export const renderHTML = async (req: Request, res: Response, blockList: any) =>
       // Lấy ra sản phẩm
       let productList: any[] = [];
       if (block.data?.getByCategory?.type === "product") {
-        productList = await getProductByCategory(block.data.getByCategory);
+        productList = await getProductByCategory(block.data.getByCategory, isWholesale);
       }
       // Hết Lấy ra sản phẩm
 
@@ -23,7 +24,7 @@ export const renderHTML = async (req: Request, res: Response, blockList: any) =>
       if(block.data?.tabs?.length > 0) {
         for(const tab of block.data.tabs) {
           if(tab.getByCategory?.type === "product") {
-            const productListByTab = await getProductByCategory(tab.getByCategory);
+            const productListByTab = await getProductByCategory(tab.getByCategory, isWholesale);
             tabList.push({
               ...tab,
               productList: productListByTab
@@ -46,7 +47,8 @@ export const renderHTML = async (req: Request, res: Response, blockList: any) =>
         blockData: block.data,
         blockProductList: productList,
         blockTabList: tabList,
-        blockBlogList: blogList
+        blockBlogList: blogList,
+        isWholesale: isWholesale
       });
       blocksHtml.push(html);
     } catch (error) {

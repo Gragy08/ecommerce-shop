@@ -203,23 +203,10 @@ export const productByCategory = async (req: Request, res: Response) => {
     .skip(skip)
     .sort(sort)
 
-  for (const item of productList) {
-    // // Giảm giá
-    // item.discount = Math.floor(((item.priceOld - item.priceNew) / item.priceOld) * 100);
+  const isWholesale = Boolean(res.locals.isWholesale);
 
-    // // Màu sắc
-    // const colorSet = new Set();
-    // item.variants
-    //   .filter((variant: any) => variant.status)
-    //   .forEach((variant: any) => {
-    //     variant.attributeValue.forEach((attr: any) => {
-    //       if(attr.attrType == "color") {
-    //         colorSet.add(attr.value);
-    //       }
-    //     })
-    //   })
-    // item.colorList = [...colorSet];
-    formatProductItem(item);
+  for (const item of productList) {
+    formatProductItem(item, isWholesale);
   }
 
   // Sản phẩm được đánh giá cao
@@ -236,12 +223,17 @@ export const productByCategory = async (req: Request, res: Response) => {
     .lean();
   // Hết Sản phẩm được đánh giá cao
 
+  for (const item of topRatedProducts) {
+    formatProductItem(item, isWholesale);
+  }
+
   res.render("client/pages/product-by-category", {
     pageTitle: categoryDetail.name,
     categoryDetail: categoryDetail,
     productList: productList,
     topRatedProducts: topRatedProducts,
-    pagination: pagination
+    pagination: pagination,
+    isWholesale: isWholesale
   });
 }
 
@@ -306,6 +298,14 @@ export const detail = async (req: Request, res: Response) => {
     return;
   }
 
+  const isWholesale = Boolean(res.locals.isWholesale);
+
+  if (isWholesale && productDetail.priceWholeSale && productDetail.priceWholeSale > 0) {
+    productDetail.isWholesalePrice = true;
+    productDetail.priceRetailNew = productDetail.priceNew;
+    productDetail.priceNew = productDetail.priceWholeSale;
+  }
+
   // Danh sách thuộc tính
   const attributeList: any = await AttributeProduct.find({
     _id: { $in: productDetail.attributes }
@@ -353,7 +353,7 @@ export const detail = async (req: Request, res: Response) => {
     .limit(10);
 
   for (const item of relatedProducts) {
-    formatProductItem(item);
+    formatProductItem(item, isWholesale);
   }
   // Hết Sản phẩm liên quan
 
@@ -369,7 +369,7 @@ export const detail = async (req: Request, res: Response) => {
     });
 
   for (const item of boughtTogetherProducts) {
-    formatProductItem(item);
+    formatProductItem(item, isWholesale);
   }
   // Hết Sản phẩm mua kèm
 
@@ -385,7 +385,7 @@ export const detail = async (req: Request, res: Response) => {
     });
 
   for (const item of viewedProducts) {
-    formatProductItem(item);
+    formatProductItem(item, isWholesale);
   }
   // Hết Sản phẩm đã xem
 
@@ -431,6 +431,7 @@ export const detail = async (req: Request, res: Response) => {
     boughtTogetherProducts: boughtTogetherProducts,
     viewedProducts: viewedProducts,
     reviewList: reviewList,
-    seo: productDetail.seo
+    seo: productDetail.seo,
+    isWholesale: isWholesale
   });
 }

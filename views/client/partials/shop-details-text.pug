@@ -3,6 +3,7 @@ include ../mixins/stars.pug
 div(class="shop_details_text")
   script.
     const productVariants = !{JSON.stringify(productDetail.variants)};
+    const isWholesaleUser = !{JSON.stringify(Boolean(isWholesale))};
   //- p.category Computers & Tablets
   h2(class="details_title") #{productDetail.name}
   .d-flex.flex-wrap.align-items-center
@@ -20,6 +21,8 @@ div(class="shop_details_text")
       +stars(productDetail)
       span (#{productDetail.ratingCount} Đánh giá)
   h3.price
+    if (isWholesale && productDetail.isWholesalePrice)
+      span.badge.bg-warning.text-dark.me-2(style="font-size: 13px; vertical-align: middle; padding: 4px 8px; border-radius: 4px;") Giá sỉ
     div.price-new #{productDetail.priceNew.toLocaleString("vi-VN")}đ
     del.price-old #{productDetail.priceOld.toLocaleString("vi-VN")}đ
   div(class="short_description") !{productDetail.description}

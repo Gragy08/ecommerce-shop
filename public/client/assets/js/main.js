@@ -568,7 +568,10 @@ const drawCart = () => {
                   ${htmlVariant}
                 </td>
                 <td class="cart_page_price">
-                  <h3>${priceNew.toLocaleString("vi-VN")}đ</h3>
+                  <h3>
+                    ${detail.isWholesalePrice ? '<span class="badge bg-warning text-dark me-1" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">Giá sỉ</span>' : ''}
+                    ${priceNew.toLocaleString("vi-VN")}đ
+                  </h3>
                 </td>
                 <td class="cart_page_quantity">
                   <div class="details_qty_input">
@@ -738,6 +741,63 @@ const drawCart = () => {
           eventQuantityItemInCart();
           eventCheckItemInCart();
           eventCheckShipping();
+
+          const wholesaleAlert = document.getElementById("wholesaleAlertArea");
+          const btnCheckout = document.querySelector("[btn-checkout]");
+          if (wholesaleAlert) {
+            if (data.isWholesale && data.wholesaleConstraint) {
+              const c = data.wholesaleConstraint;
+              if (c.isQualified) {
+                wholesaleAlert.innerHTML = `
+                  <div class="alert alert-success p-3 mb-3 rounded-3 border-0">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <i class="fas fa-check-circle text-success" style="font-size: 18px;"></i>
+                      <strong class="text-success small">Đã đạt điều kiện mua giá sỉ!</strong>
+                    </div>
+                    <small class="text-muted d-block">
+                      Đã chọn: <strong>${c.currentQuantity} máy</strong> &nbsp;|&nbsp; <strong>${c.currentTotal.toLocaleString("vi-VN")} đ</strong>
+                    </small>
+                  </div>
+                `;
+                if (btnCheckout) {
+                  btnCheckout.classList.remove("disabled", "opacity-50");
+                  btnCheckout.removeAttribute("data-blocked");
+                  btnCheckout.removeAttribute("title");
+                }
+              } else {
+                const qtyPercent = (c.currentQuantity / c.minQuantity) * 100;
+                const totalPercent = (c.currentTotal / c.minOrderTotal) * 100;
+                const maxPercent = Math.min(100, Math.max(qtyPercent, totalPercent));
+
+                wholesaleAlert.innerHTML = `
+                  <div class="alert alert-warning p-3 mb-3 rounded-3 border-0">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <i class="fas fa-exclamation-triangle text-warning" style="font-size: 18px;"></i>
+                      <strong class="text-dark small">Chưa đủ điều kiện đơn sỉ!</strong>
+                    </div>
+                    <small class="text-muted d-block mb-2">
+                      Chính sách yêu cầu: tối thiểu <strong>${c.minQuantity} máy</strong> HOẶC tổng đơn từ <strong>${c.minOrderTotal.toLocaleString("vi-VN")} đ</strong>.<br/>
+                      Bạn còn thiếu: <strong>${c.missingQuantity} máy</strong> hoặc <strong>${c.missingTotal.toLocaleString("vi-VN")} đ</strong>.
+                    </small>
+                    <div class="progress" style="height: 6px;">
+                      <div class="progress-bar bg-warning" role="progressbar" style="width: ${maxPercent}%"></div>
+                    </div>
+                  </div>
+                `;
+                if (btnCheckout) {
+                  btnCheckout.classList.add("disabled", "opacity-50");
+                  btnCheckout.setAttribute("data-blocked", "true");
+                  btnCheckout.setAttribute("title", `Cần tối thiểu ${c.minQuantity} máy hoặc ${c.minOrderTotal.toLocaleString("vi-VN")} đ để thanh toán giá sỉ`);
+                }
+              }
+            } else {
+              wholesaleAlert.innerHTML = "";
+              if (btnCheckout) {
+                btnCheckout.classList.remove("disabled", "opacity-50");
+                btnCheckout.removeAttribute("data-blocked");
+              }
+            }
+          }
         }
       })
   } else {
@@ -838,7 +898,9 @@ if(shopDetailsText) {
         })
 
         if(variantMatched) {
-          elementPriceNew.innerHTML = variantMatched.priceNew.toLocaleString("vi-VN") + "đ";
+          const isWholesaleVariant = (typeof isWholesaleUser !== "undefined" && isWholesaleUser && variantMatched.priceWholeSale && variantMatched.priceWholeSale > 0);
+          const activeVariantPrice = isWholesaleVariant ? variantMatched.priceWholeSale : variantMatched.priceNew;
+          elementPriceNew.innerHTML = (isWholesaleVariant ? '<span class="badge bg-warning text-dark me-2" style="font-size: 13px; vertical-align: middle; padding: 4px 8px; border-radius: 4px;">Giá sỉ</span>' : '') + activeVariantPrice.toLocaleString("vi-VN") + "đ";
           elementPriceOld.innerHTML = variantMatched.priceOld.toLocaleString("vi-VN") + "đ";
 
           if(variantMatched.stock > 0) {
@@ -2806,3 +2868,16 @@ if(gtranslateWrapper) {
   }
 }
 // Hết Khởi tạo tính năng dịch
+/* wholesale checkout guard */
+document.addEventListener("click", function(e) {
+  const btn = e.target.closest("[btn-checkout]");
+  if (btn && btn.getAttribute("data-blocked") === "true") {
+    e.preventDefault();
+    const msg = btn.getAttribute("title") || "Đơn hàng đại lý chưa đạt ngưỡng tối thiểu!";
+    if (typeof notyf !== "undefined") {
+      notyf.error(msg);
+    } else {
+      alert(msg);
+    }
+  }
+});

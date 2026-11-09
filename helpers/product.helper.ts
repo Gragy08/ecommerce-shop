@@ -5,25 +5,40 @@ import AccountAdmin from "../models/account-admin.model";
 import Blog from "../models/blog.model";
 import CategoryBlog from "../models/category-blog.model";
 
-export const formatProductItem = (item: any) => {
+export const formatProductItem = (item: any, isWholesale: boolean = false) => {
+  // Áp dụng giá sỉ nếu tài khoản là đại lý và sản phẩm có cấu hình giá sỉ
+  if (isWholesale && item.priceWholeSale && item.priceWholeSale > 0) {
+    item.priceRetailNew = item.priceNew;
+    item.priceNew = item.priceWholeSale;
+    item.isWholesalePrice = true;
+  }
+
   // Giảm giá
-  item.discount = Math.floor(((item.priceOld - item.priceNew) / item.priceOld) * 100);
+  if (item.priceOld && item.priceNew && item.priceOld > item.priceNew) {
+    item.discount = Math.floor(((item.priceOld - item.priceNew) / item.priceOld) * 100);
+  } else {
+    item.discount = 0;
+  }
 
   // Màu sắc
   const colorSet = new Set();
-  item.variants
-    .filter((variant: any) => variant.status)
-    .forEach((variant: any) => {
-      variant.attributeValue.forEach((attr: any) => {
-        if(attr.attrType == "color") {
-          colorSet.add(attr.value);
+  if (Array.isArray(item.variants)) {
+    item.variants
+      .filter((variant: any) => variant && variant.status)
+      .forEach((variant: any) => {
+        if (Array.isArray(variant.attributeValue)) {
+          variant.attributeValue.forEach((attr: any) => {
+            if(attr.attrType == "color") {
+              colorSet.add(attr.value);
+            }
+          });
         }
-      })
-    })
+      });
+  }
   item.colorList = [...colorSet];
 }
 
-export const getProductByCategory = async (getByCategory: any) => {
+export const getProductByCategory = async (getByCategory: any, isWholesale: boolean = false) => {
   let productList: any[] = [];
 
   // Tạo đối tượng tìm kiếm
@@ -62,7 +77,7 @@ export const getProductByCategory = async (getByCategory: any) => {
     .limit(limit);
   
   for(const item of productList) {
-    formatProductItem(item);
+    formatProductItem(item, isWholesale);
   }
 
   return productList;
