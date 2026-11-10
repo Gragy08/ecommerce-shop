@@ -49,15 +49,16 @@ block main
                           span(class="badge bg-danger") Tạm dừng
                       td.text-end
                         if permissions.includes('role-edit')
-                          a(href=`/${pathAdmin}/role/edit/${item.id}`)
-                            i.las.la-pen.text-secondary.fs-4.text-info
+                          a.me-1(href=`/${pathAdmin}/role/edit/${item.id}` title="Chỉnh sửa")
+                            i.las.la-pen.text-info.fs-20
                         if permissions.includes('role-delete')
                           a(
                             href="javascript:;"
                             button-api
                             data-method="PATCH"
                             data-api=`/${pathAdmin}/role/delete/${item.id}`
+                            title="Xóa"
                           )
-                            i.las.la-trash-alt.text-secondary.fs-4.text-danger
+                            i.las.la-trash-alt.text-danger.fs-20
             +pagination()
       // end col

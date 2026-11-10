@@ -49,7 +49,7 @@ block main
             .col
               h4.card-title.mb-0 #{pageTitle}
             .col-auto.d-flex.gap-2
-              a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/registrations`)
+              a.btn.btn-success(href=`/${pathAdmin}/wholesale/registrations`)
                 i.las.la-list.me-1
                 | Duyệt hồ sơ đại lý
               a.btn.btn-primary(href=`/${pathAdmin}/wholesale/registrations/create`)
@@ -115,25 +115,24 @@ block main
                         span.badge.bg-light.text-dark.fs-12 #{item.orderCount || 0}
                       td.text-end.fw-bold.text-danger #{item.totalSpentFormatted}
                       td.text-end
-                        .d-inline-flex.align-items-center.gap-1
-                          a.btn.btn-sm.btn-outline-info(
-                            href=`/${pathAdmin}/customer/detail/${item._id}`
-                            title="Xem chi tiết hồ sơ CRM"
+                        a.me-1(
+                          href=`/${pathAdmin}/customer/detail/${item._id}`
+                          title="Xem chi tiết hồ sơ CRM"
+                        )
+                          i.las.la-eye.text-purple.fs-20
+                        if (permissions.includes("customer-edit"))
+                          a.me-1(
+                            href=`/${pathAdmin}/customer/edit/${item._id}`
+                            title="Chỉnh sửa hồ sơ"
                           )
-                            i.las.la-eye
-                          if (permissions.includes("customer-edit"))
-                            a.btn.btn-sm.btn-outline-primary(
-                              href=`/${pathAdmin}/customer/edit/${item._id}`
-                              title="Chỉnh sửa hồ sơ"
-                            )
-                              i.las.la-pen
-                          if (permissions.includes("wholesale-approval"))
-                            button.btn.btn-sm.btn-outline-danger(
-                              type="button"
-                              onclick=`revokeDealer('${item._id}', '${item.fullName}')`
-                              title="Thu hồi quyền đại lý (chuyển về khách lẻ)"
-                            )
-                              i.las.la-user-times
+                            i.las.la-pen.text-info.fs-20
+                        if (permissions.includes("wholesale-approval"))
+                          a(
+                            href="javascript:;"
+                            onclick=`revokeDealer('${item._id}', '${item.fullName}')`
+                            title="Thu hồi quyền đại lý (chuyển về khách lẻ)"
+                          )
+                            i.las.la-trash-alt.text-danger.fs-20
                 else
                   tr
                     td.text-center.py-4(colspan="8")

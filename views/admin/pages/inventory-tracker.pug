@@ -9,8 +9,8 @@ block main
             .col
               h4.card-title #{pageTitle}
             .col-auto
-              a.btn.btn-outline-primary(href=`/${pathAdmin}/inventory/list`)
-                i.fa-solid.fa-warehouse.me-1
+              a.btn.btn-primary(href=`/${pathAdmin}/inventory/list`)
+                i.fa-solid.fa-checklist.me-1
                 | Danh sách tồn kho
         .card-body.pt-0
           // Form tra cứu IMEI
@@ -169,7 +169,7 @@ block main
                 .card.border
                   .card-header.bg-light.d-flex.justify-content-between.align-items-center
                     h6.card-title.mb-0 Lịch sử Bảo hành & Sửa chữa (#{warrantyTickets ? warrantyTickets.length : 0})
-                    a.btn.btn-sm.btn-outline-primary(href=`/${pathAdmin}/warranty/create`)
+                    a.btn.btn-sm.btn-primary(href=`/${pathAdmin}/warranty/create`)
                       i.fa-solid.fa-plus.me-1
                       | Tiếp nhận bảo hành
                   .card-body

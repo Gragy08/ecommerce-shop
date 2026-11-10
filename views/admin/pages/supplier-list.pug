@@ -52,16 +52,17 @@ block main
                       td #{item.createdAtFormat || '-'}
                       td.text-end
                         if (permissions.includes("supplier-edit"))
-                          a(href=`/${pathAdmin}/supplier/edit/${item._id}`)
-                            i.las.la-pen.text-secondary.fs-20
+                          a.me-1(href=`/${pathAdmin}/supplier/edit/${item._id}` title="Chỉnh sửa")
+                            i.las.la-pen.text-info.fs-20
                         if (permissions.includes("supplier-delete"))
                           a(
                             href="javascript:;"
                             button-api
                             data-method="PATCH"
                             data-api=`/${pathAdmin}/supplier/delete/${item._id}`
+                            title="Xóa"
                           )
-                            i.las.la-trash-alt.text-secondary.fs-20
+                            i.las.la-trash-alt.text-danger.fs-20
                 else
                   tr
                     td.text-center.text-muted.py-4(colspan="9") Chưa có nhà cung cấp nào.

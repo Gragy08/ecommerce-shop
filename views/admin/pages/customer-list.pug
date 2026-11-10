@@ -91,10 +91,10 @@ block main
                       td.text-end.fw-semibold.text-danger #{item.totalSpentFormatted}
                       td.text-end
                         a.me-1(href=`/${pathAdmin}/customer/detail/${item._id}` title="Xem chi tiết")
-                          i.las.la-eye.text-secondary.fs-20
+                          i.las.la-eye.text-purple.fs-20
                         if (permissions.includes("customer-edit"))
                           a.me-1(href=`/${pathAdmin}/customer/edit/${item._id}` title="Chỉnh sửa")
-                            i.las.la-pen.text-secondary.fs-20
+                            i.las.la-pen.text-info.fs-20
                         if (permissions.includes("customer-delete"))
                           a(
                             href="javascript:;"
@@ -103,7 +103,7 @@ block main
                             data-api=`/${pathAdmin}/customer/delete/${item._id}`
                             title="Xóa"
                           )
-                            i.las.la-trash-alt.text-secondary.fs-20
+                            i.las.la-trash-alt.text-danger.fs-20
                 else
                   tr
                     td.text-center.text-muted.py-4(colspan="9") Chưa có khách hàng nào.

@@ -50,7 +50,7 @@ block main
                           href=`/${pathAdmin}/inventory/receipt/detail/${item._id}`
                           title="Xem chi tiết phiếu nhập"
                         )
-                          i.las.la-eye.text-secondary.fs-20
+                          i.las.la-eye.text-purple.fs-20
                         if (permissions.includes("stock-receipt-delete"))
                           a(
                             href="javascript:;"
@@ -59,7 +59,7 @@ block main
                             data-api=`/${pathAdmin}/inventory/receipt/delete/${item._id}`
                             title="Hủy phiếu nhập kho"
                           )
-                            i.las.la-trash-alt.text-secondary.fs-20
+                            i.las.la-trash-alt.text-danger.fs-20
                 else
                   tr
                     td.text-center.text-muted.py-4(colspan="9") Chưa có phiếu nhập kho nào.

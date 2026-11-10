@@ -11,7 +11,7 @@ block main
                 h4.card-title #{pageTitle}
               // end col
               .col-auto
-                a.btn.btn-info(
+                a.btn.btn-secondary(
                   href=`/${pathAdmin}/article/category`
                   )
                   <i class="fa-solid fa-arrow-left me-1"></i>
@@ -42,21 +42,20 @@ block main
                           span.badge.bg-danger Tạm dừng
                       td #{item.view}
                       td.text-end
-                        a(
+                        a.me-2(
                           href="javascript:;"
                           button-api
                           data-method="PATCH"
                           data-api=`/${pathAdmin}/article/category/undo/${item.id}`
-                          class="me-2"
-                          style="font-size: 16px;"
+                          title="Khôi phục"
                           )
-                          <i class="fa-solid fa-rotate-left"></i>
+                          i.las.la-undo.text-success.fs-20
                         a(
                           href="javascript:;"
                           button-api
                           data-method="DELETE"
                           data-api=`/${pathAdmin}/article/category/destroy/${item.id}`
-                          style="font-size: 16px; margin-right: 10px;"
+                          title="Xóa vĩnh viễn"
                           )
-                          <i class="fa-solid fa-trash text-danger"></i>
+                          i.las.la-trash-alt.text-danger.fs-20
       // end col

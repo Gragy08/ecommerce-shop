@@ -39,7 +39,7 @@ block main
             .col
               h4.card-title.mb-0 #{pageTitle}
             .col-auto
-              a.btn.btn-outline-secondary(href=`/${pathAdmin}/wholesale/list`)
+              a.btn.btn-secondary(href=`/${pathAdmin}/wholesale/list`)
                 i.las.la-arrow-left.me-1
                 | Danh sách đại lý
 
@@ -132,9 +132,8 @@ block main
             .mt-4.pt-3.border-top
               if (permissions.includes("wholesale-setting"))
                 button.btn.btn-primary(type="submit")
-                  i.las.la-save.me-1
                   | Lưu chính sách
-              a.btn.btn-outline-secondary.ms-2(href=`/${pathAdmin}/wholesale/list`) Quay lại
+              a.btn.btn-danger.ms-2(href=`/${pathAdmin}/wholesale/list`) Hủy
 
 block script
   script.

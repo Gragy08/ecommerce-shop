@@ -17,7 +17,7 @@ block main
                   .d-flex.align-items-baseline.gap-2
                     h4.mb-0 #{stats ? stats.totalOrders : 0}
                     if stats && stats.wholesaleOrdersCount
-                      span.badge.bg-warning.text-dark(title="Đơn sỉ đại lý")
+                      span.badge.bg-primary.text-white(title="Đơn sỉ đại lý")
                         | #{stats.wholesaleOrdersCount} đơn sỉ
         .col-md-3.col-sm-6
           .card.mb-0.h-100
@@ -44,7 +44,7 @@ block main
                 .avatar-sm.bg-warning-subtle.rounded-circle.me-3.d-flex.align-items-center.justify-content-center
                   i.las.la-file-invoice-dollar.fs-3.text-warning
                 div
-                  h6.text-muted.mb-1 Chờ đối tác giải ngân (#{stats ? stats.pendingInstallmentCount : 0})
+                  h6.text-muted.mb-1 Chờ giải ngân (#{stats ? stats.pendingInstallmentCount : 0})
                   h4.mb-0.text-warning #{stats ? stats.pendingInstallmentLoanTotalFormatted : '0 đ'}
 
       .card
@@ -76,7 +76,7 @@ block main
             .col-lg-2.col-md-3.col-6
               select.form-select(name="channel")
                 option(value="" selected=(!filters || !filters.channel)) Tất cả kênh bán
-                option(value="pos" selected=(filters && filters.channel == "pos")) Tại quầy POS
+                option(value="pos" selected=(filters && filters.channel == "pos")) Tại cửa hàng
                 option(value="online" selected=(filters && filters.channel == "online")) Online Web
             .col-lg-2.col-md-3.col-6
               select.form-select(name="paymentMethod")
@@ -127,12 +127,11 @@ block main
                         .d-flex.align-items-center.flex-wrap.gap-1
                           a.fw-bold.text-primary.text-decoration-none(href=`/${pathAdmin}/order/edit/${item.id}`) #{item.code}
                           if (item.orderType === "wholesale")
-                            span.badge.bg-warning.text-dark(title="Đơn hàng đại lý sỉ")
-                              i.las.la-crown.me-1
+                            span.badge.bg-primary.text-white(title="Đơn hàng đại lý sỉ")
                               | Đơn sỉ
                       td
                         if (item.channel == "pos")
-                          span.badge.bg-info Tại quầy POS
+                          span.badge.bg-info Tại cửa hàng
                         else
                           span.badge.bg-primary Online Web
                       td
@@ -141,8 +140,7 @@ block main
                         else
                           div.fw-semibold #{item.fullName}
                         if (item.storeName)
-                          span.badge.bg-warning-subtle.text-dark.border.border-warning.d-inline-flex.align-items-center.gap-1.my-1
-                            i.las.la-store.text-warning-emphasis
+                          span.badge.bg-success-subtle.text-black.border.border-success.d-inline-flex.align-items-center.gap-1.my-1
                             span.fw-semibold #{item.storeName}
                         small.text-muted.d-block #{item.phone}
                       td.text-end.fw-bold.text-danger #{item.totalFormatted}
@@ -194,9 +192,9 @@ block main
                       td #{item.createdAtFormat}
                       td.text-end
                         a.me-1(href=`/${pathAdmin}/order/print/${item.id}` title="In hóa đơn")
-                          i.las.la-print.text-secondary.fs-20
+                          i.las.la-print.text-warning.fs-20
                         a.me-1(href=`/${pathAdmin}/order/edit/${item.id}` title="Chi tiết / Cập nhật")
-                          i.las.la-pen.text-secondary.fs-20
+                          i.las.la-pen.text-info.fs-20
                         a(
                           href="javascript:;"
                           button-api
@@ -204,7 +202,7 @@ block main
                           data-api=`/${pathAdmin}/order/delete/${item.id}`
                           title="Xóa"
                         )
-                          i.las.la-trash-alt.text-secondary.fs-20
+                          i.las.la-trash-alt.text-danger.fs-20
                 else
                   tr
                     td.text-center.text-muted.py-4(colspan="10") Chưa có đơn hàng nào.

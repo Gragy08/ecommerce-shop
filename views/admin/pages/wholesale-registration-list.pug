@@ -167,17 +167,17 @@ block main
                               )
                                 i.las.la-ban
                           if item.customerId
-                            a.btn.btn-sm.btn-outline-info(
+                            a.me-1(
                               href=`/${pathAdmin}/customer/detail/${item.customerId}`
                               title="Xem hồ sơ khách hàng CRM"
                             )
-                              i.las.la-user-tag
-                          button.btn.btn-sm.btn-outline-secondary(
-                            type="button"
+                              i.las.la-eye.text-purple.fs-20
+                          a(
+                            href="javascript:;"
                             onclick=`deleteRegistration('${item._id}', '${item.storeName}')`
                             title="Xóa hồ sơ"
                           )
-                            i.las.la-trash
+                            i.las.la-trash-alt.text-danger.fs-20
                 else
                   tr
                     td.text-center.py-4(colspan="7")

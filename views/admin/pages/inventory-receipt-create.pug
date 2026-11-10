@@ -8,10 +8,6 @@ block main
           .row.align-items-center
             .col
               h4.card-title #{pageTitle}
-            .col-auto
-              a.btn.btn-outline-secondary(href=`/${pathAdmin}/inventory/receipt`)
-                i.fa-solid.fa-arrow-left.me-1
-                | Quay lại danh sách
         .card-body.pt-0
           if !canCreate
             .alert.alert-warning

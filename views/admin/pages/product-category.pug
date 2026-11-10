@@ -55,14 +55,15 @@ block main
                         span(class="badge bg-danger") Tạm dừng
                     td #{item.view}
                     td.text-end
-                      a(href=`/${pathAdmin}/product/category/edit/${item.id}`)
-                        i.las.la-pen.text-secondary.font-16
+                      a.me-1(href=`/${pathAdmin}/product/category/edit/${item.id}` title="Chỉnh sửa")
+                        i.las.la-pen.text-info.fs-20
                       a(
                         href="javascript:;"
                         button-api
                         data-method="PATCH"
                         data-api=`/${pathAdmin}/product/category/delete/${item.id}`
+                        title="Xóa"
                       )
-                        i.las.la-trash-alt.text-secondary.font-16
+                        i.las.la-trash-alt.text-danger.fs-20
           +pagination()
     // end col

@@ -46,7 +46,7 @@ block main
                   i.fa-solid.fa-plus.me-1
                   | Nhập kho
               if (permissions.includes("inventory-tracker"))
-                a.btn.btn-outline-primary(href=`/${pathAdmin}/inventory/tracker`)
+                a.btn.btn-info(href=`/${pathAdmin}/inventory/tracker`)
                   i.fa-solid.fa-barcode.me-1
                   | Tra cứu IMEI
         .card-body.pt-0
@@ -92,7 +92,7 @@ block main
                         span.fw-bold.text-dark #{item.totalQuantity}
                       td.text-end
                         if item.inventoryType === "imei"
-                          button.btn.btn-sm.btn-outline-primary.btn-view-imei(
+                          button.btn.btn-sm.btn-outline-secondary.btn-view-imei(
                             type="button"
                             data-variant-id=item.variantId
                             data-variant-name=`${item.productName} - ${item.attributeLabel || item.sku}`

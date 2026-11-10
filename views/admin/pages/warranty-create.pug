@@ -9,7 +9,7 @@ block main
             .col
               h4.card-title.mb-0 #{pageTitle}
             .col-auto
-              a.btn.btn-outline-secondary.btn-sm(href=`/${pathAdmin}/warranty/list`)
+              a.btn.btn-secondary.btn-sm(href=`/${pathAdmin}/warranty/list`)
                 i.fa-solid.fa-arrow-left.me-1
                 | Danh sách phiếu bảo hành
 
@@ -42,8 +42,7 @@ block main
               i.fa-solid.fa-magnifying-glass.me-1
               | Kiểm tra
         .col-lg-4.text-lg-end
-          button#btnQuickExternalDevice.btn.btn-outline-warning.w-100(type="button")
-            i.fa-solid.fa-screwdriver-wrench.me-1
+          button#btnQuickExternalDevice.btn.btn-outline-info.w-100(type="button")
             | Tiếp nhận máy ngoài / Không có IMEI
 
       #deviceCheckResultCard.mt-3(style="display: none;")
@@ -96,7 +95,7 @@ block main
         .card.mb-3
           .card-header.d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
             h5.card-title.mb-0 Linh kiện / Phụ tùng thay thế (Nếu có)
-            button#btnAddExternalPart.btn.btn-outline-primary.btn-sm(type="button")
+            button#btnAddExternalPart.btn.btn-primary.btn-sm(type="button")
               i.fa-solid.fa-plus.me-1
               | Thêm linh kiện ngoài
           .card-body.pt-0

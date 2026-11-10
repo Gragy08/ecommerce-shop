@@ -41,17 +41,17 @@ block main
                       else if (item.status == "inactive")
                         span(class="badge bg-danger") Tạm dừng
                     td.text-end
-                      a(
+                      a.me-1(
                         href=`/${pathAdmin}/block/edit/${item.id}` 
-                        class="btn btn-sm btn-warning text-white"
+                        title="Chỉnh sửa"
                         )
-                        | Sửa
+                        i.las.la-pen.text-info.fs-20
                       a(
                         href="javascript:;"
                         button-api
                         data-method="DELETE"
                         data-api=`/${pathAdmin}/block/delete/${item.id}`
-                        class="btn btn-sm btn-danger text-white ms-1"
+                        title="Xóa"
                       )
-                        | Xóa
+                        i.las.la-trash-alt.text-danger.fs-20
           //- +pagination()

@@ -48,7 +48,7 @@ block main
         .col-auto
           a.btn.btn-primary(href=`/${pathAdmin}/warranty/create`)
             i.fa-solid.fa-plus.me-1
-            | Tiếp nhận bảo hành / sửa chữa
+            | Tiếp nhận bảo hành
     .card-body.pt-0
       form.row.g-2.mb-3(method="GET" action=`/${pathAdmin}/warranty/list`)
         .col-md-4
@@ -176,9 +176,8 @@ block main
                     div #{moment(item.createdAt).format("DD/MM/YYYY")}
                     small.text-muted #{moment(item.createdAt).format("HH:mm")}
                   td.text-end
-                    a.btn.btn-sm.btn-outline-primary(href=`/${pathAdmin}/warranty/detail/${item._id}`)
-                      i.fa-solid.fa-eye.me-1
-                      | Chi tiết
+                    a.me-1(href=`/${pathAdmin}/warranty/detail/${item._id}` title="Xem chi tiết phiếu")
+                      i.las.la-eye.text-purple.fs-20
             else
               tr
                 td.text-center.text-muted.py-4(colspan="10") Chưa có phiếu bảo hành / sửa chữa nào.

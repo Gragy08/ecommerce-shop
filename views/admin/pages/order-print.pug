@@ -40,18 +40,16 @@ block main
             h4.card-title.mb-0 In hóa đơn: #{order.code}
             span.badge.bg-success Đã hoàn tất
           .d-flex.gap-2
-            button.btn.btn-primary(type="button" onclick="printInvoiceMode('k80')")
-              i.fa-solid.fa-print.me-1
+            button.btn.btn-success(type="button" onclick="printInvoiceMode('k80')")
               | In hóa đơn nhiệt K80
-            button.btn.btn-outline-primary(type="button" onclick="printInvoiceMode('a4')")
-              i.fa-solid.fa-file-invoice.me-1
+            button.btn.btn-outline-success(type="button" onclick="printInvoiceMode('a4')")
               | In hóa đơn khổ A4
-            a.btn.btn-outline-success(href=`/${pathAdmin}/order/pos`)
-              i.fa-solid.fa-plus.me-1
-              | Tạo đơn POS mới
-            a.btn.btn-outline-secondary(href=`/${pathAdmin}/order/edit/${order.id}`)
-              i.fa-solid.fa-arrow-left.me-1
+            a.btn.btn-primary(href=`/${pathAdmin}/order/pos`)
+              i.fas.fa-plus.me-1
+              | Tạo đơn mới
+            a.btn.btn-secondary(href=`/${pathAdmin}/order/edit/${order.id}`)
               | Chi tiết đơn
+              i.fas.fa-arrow-right.ms-1
 
   .row.g-4
     // Khổ A4 bên trái
@@ -60,19 +58,19 @@ block main
         .card-body.p-4
           .d-flex.justify-content-between.border-bottom.pb-3.mb-3
             div
-              h4.fw-bold.mb-1 CỬA HÀNG TY PHU QUY
-              div.text-muted.small Địa chỉ: 509 Nguyễn Trung Trực, Rạch Giá, Kiên Giang
+              h4.fw-bold.mb-1 CỬA HÀNG TỶ PHÚ QUÝ
+              div.text-muted.small Địa chỉ: 509 Nguyễn Trung Trực, Rạch Giá, An Giang
               div.text-muted.small Điện thoại: 0982.887.761
             .text-end
               h4.fw-bold.text-primary.mb-1
                 if order.orderType === 'wholesale'
-                  | HÓA ĐƠN BÁN SỈ (B2B)
+                  | HÓA ĐƠN BÁN SỈ
                 else
                   | HÓA ĐƠN BÁN HÀNG
               div.small Mã HĐ: 
                 strong #{order.code}
               if order.orderType === 'wholesale'
-                div.badge.bg-warning.text-dark.mb-1 Đơn sỉ đại lý
+                div.badge.bg-primary.text-white.mb-1 Đơn sỉ đại lý
               div.small Ngày lập: #{order.createdAtFormat}
               if order.cashierName
                 div.small Thu ngân: #{order.cashierName}
@@ -189,14 +187,14 @@ block main
       .card.border.mx-auto(style="max-width: 320px; font-family: monospace; font-size: 13px;")
         .card-body.p-3
           .text-center.border-bottom.pb-2.mb-2
-            .fw-bold.fs-16 TY PHU QUY SHOP
+            .fw-bold.fs-16 Cửa Hàng Tỷ Phú Quý
             div 509 Nguyễn Trung Trực, Rạch Giá
             div SĐT: 0982.887.761
             .fw-bold.mt-2
               if order.orderType === 'wholesale'
-                | HÓA ĐƠN BÁN SỈ (B2B)
+                | HÓA ĐƠN BÁN SỈ
               else
-                | HÓA ĐƠN BÁN LẺ
+                | HÓA ĐƠN BÁN HÀNG
             div Mã: #{order.code}
             if order.orderType === 'wholesale'
               div [ĐƠN SỈ ĐẠI LÝ]

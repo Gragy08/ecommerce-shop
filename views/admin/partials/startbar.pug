@@ -100,6 +100,9 @@
                       a.nav-link(href=`/${pathAdmin}/inventory/list`) Danh sách tồn kho
                   if (permissions.includes("stock-receipt-list"))
                     li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/inventory/receipt/create`) Tạo phiếu nhập kho
+                  if (permissions.includes("stock-receipt-list"))
+                    li.nav-item
                       a.nav-link(href=`/${pathAdmin}/inventory/receipt`) Phiếu nhập kho
                   if (permissions.includes("supplier-list"))
                     li.nav-item
@@ -213,7 +216,7 @@
                       a.nav-link(href=`/${pathAdmin}/wholesale/registrations`) Duyệt hồ sơ đại lý
                   if (permissions.includes("wholesale-setting"))
                     li.nav-item
-                      a.nav-link(href=`/${pathAdmin}/wholesale/settings`) Chính sách & Ràng buộc sỉ
+                      a.nav-link(href=`/${pathAdmin}/wholesale/settings`) Chính sách đơn sỉ
           if (permissions.includes("coupon-role"))
             li.nav-item
               a.nav-link(
@@ -259,12 +262,12 @@
                 href="#sidebarWarranty"
                 )
                 i.iconoir-wrench.menu-icon
-                span Bảo hành - Sửa chữa
+                span Bảo hành & Sửa chữa
               #sidebarWarranty.collapse
                 ul.nav.flex-column
                   if (permissions.includes("warranty-create"))
                     li.nav-item
-                      a.nav-link(href=`/${pathAdmin}/warranty/create`) Tiếp nhận bảo hành / sửa chữa
+                      a.nav-link(href=`/${pathAdmin}/warranty/create`) Tiếp nhận bảo hành
                   if (permissions.includes("warranty-list"))
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/warranty/list`) Danh sách phiếu bảo hành

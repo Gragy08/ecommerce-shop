@@ -11,7 +11,7 @@ block main
             .col-auto.d-flex.gap-2
               if (customer.accountUserId && permissions.includes("customer-edit"))
                 if (customer.accountUserId.status == "active")
-                  a.btn.btn-outline-danger(
+                  a.btn.btn-danger(
                     href="javascript:;"
                     button-api
                     data-method="PATCH"
@@ -29,10 +29,10 @@ block main
                     i.fa-solid.fa-unlock.me-1
                     | Mở khóa tài khoản Web
               if (permissions.includes("customer-edit"))
-                a.btn.btn-primary(href=`/${pathAdmin}/customer/edit/${customer._id}`)
+                a.btn.btn-info(href=`/${pathAdmin}/customer/edit/${customer._id}`)
                   i.fa-solid.fa-pen.me-1
                   | Chỉnh sửa
-              a.btn.btn-outline-secondary(href=`/${pathAdmin}/customer/list`)
+              a.btn.btn-secondary(href=`/${pathAdmin}/customer/list`)
                 i.fa-solid.fa-arrow-left.me-1
                 | Quay lại danh sách
         .card-body.pt-0
@@ -144,7 +144,7 @@ block main
                       td #{ord.createdAtFormat}
                       td.text-end
                         a(href=`/${pathAdmin}/order/edit/${ord._id}` title="Xem đơn hàng")
-                          i.las.la-eye.text-secondary.fs-20
+                          i.las.la-eye.text-purple.fs-20
                 else
                   tr
                     td.text-center.text-muted.py-3(colspan="8") Khách hàng chưa có đơn hàng nào.

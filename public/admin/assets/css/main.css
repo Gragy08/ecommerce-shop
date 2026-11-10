@@ -258,3 +258,18 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Standardized Action Icons */
+.text-purple {
+  color: #7367f0 !important;
+}
+
+td.text-end a > i.las {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  vertical-align: middle;
+}
+
+td.text-end a:hover > i.las {
+  transform: scale(1.18);
+  opacity: 0.85;
+}
