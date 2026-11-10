@@ -53,6 +53,7 @@ app.use((req, res, next) => {
 // Thiết lập thư mục views và view engine Pug
 app.set('views', path.join(__dirname, 'views')); // Thư mục chứa file Pug
 app.set('view engine', 'pug'); // Thiết lập Pug làm view engine
+app.set('view cache', false); // Tắt cache view để khi chỉnh sửa file Pug, chỉ cần F5 là thấy ngay không cần restart server
 
 // Thiết lập thư mục chứa file tĩnh
 app.use(express.static(path.join(__dirname, 'public')));
