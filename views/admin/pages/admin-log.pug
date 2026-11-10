@@ -17,52 +17,65 @@ block main
             // end row
           // end card-header
           .card-body.pt-0
-            .row.align-items-center
-              .col-lg-6
+            .row.align-items-center.mb-2
+              .col-md-5.col-lg-4
                 +form-search()
-              //- .col-lg-6
-              //-   // Bộ lọc thời gian - chọn ngày trong 30 ngày gần nhất (giao diện)
-              //-   .d-flex.justify-content-lg-end.mt-3.mt-lg-0
-              //-     .input-group.mb-3
-              //-       span.input-group-text.fs-12 Từ
-              //-       input.form-control(type="date" id="filterStartDate")
-              //-       span.input-group-text.fs-12 Tới
-              //-       input.form-control(type="date" id="filterEndDate")
-              //-       a.btn.btn-secondary
-              //-         i.iconoir-reply
-              //-         | Xóa bộ lọc
             .table-responsive
-              table.table.table-striped.mb-0
+              table.table.table-striped.align-middle.mb-0
                 thead.table-light
                   tr
-                    th STT
-                    th Avatar
-                    th Tên Admin
-                    th Admin ID
+                    th.text-center(style="width: 50px") STT
+                    th.text-center(style="width: 60px") Avatar
+                    th(style="width: 130px") Tên Admin
+                    th(style="width: 140px") Admin ID
                     th Mô tả hành động
-                    th Method
-                    th Route
-                    th.text-end Thời gian
+                    th.text-center(style="width: 80px") Method
+                    th(style="width: 220px") Route
+                    th.text-end(style="width: 140px") Thời gian
                 tbody
-                  each item, index in recordList
+                  if (recordList && recordList.length > 0)
+                    each item, index in recordList
+                      tr
+                        td.text-center #{pagination.skip + index + 1}
+                        td.text-center
+                          if(item.avatar)
+                            img.rounded-circle(
+                              src=`${domainCDN}${item.avatar}`
+                              width="36"
+                              height="36"
+                              style="object-fit: cover;"
+                            )
+                          else
+                            img.rounded-circle(
+                              src=`${item.avatarSuperAdmin ? item.avatarSuperAdmin : item.avatarUnknown}`
+                              width="36"
+                              height="36"
+                              style="object-fit: cover;"
+                            )
+                        td
+                          span.fw-semibold #{item.name}
+                        td
+                          code.text-muted.small(style="word-break: break-all; display: inline-block; max-width: 140px;") #{item.adminId}
+                        td
+                          span #{item.title}
+                        td.text-center
+                          case item.method
+                            when "POST"
+                              span.badge.bg-success.text-white POST
+                            when "PATCH"
+                              span.badge.bg-warning.text-dark PATCH
+                            when "PUT"
+                              span.badge.bg-info.text-dark PUT
+                            when "DELETE"
+                              span.badge.bg-danger.text-white DELETE
+                            default
+                              span.badge.bg-secondary #{item.method || 'GET'}
+                        td
+                          code.text-dark.small(style="word-break: break-all; display: inline-block; max-width: 220px;") #{item.route}
+                        td.text-end.text-nowrap
+                          span.small.text-muted #{item.formattedCreatedAt}
+                  else
                     tr
-                      td #{pagination.skip + index + 1}
-                      td
-                        if(item.avatar)
-                          img(
-                            src=`${domainCDN}${item.avatar}`
-                            class="rounded thumb-md me-1 d-inline"
-                          )
-                        else
-                          img(
-                            src=`${item.avatarSuperAdmin ? item.avatarSuperAdmin : item.avatarUnknown}`
-                            class="rounded thumb-md me-1 d-inline"
-                          )
-                      td #{item.name}
-                      td #{item.adminId}
-                      td #{item.title}
-                      td #{item.method}
-                      td #{item.route}
-                      td.text-end #{item.formattedCreatedAt}
+                      td.text-center.text-muted.py-4(colspan="8") Chưa có lịch sử hoạt động nào.
             +pagination()
       // end col

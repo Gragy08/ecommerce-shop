@@ -213,7 +213,7 @@
                 <th>Mã IMEI</th>
                 <th>Đơn hàng</th>
                 <th>Thời hạn bảo hành</th>
-                <th class="text-end">Thao tác</th>
+                <th class="text-end"></th>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>

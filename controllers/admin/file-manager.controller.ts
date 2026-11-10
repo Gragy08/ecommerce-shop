@@ -47,13 +47,18 @@ export const fileManager = async (req: Request, res: Response) => {
 
   // Danh sách folder
   let folderList = [];
-  const response = await axios.get(`${domainCDN}/file-manager/folder/list?folderPath=${req.query.folderPath}`, {
+  const folderPathParam = req.query.folderPath ? `?folderPath=${req.query.folderPath}` : "";
+  const response = await axios.get(`${domainCDN}/file-manager/folder/list${folderPathParam}`, {
     headers: {
       Authorization: `Bearer ${process.env.FILE_MANAGER_SECRET}`
     }
   });
   if(response.data.code == "success") {
-    folderList = response.data.folderList;
+    // Ẩn folder riêng biệt (như shop-thanhtien) trên admin Tỷ Phú Quý mà không xóa trên server CDN
+    const hiddenFolders = ["shop-thanhtien"];
+    folderList = (response.data.folderList || []).filter(
+      (item: any) => !hiddenFolders.includes(item.name)
+    );
     for (const item of folderList) {
       item.createdAtFormat = moment(item.createdAt).format("HH:mm - DD/MM/YYYY");
     }
@@ -276,6 +281,14 @@ export const deleteFolderDel = async (req: Request, res: Response) => {
         code: "error",
         message: "Vui lòng gửi kèm tên folder!"
       })
+      return;
+    }
+
+    if(String(folderPath).includes("shop-thanhtien")) {
+      res.json({
+        code: "error",
+        message: "Không được phép xóa folder hệ thống này!"
+      });
       return;
     }
 

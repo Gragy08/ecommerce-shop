@@ -57,7 +57,7 @@ block main
                   th Vị trí
                   th Trạng thái
                   th Lượt xem
-                  th.text-end Hành động
+                  th.text-end.text-nowrap(style="min-width: 110px; width: 110px;") Hành động
               tbody
                 each item, index in recordList
                   tr
@@ -89,7 +89,7 @@ block main
                       else if (item.status == "inactive")
                         span(class="badge bg-danger") Tạm dừng
                     td #{item.view}
-                    td.text-end
+                    td.text-end.text-nowrap(style="min-width: 110px;")
                       a.me-1(href=`/${pathAdmin}/product/edit/${item.id}` title="Chỉnh sửa")
                         i.las.la-pen.text-info.fs-20
                       a.me-1(

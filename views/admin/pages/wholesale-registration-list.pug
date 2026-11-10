@@ -104,7 +104,7 @@ block main
                   th Tài khoản Web
                   th Trạng thái xét duyệt
                   th Ngày đăng ký
-                  th.text-end Thao tác
+                  th.text-end Hành động
               tbody
                 if (registrations && registrations.length > 0)
                   each item, index in registrations
@@ -160,12 +160,12 @@ block main
                                 i.las.la-check.me-1
                                 | Duyệt
                             if (item.status !== "rejected")
-                              button.btn.btn-sm.btn-outline-danger(
-                                type="button"
+                              a.me-1(
+                                href="javascript:;"
                                 onclick=`openRejectModal('${item._id}', '${item.storeName}')`
                                 title="Từ chối / Thu hồi quyền đại lý"
                               )
-                                i.las.la-ban
+                                i.las.la-ban.text-warning.fs-20
                           if item.customerId
                             a.me-1(
                               href=`/${pathAdmin}/customer/detail/${item.customerId}`

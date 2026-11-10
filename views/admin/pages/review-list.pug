@@ -71,14 +71,14 @@ block main
                         )
                             | Duyệt
                       if (item.status != "rejected")
-                        a(
-                            href="javascript:;"
-                            button-api
-                            data-method="PATCH"
-                            data-api=`/${pathAdmin}/review/change-status/${item.id}/rejected`
-                            class="btn btn-sm btn-warning text-white ms-1"
+                        a.me-1(
+                          href="javascript:;"
+                          button-api
+                          data-method="PATCH"
+                          data-api=`/${pathAdmin}/review/change-status/${item.id}/rejected`
+                          title="Ẩn đánh giá"
                         )
-                            | Ẩn
+                          i.las.la-eye-slash.text-warning.fs-20
                       a.ms-1(
                         href="javascript:;"
                         button-api
