@@ -566,7 +566,7 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
         const logEntry: any = {
           fromStatus: prevStatus,
           toStatus: "sold",
-          reason: "Xuất bán tại quầy POS",
+          reason: "Xuất bán tại quầy Cửa hàng",
           note: `Hóa đơn ${code} - Khách: ${fullName}`,
           updatedAt: new Date()
         };

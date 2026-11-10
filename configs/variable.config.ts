@@ -268,6 +268,10 @@ export const permissionList = [
   {
     id: "wholesale-setting",
     name: "Cấu hình chính sách bán sỉ"
+  },
+  {
+    id: "wholesale-order-create",
+    name: "Lên đơn hàng sỉ cho đại lý"
   }
 ];
 

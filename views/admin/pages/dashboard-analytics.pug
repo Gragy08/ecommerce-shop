@@ -92,13 +92,13 @@ block main
         .card.h-100.border.shadow-none
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Kênh Quầy POS
+              span.text-muted.fs-13.fw-medium Kênh tại Cửa hàng
               span.avatar-xs.bg-info-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-cash-register.text-info.fs-18
             h3.fs-22.fw-bold.text-info.mb-1 #{kpis.posRevenue.toLocaleString("vi-VN")} đ
             .d-flex.align-items-center.justify-content-between.fs-12
               span.badge.bg-info-subtle.text-info Chiếm #{kpis.posShare}%
-              span.text-muted #{kpis.posOrders} hóa đơn tại quầy
+              span.text-muted #{kpis.posOrders} hóa đơn tại Cửa hàng
 
       // KPI 4: Kênh Website Online
       .col-sm-6.col-xl-3
@@ -168,7 +168,7 @@ block main
               h5.card-title.mb-0 Xu hướng Doanh thu theo Kênh bán hàng (#{chartData.isHourly ? "Từng giờ" : "Từng ngày"})
               span.fs-12.text-muted
                 span.badge.bg-info.me-1 &nbsp;
-                | Quầy POS &nbsp;&nbsp;
+                | Tại Cửa hàng &nbsp;&nbsp;
                 span.badge.bg-warning.me-1 &nbsp;
                 | Online Web
           .card-body
@@ -185,7 +185,7 @@ block main
               canvas#channelShareChart
             .d-flex.justify-content-around.w-100.mt-3.pt-2.border-top
               .text-center
-                span.fs-12.text-muted POS Tại Quầy
+                span.fs-12.text-muted Tại Cửa hàng
                 h6.mb-0.text-info #{kpis.posShare}% (#{kpis.posOrders} đơn)
               .text-center
                 span.fs-12.text-muted Website Online
@@ -332,7 +332,7 @@ block script
           labels: timelineLabels,
           datasets: [
             {
-              label: 'Quầy POS',
+              label: 'tại Cửa hàng',
               data: posTimeline,
               backgroundColor: 'rgba(13, 202, 240, 0.75)',
               borderColor: 'rgba(13, 202, 240, 1)',

@@ -53,6 +53,9 @@ block main
             .col
               h4.card-title #{pageTitle}
             .col-auto.d-flex.gap-2
+              a.btn.btn-outline-primary(href=`/${pathAdmin}/wholesale/orders/create`)
+                i.fa-solid.fa-store.me-1
+                | Lên đơn sỉ
               a.btn.btn-primary(href=`/${pathAdmin}/order/pos`)
                 i.fa-solid.fa-cash-register.me-1
                 | Bán hàng tại quầy
@@ -71,7 +74,7 @@ block main
             .col-lg-2.col-md-3.col-6
               select.form-select(name="orderType")
                 option(value="" selected=(!filters || !filters.orderType)) Tất cả loại đơn
-                option(value="wholesale" selected=(filters && filters.orderType == "wholesale")) 👑 Đại lý (Sỉ)
+                option(value="wholesale" selected=(filters && filters.orderType == "wholesale")) Khách sỉ
                 option(value="retail" selected=(filters && filters.orderType == "retail")) Khách lẻ
             .col-lg-2.col-md-3.col-6
               select.form-select(name="channel")

@@ -5,6 +5,13 @@ const router = Router();
 
 router.get("/list", wholesaleController.dealerList);
 
+// Lên đơn hàng sỉ (Đại lý)
+router.get("/orders/create", wholesaleController.wholesaleOrderCreate);
+router.post("/orders/create", wholesaleController.wholesaleOrderCreatePost);
+router.get("/api/dealers", wholesaleController.searchApprovedDealers);
+router.get("/api/search-products", wholesaleController.searchWholesaleProducts);
+router.get("/api/available-imeis/:variantId", wholesaleController.availableWholesaleImeis);
+
 router.get("/registrations", wholesaleController.registrationList);
 
 router.get("/registrations/create", wholesaleController.registrationCreate);

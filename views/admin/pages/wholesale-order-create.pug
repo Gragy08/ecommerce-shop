@@ -1,0 +1,241 @@
+extends ../layouts/default.pug
+
+block main
+  .row
+    .col-12
+      .card.mb-3
+        .card-header.py-2
+          .row.align-items-center
+            .col
+              h4.card-title.mb-0 #{pageTitle}
+            .col-auto.d-flex.gap-2
+              a.btn.btn-outline-secondary.btn-sm(href=`/${pathAdmin}/order/list`)
+                i.fa-solid.fa-list.me-1
+                | Danh sách đơn hàng
+              a.btn.btn-outline-primary.btn-sm(href=`/${pathAdmin}/wholesale/list`)
+                i.fa-solid.fa-shop.me-1
+                | Danh sách đại lý
+
+  .row.g-3
+    // Cột trái: Tìm kiếm sản phẩm sỉ / Quét IMEI & Giỏ hàng sỉ
+    .col-xl-8.col-lg-7
+      .card.mb-3(style="position: relative; z-index: 30;")
+        .card-body.p-3
+          .position-relative
+            .input-group
+              span.input-group-text
+                i.fa-solid.fa-barcode
+              input#wholesaleSearchInput.form-control(
+                type="text"
+                placeholder="Quét mã IMEI hoặc tìm tên sản phẩm, mã SKU..."
+                autocomplete="off"
+                autofocus
+              )
+              button#btnClearSearch.btn.btn-outline-secondary(type="button" style="display: none;")
+                i.fa-solid.fa-xmark
+
+            #wholesaleSearchResults.dropdown-menu.w-100.p-2(
+              style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40; max-height: 400px; overflow-y: auto; display: none;"
+            )
+
+      .card(style="position: relative; z-index: 1;")
+        .card-header.d-flex.justify-content-between.align-items-center
+          h5.card-title.mb-0
+            | Giỏ hàng sỉ (
+            span#cartTotalItemsCount 0
+            | )
+          button#btnResetCart.btn.btn-outline-danger.btn-sm(type="button")
+            i.fa-solid.fa-trash-can.me-1
+            | Làm mới
+        .card-body.pt-0
+          .table-responsive(style="min-height: 280px;")
+            table.table.table-bordered.align-middle.mb-0
+              thead.table-light
+                tr
+                  th.text-center(style="width: 45px") STT
+                  th Sản phẩm / Biến thể
+                  th.text-end(style="width: 140px") Đơn giá sỉ
+                  th.text-center(style="width: 110px") Số lượng
+                  th(style="width: 220px") Mã IMEI xuất bán
+                  th.text-end(style="width: 140px") Thành tiền
+                  th.text-center(style="width: 45px")
+              tbody#cartTableBody
+                tr#cartEmptyRow
+                  td.text-center.text-muted.py-5(colspan="7") Chưa có sản phẩm nào trong giỏ hàng sỉ.
+
+        // Khối theo dõi điều kiện chính sách bán sỉ
+        .card-footer.bg-light.border-top
+          .row.align-items-center.g-2
+            .col-md-8
+              .d-flex.flex-wrap.align-items-center.gap-3.small
+                span
+                  | Tổng số lượng: 
+                  strong#policyCurrentQuantity.text-dark 0
+                  |  / 
+                  span#policyMinQuantity #{policy.minQuantity || 4} máy
+                span •
+                span
+                  | Tổng tiền sỉ: 
+                  strong#policyCurrentTotal.text-dark 0 đ
+                  |  / 
+                  span#policyMinTotal #{(policy.minOrderTotal || 20000000).toLocaleString("vi-VN")} đ
+            .col-md-4.text-md-end
+              span#policyStatusBadge.badge.bg-secondary Chưa đạt điều kiện sỉ
+
+    // Cột phải: Chọn Đại lý & Thanh toán
+    .col-xl-4.col-lg-5
+      .card.mb-3
+        .card-header
+          h5.card-title.mb-0 Thông tin đại lý nhận hàng
+        .card-body.pt-0
+          .mb-3
+            label.form-label.fw-semibold(for="dealerSelect") Chọn đại lý *
+            select#dealerSelect.form-select
+              option(value="") -- Chọn đại lý đã duyệt --
+              if (dealers && dealers.length > 0)
+                each d in dealers
+                  option(
+                    value=d._id
+                    data-store-name=d.storeName
+                    data-full-name=d.fullName
+                    data-phone=d.phone
+                    data-address=d.businessAddress
+                    data-tax-code=d.taxCode
+                  ) #{d.storeName} - #{d.fullName} (#{d.phone})
+              else
+                option(value="" disabled) Chưa có đại lý nào được phê duyệt
+
+          #dealerDetailsSection(style="display: none;")
+            .mb-2
+              label.form-label.small.text-muted.mb-1 Cửa hàng / Đại lý
+              input#dealerStoreName.form-control.form-control-sm.fw-semibold(type="text" readonly)
+            .row.g-2.mb-2
+              .col-6
+                label.form-label.small.text-muted.mb-1 Người đại diện
+                input#dealerFullName.form-control.form-control-sm(type="text" readonly)
+              .col-6
+                label.form-label.small.text-muted.mb-1 Số điện thoại
+                input#dealerPhone.form-control.form-control-sm(type="text" readonly)
+            .mb-2
+              label.form-label.small.text-muted.mb-1 Mã số thuế (MST)
+              input#dealerTaxCode.form-control.form-control-sm(type="text" readonly placeholder="Chưa có")
+            .mb-2
+              label.form-label.small.text-muted.mb-1 Hình thức giao nhận
+              select#deliveryMethod.form-select.form-select-sm
+                option(value="pickup" selected) Nhận trực tiếp tại kho / quầy
+                option(value="delivery") Giao hàng đến địa chỉ đại lý / Chành xe
+            .mb-0
+              label.form-label.small.text-muted.mb-1 Địa chỉ giao nhận
+              textarea#dealerAddress.form-control.form-control-sm(rows="2")
+
+      .card
+        .card-header
+          h5.card-title.mb-0 Thanh toán đơn sỉ
+        .card-body.pt-0
+          .d-flex.justify-content-between.align-items-center.mb-2
+            span.text-muted Tạm tính (Giá sỉ):
+            strong#subTotalDisplay 0 đ
+
+          .d-flex.justify-content-between.align-items-center.mb-2
+            span.text-muted Chiết khấu thêm (VNĐ):
+            input#orderDiscountInput.form-control.form-control-sm.text-end(
+              type="number"
+              min="0"
+              value="0"
+              style="width: 140px;"
+            )
+
+          hr.my-2
+
+          .d-flex.justify-content-between.align-items-center.mb-3
+            span.fw-bold Đại lý cần trả:
+            h4#totalAmountDisplay.fw-bold.text-danger.mb-0 0 đ
+
+          .mb-3
+            label.form-label.small.text-muted.mb-1 Hình thức thanh toán
+            select#paymentMethod.form-select.form-select-sm
+              option(value="money") Tiền mặt
+              option(value="bank_transfer" selected) Chuyển khoản ngân hàng
+              option(value="debt") Công nợ / Thanh toán sau
+
+          .mb-3
+            label.form-label.small.text-muted.mb-1 Trạng thái thanh toán
+            select#paymentStatus.form-select.form-select-sm
+              option(value="paid" selected) Đã thanh toán đủ
+              option(value="unpaid") Chưa thanh toán / Ghi nợ
+
+          #paidAmountSection(style="display: none;")
+            .mb-2
+              .d-flex.justify-content-between.align-items-center.mb-1
+                label.form-label.small.text-muted.mb-0(for="paidAmountInput") Tiền đại lý đưa / chuyển (VNĐ)
+                button#btnExactAmount.btn.btn-link.btn-sm.p-0.text-decoration-none(type="button") Đủ tiền
+              input#paidAmountInput.form-control.form-control-sm.text-end.fw-bold(type="number" min="0")
+            .d-flex.justify-content-between.align-items-center.p-2.bg-light.rounded.mb-3.small
+              span.text-muted Tiền thừa trả lại:
+              strong#changeAmountDisplay.text-success 0 đ
+
+          .mb-3
+            label.form-label.small.text-muted.mb-1(for="orderNote") Ghi chú đơn sỉ
+            textarea#orderNote.form-control.form-control-sm(rows="2" placeholder="Ghi chú về đóng gói, chành xe nhận...")
+
+          // Checkbox áp dụng ngoại lệ giá sỉ khi chưa đủ điều kiện
+          #overridePolicySection.form-check.mb-3.p-2.bg-light.rounded.border(style="display: none;")
+            input#isPolicyOverride.form-check-input.ms-0.me-2(type="checkbox")
+            label.form-check-label.small.text-dark(for="isPolicyOverride")
+              | Cho phép xuất giá sỉ ngoại lệ cho đơn hàng này
+
+          button#btnSubmitWholesaleOrder.btn.btn-primary.w-100.py-2.fw-bold(type="button")
+            i.fa-solid.fa-check.me-1
+            | Tạo đơn hàng sỉ
+
+  // Modal chọn mã IMEI cho sản phẩm trong giỏ
+  #selectImeiModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-dialog-centered.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title
+            | Chọn mã IMEI: 
+            span#modalImeiProductName.text-primary
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        .modal-body
+          .d-flex.justify-content-between.align-items-center.mb-2.small
+            span
+              | Yêu cầu: 
+              strong#modalRequiredCount 1
+              |  mã IMEI
+            span
+              | Đã chọn: 
+              strong#modalSelectedCount.text-primary 0
+              |  / 
+              span#modalMaxCount 1
+
+          ul.nav.nav-tabs.mb-3#imeiModalTabs(role="tablist")
+            li.nav-item(role="presentation")
+              button.nav-link.active#tabSelectAvailable-tab(data-bs-toggle="tab" data-bs-target="#tabSelectAvailable" type="button" role="tab") Chọn từ kho
+            li.nav-item(role="presentation")
+              button.nav-link#tabPasteBatch-tab(data-bs-toggle="tab" data-bs-target="#tabPasteBatch" type="button" role="tab") Dán danh sách IMEI
+
+          .tab-content
+            // Tab 1: Chọn từ kho
+            .tab-pane.fade.show.active#tabSelectAvailable(role="tabpanel")
+              input#modalImeiSearch.form-control.form-control-sm.mb-2(type="text" placeholder="Lọc nhanh mã IMEI...")
+              #modalImeiList.d-flex.flex-wrap.gap-2.p-3.bg-light.rounded.border(style="max-height: 260px; overflow-y: auto;")
+
+            // Tab 2: Dán danh sách hàng loạt
+            .tab-pane.fade#tabPasteBatch(role="tabpanel")
+              label.form-label.small.text-muted Dán danh sách IMEI (mỗi mã một dòng hoặc cách nhau bởi dấu phẩy, khoảng trắng):
+              textarea#modalBatchImeiTextarea.form-control.form-control-sm.mb-2(rows="6" placeholder="Ví dụ:\n356789123456789\n356789123456790\n356789123456791")
+              .d-flex.justify-content-between.align-items-center
+                span#batchImeiFeedback.small.text-muted Chưa có mã nào
+                button#btnApplyBatchImei.btn.btn-sm.btn-secondary(type="button") Áp dụng mã đã dán
+
+        .modal-footer
+          button.btn.btn-secondary.btn-sm(type="button" data-bs-dismiss="modal") Đóng
+          button#btnConfirmImeis.btn.btn-primary.btn-sm(type="button") Xác nhận chọn
+
+block script
+  script.
+    const policyMinQuantity = #{policy.minQuantity || 4};
+    const policyMinOrderTotal = #{policy.minOrderTotal || 20000000};
+    const policyAllowPosOverride = #{Boolean(policy.allowPosOverride)};
+  script(src="/admin/assets/js/wholesale-order-create.js")

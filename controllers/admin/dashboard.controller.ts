@@ -1064,7 +1064,7 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
       installment: { label: "Trả góp", count: 0, revenue: 0 },
       vnpay: { label: "VNPay", count: 0, revenue: 0 },
       zalopay: { label: "ZaloPay", count: 0, revenue: 0 },
-      other: { label: "Khác / Thẻ POS", count: 0, revenue: 0 }
+      other: { label: "Khác", count: 0, revenue: 0 }
     };
 
     let installmentPendingCount = 0;
@@ -1374,7 +1374,7 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         posTimeline: JSON.stringify(posTimeline),
         onlineTimeline: JSON.stringify(onlineTimeline),
         totalTimeline: JSON.stringify(totalTimeline),
-        channelLabels: JSON.stringify(["Quầy POS", "Online Store"]),
+        channelLabels: JSON.stringify(["Tại Cửa hàng", "Online Store"]),
         channelRevenue: JSON.stringify([posRevenue, onlineRevenue]),
         paymentLabels: JSON.stringify(paymentBreakdownList.map(p => p.label)),
         paymentRevenue: JSON.stringify(paymentBreakdownList.map(p => p.revenue)),

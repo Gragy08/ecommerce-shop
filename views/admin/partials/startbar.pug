@@ -196,7 +196,7 @@
                   if (permissions.includes("customer-list"))
                     li.nav-item
                       a.nav-link(href=`/${pathAdmin}/customer/list`) Danh sách khách hàng
-          if (permissions.includes("wholesale-role") || permissions.includes("wholesale-registration-list") || permissions.includes("wholesale-approval") || permissions.includes("wholesale-setting"))
+          if (permissions.includes("wholesale-role") || permissions.includes("wholesale-registration-list") || permissions.includes("wholesale-approval") || permissions.includes("wholesale-setting") || permissions.includes("wholesale-order-create"))
             li.nav-item
               a.nav-link(
                 aria-controls="sidebarWholesale" 
@@ -209,6 +209,9 @@
                 span Kênh Đại lý (Bán sỉ)
               #sidebarWholesale.collapse
                 ul.nav.flex-column
+                  if (permissions.includes("wholesale-order-create") || permissions.includes("wholesale-role"))
+                    li.nav-item
+                      a.nav-link(href=`/${pathAdmin}/wholesale/orders/create`) Lên đơn sỉ
                   li.nav-item
                     a.nav-link(href=`/${pathAdmin}/wholesale/list`) Danh sách đại lý
                   if (permissions.includes("wholesale-registration-list") || permissions.includes("wholesale-approval"))
