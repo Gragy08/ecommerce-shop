@@ -53,8 +53,8 @@ export const fileManager = async (req: Request, res: Response) => {
     }
   });
   if(response.data.code == "success") {
-    // Ẩn folder riêng biệt (như shop-thanhtien) trên admin Tỷ Phú Quý mà không xóa trên server CDN
-    const hiddenFolders = ["shop-thanhtien"];
+    // Ẩn folder riêng biệt (như shop-thanhtien) và folder rác undefined trên admin Tỷ Phú Quý
+    const hiddenFolders = ["shop-thanhtien", "undefined"];
     folderList = (response.data.folderList || []).filter(
       (item: any) => !hiddenFolders.includes(item.name)
     );
