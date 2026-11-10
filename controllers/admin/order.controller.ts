@@ -675,11 +675,18 @@ export const printInvoice = async (req: Request, res: Response): Promise<void> =
 
     let storeName = "";
     if (order.userId && mongoose.isValidObjectId(order.userId)) {
-      const userDoc: any = await AccountUser.findById(order.userId).select("storeName").lean();
+      const userDoc: any = await AccountUser.findOne({
+        _id: order.userId,
+        $or: [{ wholesaleStatus: "approved" }, { userType: "wholesale" }]
+      }).select("storeName").lean();
       if (userDoc?.storeName) storeName = userDoc.storeName;
     }
     if (!storeName && order.phone) {
-      const regDoc: any = await WholesaleRegistration.findOne({ phone: order.phone, deleted: false }).select("storeName").lean();
+      const regDoc: any = await WholesaleRegistration.findOne({
+        phone: order.phone,
+        status: "approved",
+        deleted: false
+      }).select("storeName").lean();
       if (regDoc?.storeName) storeName = regDoc.storeName;
     }
     order.storeName = storeName;
@@ -749,9 +756,10 @@ export const list = async (req: Request, res: Response): Promise<void> => {
     if (keyword) {
       const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 
-      // Tìm thêm SĐT của đại lý có tên cửa hàng hoặc tên người đại diện khớp keyword
+      // Tìm thêm SĐT của đại lý có tên cửa hàng hoặc tên người đại diện khớp keyword (chỉ đại lý đã duyệt)
       const matchedDealers = await WholesaleRegistration.find({
         $or: [{ storeName: regex }, { fullName: regex }],
+        status: "approved",
         deleted: false
       }).select("phone").lean();
       const matchedPhones = matchedDealers.map((d: any) => d.phone).filter(Boolean);
@@ -843,10 +851,17 @@ export const list = async (req: Request, res: Response): Promise<void> => {
 
     const [accountUsers, wholesaleRegistrations] = await Promise.all([
       wholesaleUserIds.length > 0
-        ? AccountUser.find({ _id: { $in: wholesaleUserIds } }).select("storeName fullName phone").lean()
+        ? AccountUser.find({
+            _id: { $in: wholesaleUserIds },
+            $or: [{ wholesaleStatus: "approved" }, { userType: "wholesale" }]
+          }).select("storeName fullName phone wholesaleStatus userType").lean()
         : [],
       orderPhones.length > 0
-        ? WholesaleRegistration.find({ phone: { $in: orderPhones }, deleted: false }).select("storeName phone fullName").lean()
+        ? WholesaleRegistration.find({
+            phone: { $in: orderPhones },
+            status: "approved",
+            deleted: false
+          }).select("storeName phone fullName status").lean()
         : []
     ]);
 
@@ -867,6 +882,8 @@ export const list = async (req: Request, res: Response): Promise<void> => {
 
       const matchedUser = item.userId ? userMap.get(String(item.userId)) : null;
       const matchedReg = item.phone ? regPhoneMap.get(String(item.phone)) : null;
+
+      // CHỈ hiển thị tên cửa hàng đại lý nếu là đơn sỉ hoặc tài khoản/SĐT là đại lý ĐÃ ĐƯỢC DUYỆT
       item.storeName = matchedUser?.storeName || matchedReg?.storeName || "";
     }
 
@@ -943,14 +960,21 @@ export const edit = async (req: Request, res: Response): Promise<void> => {
     let dealerBusinessAddress = "";
 
     if (orderDetail.userId && mongoose.isValidObjectId(orderDetail.userId)) {
-      const userDoc: any = await AccountUser.findById(orderDetail.userId).select("storeName phone email").lean();
+      const userDoc: any = await AccountUser.findOne({
+        _id: orderDetail.userId,
+        $or: [{ wholesaleStatus: "approved" }, { userType: "wholesale" }]
+      }).select("storeName phone email").lean();
       if (userDoc?.storeName) {
         dealerStoreName = userDoc.storeName;
       }
     }
 
     if (orderDetail.phone) {
-      const regDoc: any = await WholesaleRegistration.findOne({ phone: orderDetail.phone, deleted: false }).lean();
+      const regDoc: any = await WholesaleRegistration.findOne({
+        phone: orderDetail.phone,
+        status: "approved",
+        deleted: false
+      }).lean();
       if (regDoc) {
         dealerStoreName = dealerStoreName || regDoc.storeName || "";
         dealerTaxCode = regDoc.taxCode || "";
