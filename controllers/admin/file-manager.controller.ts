@@ -47,8 +47,7 @@ export const fileManager = async (req: Request, res: Response) => {
 
   // Danh sách folder
   let folderList = [];
-  const folderPathParam = req.query.folderPath ? `?folderPath=${req.query.folderPath}` : "";
-  const response = await axios.get(`${domainCDN}/file-manager/folder/list${folderPathParam}`, {
+  const response = await axios.get(`${domainCDN}/file-manager/folder/list?folderPath=${req.query.folderPath}`, {
     headers: {
       Authorization: `Bearer ${process.env.FILE_MANAGER_SECRET}`
     }
