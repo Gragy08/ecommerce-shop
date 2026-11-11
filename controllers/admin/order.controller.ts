@@ -570,7 +570,7 @@ export const createPosPost = async (req: Request, res: Response): Promise<void> 
 
     await logAdminAction(
       req as any,
-      `Tạo hóa đơn bán lẻ tại quầy POS: ${code} (${total.toLocaleString("vi-VN")} đ)`
+      `Tạo hóa đơn bán lẻ tại Cửa hàng: ${code} (${total.toLocaleString("vi-VN")} đ)`
     );
 
     res.json({

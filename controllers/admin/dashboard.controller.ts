@@ -1523,7 +1523,7 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         onlineTimeline: JSON.stringify(onlineTimeline),
         wholesaleTimeline: JSON.stringify(wholesaleTimeline),
         totalTimeline: JSON.stringify(totalTimeline),
-        channelLabels: JSON.stringify(["Tại quầy POS", "Website Online", "Bán sỉ Đại lý"]),
+        channelLabels: JSON.stringify(["Tại Cửa hàng", "Website Online", "Bán sỉ Đại lý"]),
         channelRevenue: JSON.stringify([posRevenue, onlineRevenue, wholesaleRevenue]),
         paymentLabels: JSON.stringify(paymentBreakdownList.map(p => p.label)),
         paymentRevenue: JSON.stringify(paymentBreakdownList.map(p => p.revenue)),

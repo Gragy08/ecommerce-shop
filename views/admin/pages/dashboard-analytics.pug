@@ -245,7 +245,7 @@ block main
               h5.card-title.mb-0 Xu hướng Doanh thu theo Kênh bán hàng (#{chartData.isHourly ? "Từng giờ" : "Từng ngày"})
               span.fs-12.text-muted
                 span.badge.bg-info.me-1 &nbsp;
-                | Quầy POS &nbsp;&nbsp;
+                | Tại Cửa hàng &nbsp;&nbsp;
                 span.badge.bg-warning.me-1 &nbsp;
                 | Online Web &nbsp;&nbsp;
                 span.badge.bg-success.me-1 &nbsp;
@@ -264,7 +264,7 @@ block main
               canvas#channelShareChart
             .row.w-100.mt-3.pt-2.border-top.text-center.g-1
               .col-4
-                span.fs-11.text-muted Quầy POS
+                span.fs-11.text-muted Tại Cửa hàng
                 h6.mb-0.text-info.fs-12 #{kpis.posShare}% (#{kpis.posOrders})
               .col-4
                 span.fs-11.text-muted Online Web
@@ -460,7 +460,7 @@ block script
           labels: timelineLabels,
           datasets: [
             {
-              label: 'Tại quầy POS',
+              label: 'Tại Cửa hàng',
               data: posTimeline,
               backgroundColor: 'rgba(13, 202, 240, 0.75)',
               borderColor: 'rgba(13, 202, 240, 1)',
