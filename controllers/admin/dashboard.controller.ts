@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import moment from 'moment';
 import Order from '../../models/order.model';
 import AccountUser from '../../models/account-user.model';
 import InventoryItem from '../../models/inventory-item.model';
@@ -6,6 +7,7 @@ import WarrantyTicket from '../../models/warranty-ticket.model';
 import Product from '../../models/product.model';
 import ProductVariant from '../../models/product-variant.model';
 import Customer from '../../models/customer.model';
+import WholesaleRegistration from '../../models/wholesale-registration.model';
 import { getAnalyticsDateRange, formatVNDate } from '../../helpers/date.helper';
 
 export const dashboard = async (req: Request, res: Response) => {
@@ -305,6 +307,44 @@ export const dashboard = async (req: Request, res: Response) => {
     };
   }
   // HẾT ĐƠN HÀNG
+
+  // Thống kê doanh thu theo 3 kênh tháng này: POS Retail - Online Web - Wholesale
+  const channelBreakdownAgg = await Order.aggregate([
+    {
+      $match: {
+        deleted: false,
+        orderStatus: { $ne: "cancelled" },
+        createdAt: { $gte: startThisMonth, $lte: endThisMonth }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          $cond: [
+            { $eq: ["$orderType", "wholesale"] },
+            "wholesale",
+            { $cond: [{ $eq: ["$channel", "pos"] }, "pos", "online"] }
+          ]
+        },
+        revenue: { $sum: { $ifNull: ["$total", 0] } },
+        orderCount: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const channelStats = {
+    pos: { revenue: 0, orders: 0 },
+    online: { revenue: 0, orders: 0 },
+    wholesale: { revenue: 0, orders: 0 }
+  };
+  for (const row of channelBreakdownAgg) {
+    if (row._id && (channelStats as any)[row._id]) {
+      (channelStats as any)[row._id] = {
+        revenue: row.revenue || 0,
+        orders: row.orderCount || 0
+      };
+    }
+  }
   
   res.render("admin/pages/dashboard", {
     pageTitle: "Tổng quan",
@@ -321,6 +361,7 @@ export const dashboard = async (req: Request, res: Response) => {
     thisMonthOrders,
     monthOrderPercent,
     orderStatusStats,
+    channelStats
   });
 }
 
@@ -1000,6 +1041,71 @@ export const customerStatistic = async (req: Request, res: Response) => {
   });
 }
 
+// Helper lấy danh sách top đại lý lấy hàng nhiều nhất
+const fetchTopDealers = async (startDate: Date, endDate: Date, limit: number = 10) => {
+  const matchCondition: any = {
+    orderType: "wholesale",
+    orderStatus: { $ne: "cancelled" },
+    deleted: { $ne: true },
+    createdAt: { $gte: startDate, $lte: endDate }
+  };
+
+  const agg = await Order.aggregate([
+    { $match: matchCondition },
+    {
+      $group: {
+        _id: {
+          $ifNull: ["$phone", { $ifNull: ["$userId", "$fullName"] }]
+        },
+        storeName: { $last: "$storeName" },
+        fullName: { $last: "$fullName" },
+        phone: { $last: "$phone" },
+        taxCode: { $last: "$taxCode" },
+        totalRevenue: { $sum: { $ifNull: ["$total", 0] } },
+        totalOrders: { $sum: 1 },
+        totalPaid: { $sum: { $ifNull: ["$paidAmount", 0] } },
+        lastOrderDate: { $max: "$createdAt" }
+      }
+    },
+    { $sort: { totalRevenue: -1 } },
+    { $limit: limit }
+  ]);
+
+  const phoneList = agg.map(a => a.phone).filter(Boolean);
+  const regMap = new Map<string, any>();
+  if (phoneList.length > 0) {
+    const regDocs = await WholesaleRegistration.find({
+      phone: { $in: phoneList },
+      deleted: { $ne: true }
+    }).select("phone storeName fullName taxCode").lean();
+    for (const r of regDocs) {
+      if (r.phone) regMap.set(r.phone, r);
+    }
+  }
+
+  return agg.map((row: any) => {
+    const reg = row.phone ? regMap.get(row.phone) : null;
+    const sName = row.storeName || (reg ? reg.storeName : "") || row.fullName || "Đại lý bán sỉ";
+    const tCode = row.taxCode || (reg ? reg.taxCode : "") || "";
+    const remainingDebt = Math.max(0, (row.totalRevenue || 0) - (row.totalPaid || 0));
+
+    return {
+      storeName: sName,
+      fullName: row.fullName || (reg ? reg.fullName : "") || "Chưa cập nhật",
+      phone: row.phone || "-",
+      taxCode: tCode,
+      totalOrders: row.totalOrders || 0,
+      totalRevenue: row.totalRevenue || 0,
+      totalRevenueFormatted: `${Number(row.totalRevenue || 0).toLocaleString("vi-VN")} đ`,
+      totalPaid: row.totalPaid || 0,
+      totalPaidFormatted: `${Number(row.totalPaid || 0).toLocaleString("vi-VN")} đ`,
+      remainingDebt,
+      remainingDebtFormatted: `${Number(remainingDebt).toLocaleString("vi-VN")} đ`,
+      lastOrderDateFormatted: row.lastOrderDate ? moment(row.lastOrderDate).format("DD/MM/YYYY") : "-"
+    };
+  });
+};
+
 // [GET] /admin/dashboard/analytics - Báo cáo Bán hàng Đa kênh & Lợi nhuận gộp
 export const omnichannelAnalytics = async (req: Request, res: Response) => {
   try {
@@ -1058,10 +1164,16 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
     let onlineCogs = 0;
     let onlineGrossProfit = 0;
 
+    let wholesaleRevenue = 0;
+    let wholesaleOrdersCount = 0;
+    let wholesaleCogs = 0;
+    let wholesaleGrossProfit = 0;
+
     const paymentMap: Record<string, { label: string; count: number; revenue: number }> = {
       money: { label: "Tiền mặt", count: 0, revenue: 0 },
       bank_transfer: { label: "Chuyển khoản", count: 0, revenue: 0 },
       installment: { label: "Trả góp", count: 0, revenue: 0 },
+      debt: { label: "Công nợ", count: 0, revenue: 0 },
       vnpay: { label: "VNPay", count: 0, revenue: 0 },
       zalopay: { label: "ZaloPay", count: 0, revenue: 0 },
       other: { label: "Khác", count: 0, revenue: 0 }
@@ -1120,9 +1232,16 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
       totalCogs += orderCogs;
       totalGrossProfit += orderGrossProfit;
 
-      // Phân bổ kênh
-      const isPos = ord.channel === "pos";
-      if (isPos) {
+      // Phân bổ 3 kênh kinh doanh: Bán lẻ tại quầy POS - Bán Online Web - Bán sỉ Đại lý
+      const isWholesale = ord.orderType === "wholesale";
+      const isPosRetail = !isWholesale && ord.channel === "pos";
+
+      if (isWholesale) {
+        wholesaleRevenue += ordRev;
+        wholesaleOrdersCount += 1;
+        wholesaleCogs += orderCogs;
+        wholesaleGrossProfit += orderGrossProfit;
+      } else if (isPosRetail) {
         posRevenue += ordRev;
         posOrdersCount += 1;
         posCogs += orderCogs;
@@ -1138,7 +1257,7 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
       const pm = ord.paymentMethod || "money";
       let pmKey = "other";
       if (["money", "cash"].includes(pm)) pmKey = "money";
-      else if (["bank_transfer", "installment", "vnpay", "zalopay"].includes(pm)) pmKey = pm;
+      else if (["bank_transfer", "installment", "debt", "vnpay", "zalopay"].includes(pm)) pmKey = pm;
 
       if (paymentMap[pmKey]) {
         paymentMap[pmKey].count += 1;
@@ -1156,17 +1275,18 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
       }
     }
 
-    // 4. Biểu đồ xu hướng theo ngày hoặc theo giờ (Timeline)
+    // 4. Biểu đồ xu hướng theo ngày hoặc theo giờ (Timeline 3 kênh)
     const isHourly = range.period === "today" || range.period === "yesterday";
     const timelineLabels: string[] = [];
     const posTimeline: number[] = [];
     const onlineTimeline: number[] = [];
+    const wholesaleTimeline: number[] = [];
     const totalTimeline: number[] = [];
 
     if (isHourly) {
-      const hourlyData: Record<number, { pos: number; online: number; total: number }> = {};
+      const hourlyData: Record<number, { pos: number; online: number; wholesale: number; total: number }> = {};
       for (let h = 0; h < 24; h++) {
-        hourlyData[h] = { pos: 0, online: 0, total: 0 };
+        hourlyData[h] = { pos: 0, online: 0, wholesale: 0, total: 0 };
         timelineLabels.push(`${String(h).padStart(2, '0')}:00`);
       }
       for (const ord of allOrdersInPeriod) {
@@ -1177,24 +1297,26 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         const rev = Number(ord.total) || 0;
         if (hourlyData[h]) {
           hourlyData[h].total += rev;
-          if (ord.channel === "pos") hourlyData[h].pos += rev;
+          if (ord.orderType === "wholesale") hourlyData[h].wholesale += rev;
+          else if (ord.channel === "pos") hourlyData[h].pos += rev;
           else hourlyData[h].online += rev;
         }
       }
       for (let h = 0; h < 24; h++) {
         posTimeline.push(hourlyData[h].pos);
         onlineTimeline.push(hourlyData[h].online);
+        wholesaleTimeline.push(hourlyData[h].wholesale);
         totalTimeline.push(hourlyData[h].total);
       }
     } else {
-      const dailyData: Record<string, { label: string; pos: number; online: number; total: number }> = {};
+      const dailyData: Record<string, { label: string; pos: number; online: number; wholesale: number; total: number }> = {};
       const cur = new Date(range.startDate);
       while (cur <= range.endDate) {
         const day = String(cur.getDate()).padStart(2, '0');
         const month = String(cur.getMonth() + 1).padStart(2, '0');
         const dKey = `${day}/${month}`;
         if (!dailyData[dKey]) {
-          dailyData[dKey] = { label: dKey, pos: 0, online: 0, total: 0 };
+          dailyData[dKey] = { label: dKey, pos: 0, online: 0, wholesale: 0, total: 0 };
           timelineLabels.push(dKey);
         }
         cur.setDate(cur.getDate() + 1);
@@ -1209,13 +1331,15 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         const rev = Number(ord.total) || 0;
         if (dailyData[dKey]) {
           dailyData[dKey].total += rev;
-          if (ord.channel === "pos") dailyData[dKey].pos += rev;
+          if (ord.orderType === "wholesale") dailyData[dKey].wholesale += rev;
+          else if (ord.channel === "pos") dailyData[dKey].pos += rev;
           else dailyData[dKey].online += rev;
         }
       }
       for (const key of timelineLabels) {
         posTimeline.push(dailyData[key]?.pos || 0);
         onlineTimeline.push(dailyData[key]?.online || 0);
+        wholesaleTimeline.push(dailyData[key]?.wholesale || 0);
         totalTimeline.push(dailyData[key]?.total || 0);
       }
     }
@@ -1311,8 +1435,10 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
     const avgOrderValue = totalOrdersCount > 0 ? Math.round(netRevenue / totalOrdersCount) : 0;
     const posAov = posOrdersCount > 0 ? Math.round(posRevenue / posOrdersCount) : 0;
     const onlineAov = onlineOrdersCount > 0 ? Math.round(onlineRevenue / onlineOrdersCount) : 0;
+    const wholesaleAov = wholesaleOrdersCount > 0 ? Math.round(wholesaleRevenue / wholesaleOrdersCount) : 0;
     const posShare = netRevenue > 0 ? ((posRevenue / netRevenue) * 100).toFixed(1) : "0";
     const onlineShare = netRevenue > 0 ? ((onlineRevenue / netRevenue) * 100).toFixed(1) : "0";
+    const wholesaleShare = netRevenue > 0 ? ((wholesaleRevenue / netRevenue) * 100).toFixed(1) : "0";
     const grossProfitMargin = netRevenue > 0 ? ((totalGrossProfit / netRevenue) * 100).toFixed(1) : "0";
 
     const paymentBreakdownList = Object.keys(paymentMap).map(k => {
@@ -1325,6 +1451,19 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         percentage: netRevenue > 0 ? ((item.revenue / netRevenue) * 100).toFixed(1) : "0"
       };
     });
+
+    // 9. Xếp hạng Top đại lý lấy hàng nhiều nhất (Kỳ lọc hiện tại, Tháng này, Năm nay)
+    const nowTime = new Date();
+    const startThisMonth = new Date(nowTime.getFullYear(), nowTime.getMonth(), 1, 0, 0, 0, 0);
+    const endThisMonth = new Date(nowTime.getFullYear(), nowTime.getMonth() + 1, 0, 23, 59, 59, 999);
+    const startThisYear = new Date(nowTime.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const endThisYear = new Date(nowTime.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+    const [topDealersPeriod, topDealersThisMonth, topDealersThisYear] = await Promise.all([
+      fetchTopDealers(range.startDate, range.endDate, 10),
+      fetchTopDealers(startThisMonth, endThisMonth, 10),
+      fetchTopDealers(startThisYear, endThisYear, 10)
+    ]);
 
     res.render("admin/pages/dashboard-analytics.pug", {
       pageTitle: "Báo cáo Bán hàng Đa kênh & Lợi nhuận gộp",
@@ -1349,6 +1488,11 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         onlineGrossProfit,
         onlineShare,
         onlineAov,
+        wholesaleRevenue,
+        wholesaleOrders: wholesaleOrdersCount,
+        wholesaleGrossProfit,
+        wholesaleShare,
+        wholesaleAov,
         availableStockQty: invStatusMap.available.qty,
         availableStockCost: invStatusMap.available.cost,
         imeiStockQty: availableImeiCount,
@@ -1368,14 +1512,18 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         partsRevenue: warrantyPartsCost
       },
       topProducts: topProductsList,
+      topDealersPeriod,
+      topDealersThisMonth,
+      topDealersThisYear,
       chartData: {
         isHourly,
         timelineLabels: JSON.stringify(timelineLabels),
         posTimeline: JSON.stringify(posTimeline),
         onlineTimeline: JSON.stringify(onlineTimeline),
+        wholesaleTimeline: JSON.stringify(wholesaleTimeline),
         totalTimeline: JSON.stringify(totalTimeline),
-        channelLabels: JSON.stringify(["Tại Cửa hàng", "Online Store"]),
-        channelRevenue: JSON.stringify([posRevenue, onlineRevenue]),
+        channelLabels: JSON.stringify(["Tại quầy POS", "Website Online", "Bán sỉ Đại lý"]),
+        channelRevenue: JSON.stringify([posRevenue, onlineRevenue, wholesaleRevenue]),
         paymentLabels: JSON.stringify(paymentBreakdownList.map(p => p.label)),
         paymentRevenue: JSON.stringify(paymentBreakdownList.map(p => p.revenue)),
         inventoryStatusLabels: JSON.stringify(["Có sẵn", "Đã bán", "Bảo hành", "Lỗi/Hỏng", "Khác"]),

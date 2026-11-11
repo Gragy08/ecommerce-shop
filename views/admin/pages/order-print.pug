@@ -217,13 +217,13 @@ block main
 
           if order.orderType === 'wholesale'
             .mt-3.p-2.border.rounded.bg-light.text-center.small.fst-italic
-              | "Hai bên đã kiểm tra đầy đủ số lượng, quy cách và toàn bộ mã IMEI thiết bị niêm phong nguyên vẹn khi bàn giao."
+              | "Quý khách vui lòng kiểm đủ số lượng & IMEI khi nhận hàng. Cửa hàng Tỷ Phú Quý xin cảm ơn Quý Đại lý đã hợp tác!"
             .row.mt-4.text-center
               .col-4
-                strong Đại lý / Người nhận hàng
+                strong Người nhận hàng
                 .text-muted.small (Ký và ghi rõ họ tên)
               .col-4
-                strong Người lập phiếu / Xuất kho
+                strong Người Xuất kho
                 .text-muted.small (Ký và ghi rõ họ tên)
               .col-4
                 strong Đại diện Cửa hàng Tỷ Phú Quý
@@ -336,8 +336,7 @@ block main
 
           if order.orderType === 'wholesale'
             .text-center.border-top.pt-2.mt-2.small
-              div.fst-italic Đã kiểm đủ SL & IMEI khi nhận hàng
-              div Cảm ơn Quý Đại lý đã hợp tác!
+              div.fst-italic Cảm ơn Quý Đại lý đã hợp tác!
           else
             .text-center.border-top.pt-2.mt-2.small
               div Cảm ơn Quý khách & Hẹn gặp lại!

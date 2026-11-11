@@ -110,6 +110,12 @@ export const getAnalyticsDateRange = (
       periodLabel = `Tháng trước (${lmMonth}/${lmYear})`;
       break;
     }
+    case "thisYear": {
+      startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+      periodLabel = `Năm ${now.getFullYear()}`;
+      break;
+    }
     case "custom": {
       const parsedFrom = parseVNDate(from, false);
       const parsedTo = parseVNDate(to, true);

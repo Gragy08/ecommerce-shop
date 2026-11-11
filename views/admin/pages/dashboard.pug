@@ -48,6 +48,38 @@ block main
                             | Giảm
                             span.text-danger.mx-1 #{Math.abs(monthPercent).toFixed(1)}%
                           | so với tháng trước
+
+            if channelStats
+              h5.fs-14.mt-4 Cơ cấu 3 Kênh Doanh Thu (Tháng Này)
+              .row.g-3
+                .col-md-4
+                  .card.shadow-none.border.border-info-subtle.mb-3.mb-lg-0.h-100
+                    .card-body
+                      .d-flex.align-items-center.justify-content-between.mb-1
+                        span.text-muted.small Kênh Bán Lẻ tại Quầy POS
+                        span.badge.bg-info-subtle.text-info Quầy
+                      div.fs-16.fw-bold.text-info #{Number(channelStats.pos.revenue || 0).toLocaleString("vi-VN")}đ
+                      div.text-muted.small #{channelStats.pos.orders} đơn tại quầy
+                .col-md-4
+                  .card.shadow-none.border.border-warning-subtle.mb-3.mb-lg-0.h-100
+                    .card-body
+                      .d-flex.align-items-center.justify-content-between.mb-1
+                        span.text-muted.small Kênh Bán Online Web
+                        span.badge.bg-warning-subtle.text-warning Online
+                      div.fs-16.fw-bold.text-warning #{Number(channelStats.online.revenue || 0).toLocaleString("vi-VN")}đ
+                      div.text-muted.small #{channelStats.online.orders} đơn trực tuyến
+                .col-md-4
+                  .card.shadow-none.border.border-success-subtle.mb-3.mb-lg-0.h-100
+                    .card-body
+                      .d-flex.align-items-center.justify-content-between.mb-1
+                        span.text-muted.small Kênh Bán Sỉ Đại Lý
+                        span.badge.bg-success-subtle.text-success Kênh Sỉ
+                      div.fs-16.fw-bold.text-success #{Number(channelStats.wholesale.revenue || 0).toLocaleString("vi-VN")}đ
+                      div.text-muted.small #{channelStats.wholesale.orders} đơn hàng sỉ
+              .text-end.mt-2
+                a.btn.btn-sm.btn-link.text-primary.p-0.text-decoration-none(href=`/${pathAdmin}/dashboard/analytics`)
+                  | Xem Báo cáo Bán hàng Đa kênh & Lợi nhuận chi tiết
+                  i.fas.fa-arrow-right.ms-1
     
     .row
       .col-md-12.col-lg-12

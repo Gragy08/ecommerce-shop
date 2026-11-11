@@ -2,6 +2,54 @@ extends ../layouts/default.pug
 
 block main
   if (permissions.includes("dashboard"))
+    mixin renderDealerTable(dealers, timeLabel)
+      .table-responsive
+        table.table.table-hover.align-middle.mb-0
+          thead.table-light
+            tr
+              th.ps-3(style="width: 70px") Hạng
+              th Cửa hàng / Đại lý
+              th Người đại diện & SĐT
+              th.text-center(style="width: 100px") Số đơn sỉ
+              th.text-end(style="width: 160px") Tổng tiền hàng
+              th.text-end(style="width: 150px") Đã thanh toán
+              th.text-end(style="width: 150px") Công nợ còn lại
+              th.text-center(style="width: 130px") Đơn gần nhất
+          tbody
+            if (dealers && dealers.length > 0)
+              each d, idx in dealers
+                tr
+                  td.ps-3
+                    if idx === 0
+                      span.badge.bg-warning.text-dark.fw-bold.fs-12 #1
+                    else if idx === 1
+                      span.badge.bg-secondary.text-white.fw-bold.fs-12 #2
+                    else if idx === 2
+                      span.badge.bg-danger.text-white.fw-bold.fs-12 #3
+                    else
+                      span.fw-bold.text-muted.ms-2 ##{idx + 1}
+                  td
+                    .fw-bold.text-dark #{d.storeName}
+                    if d.taxCode
+                      small.text-muted.d-block MST: #{d.taxCode}
+                  td
+                    .fw-semibold #{d.fullName}
+                    small.text-muted.d-block #{d.phone}
+                  td.text-center
+                    span.badge.bg-light.text-dark.border #{d.totalOrders} đơn
+                  td.text-end.fw-bold.text-primary #{d.totalRevenueFormatted}
+                  td.text-end.text-success.fw-semibold #{d.totalPaidFormatted}
+                  td.text-end
+                    if d.remainingDebt > 0
+                      span.badge.bg-danger-subtle.text-danger.fw-bold #{d.remainingDebtFormatted}
+                    else
+                      span.badge.bg-success-subtle.text-success Đã tất toán
+                  td.text-center.small.text-muted #{d.lastOrderDateFormatted}
+            else
+              tr
+                td.text-center.py-4(colspan="8")
+                  span.text-muted Chưa có phát sinh giao dịch bán sỉ nào trong #{timeLabel}
+
     // Header & Filter Toolbar
     .row.align-items-center.mb-3
       .col-md-6
@@ -18,6 +66,7 @@ block main
           a.btn.btn-sm(class=range.period === "30days" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=30days`) 30 ngày
           a.btn.btn-sm(class=range.period === "thisMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisMonth`) Tháng này
           a.btn.btn-sm(class=range.period === "lastMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=lastMonth`) Tháng trước
+          a.btn.btn-sm(class=range.period === "thisYear" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisYear`) Năm nay
         button.btn.btn-sm.btn-outline-primary(
           type="button" 
           data-bs-toggle="collapse" 
@@ -55,65 +104,92 @@ block main
                   i.las.la-filter.me-1
                   | Lọc dữ liệu
 
-    // Row 1: 4 Thẻ KPI Tài Chính Cốt Lõi
-    .row.g-3.mb-4
+    // Row 1: Thẻ KPI Tổng Quát Tài Chính
+    .row.g-3.mb-3
       // KPI 1: Doanh Thu Thuần
-      .col-sm-6.col-xl-3
+      .col-md-6
         .card.h-100.border.shadow-none
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Tổng Doanh Thu Thuần
+              span.text-muted.fs-13.fw-medium Tổng Doanh Thu Thuần (Toàn bộ 3 kênh)
               span.avatar-xs.bg-primary-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-wallet.text-primary.fs-18
-            h3.fs-22.fw-bold.text-primary.mb-1 #{kpis.netRevenue.toLocaleString("vi-VN")} đ
+            h3.fs-24.fw-bold.text-primary.mb-1 #{kpis.netRevenue.toLocaleString("vi-VN")} đ
             .d-flex.align-items-center.justify-content-between.text-muted.fs-12
-              span #{kpis.completedOrders} đơn hoàn tất
-              span AOV: #{kpis.avgOrderValue.toLocaleString("vi-VN")} đ
+              span #{kpis.completedOrders} đơn hoàn tất / #{kpis.totalOrders} đơn phát sinh
+              span AOV: #{kpis.avgOrderValue.toLocaleString("vi-VN")} đ / đơn
 
       // KPI 2: Lợi Nhuận Gộp
-      .col-sm-6.col-xl-3
+      .col-md-6
         .card.h-100.border.shadow-none
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Lợi Nhuận Gộp (Gross Profit)
+              span.text-muted.fs-13.fw-medium Lợi Nhuận Gộp Toàn Hệ Thống (Gross Profit)
               span.avatar-xs.bg-success-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-chart-line.text-success.fs-18
             if canViewCost
-              h3.fs-22.fw-bold.text-success.mb-1 #{kpis.grossProfit.toLocaleString("vi-VN")} đ
+              h3.fs-24.fw-bold.text-success.mb-1 #{kpis.grossProfit.toLocaleString("vi-VN")} đ
               .d-flex.align-items-center.justify-content-between.fs-12
                 span.badge.bg-success-subtle.text-success Biên LN: +#{kpis.grossProfitMargin}%
-                span.text-muted Giá vốn: #{kpis.cogs.toLocaleString("vi-VN")} đ
+                span.text-muted Giá vốn (COGS): #{kpis.cogs.toLocaleString("vi-VN")} đ
             else
               h3.fs-20.fw-bold.text-secondary.mb-1 ****** đ
               p.text-muted.fs-12.mb-0 Chỉ tài khoản có quyền xem giá vốn
 
-      // KPI 3: Quầy Bán Lẻ POS
-      .col-sm-6.col-xl-3
-        .card.h-100.border.shadow-none
+    // Row 2: Tách Biệt Doanh Thu Giữa 3 Kênh Bán Hàng
+    .row.g-3.mb-4
+      // Kênh 1: Quầy Bán Lẻ POS
+      .col-md-4
+        .card.h-100.border.shadow-none.border-info-subtle
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Kênh tại Cửa hàng
+              span.text-muted.fs-13.fw-medium Kênh Bán lẻ tại quầy POS
               span.avatar-xs.bg-info-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-cash-register.text-info.fs-18
-            h3.fs-22.fw-bold.text-info.mb-1 #{kpis.posRevenue.toLocaleString("vi-VN")} đ
-            .d-flex.align-items-center.justify-content-between.fs-12
+            h4.fs-20.fw-bold.text-info.mb-1 #{kpis.posRevenue.toLocaleString("vi-VN")} đ
+            .d-flex.align-items-center.justify-content-between.fs-12.mb-1
               span.badge.bg-info-subtle.text-info Chiếm #{kpis.posShare}%
-              span.text-muted #{kpis.posOrders} hóa đơn tại Cửa hàng
+              span.text-muted #{kpis.posOrders} hóa đơn tại quầy
+            .d-flex.align-items-center.justify-content-between.fs-12.text-muted
+              span AOV: #{kpis.posAov.toLocaleString("vi-VN")} đ
+              if canViewCost
+                span LN: #{kpis.posGrossProfit.toLocaleString("vi-VN")} đ
 
-      // KPI 4: Kênh Website Online
-      .col-sm-6.col-xl-3
-        .card.h-100.border.shadow-none
+      // Kênh 2: Kênh Website Online
+      .col-md-4
+        .card.h-100.border.shadow-none.border-warning-subtle
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Kênh Website Online
+              span.text-muted.fs-13.fw-medium Kênh Bán Online Web
               span.avatar-xs.bg-warning-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-globe.text-warning.fs-18
-            h3.fs-22.fw-bold.text-warning.mb-1 #{kpis.onlineRevenue.toLocaleString("vi-VN")} đ
-            .d-flex.align-items-center.justify-content-between.fs-12
+            h4.fs-20.fw-bold.text-warning.mb-1 #{kpis.onlineRevenue.toLocaleString("vi-VN")} đ
+            .d-flex.align-items-center.justify-content-between.fs-12.mb-1
               span.badge.bg-warning-subtle.text-warning Chiếm #{kpis.onlineShare}%
               span.text-muted #{kpis.onlineOrders} đơn đặt trực tuyến
+            .d-flex.align-items-center.justify-content-between.fs-12.text-muted
+              span AOV: #{kpis.onlineAov.toLocaleString("vi-VN")} đ
+              if canViewCost
+                span LN: #{kpis.onlineGrossProfit.toLocaleString("vi-VN")} đ
 
-    // Row 2: 3 Thẻ Vận Hành & Tài Sản Tồn Kho
+      // Kênh 3: Kênh Bán Sỉ Đại Lý
+      .col-md-4
+        .card.h-100.border.shadow-none.border-success-subtle
+          .card-body
+            .d-flex.align-items-center.justify-content-between.mb-2
+              span.text-muted.fs-13.fw-medium Kênh Bán sỉ Đại lý
+              span.avatar-xs.bg-success-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
+                i.las.la-store.text-success.fs-18
+            h4.fs-20.fw-bold.text-success.mb-1 #{kpis.wholesaleRevenue.toLocaleString("vi-VN")} đ
+            .d-flex.align-items-center.justify-content-between.fs-12.mb-1
+              span.badge.bg-success-subtle.text-success Chiếm #{kpis.wholesaleShare}%
+              span.text-muted #{kpis.wholesaleOrders} đơn hàng sỉ
+            .d-flex.align-items-center.justify-content-between.fs-12.text-muted
+              span AOV: #{kpis.wholesaleAov.toLocaleString("vi-VN")} đ
+              if canViewCost
+                span LN: #{kpis.wholesaleGrossProfit.toLocaleString("vi-VN")} đ
+
+    // Row 3: 3 Thẻ Vận Hành & Tài Sản Tồn Kho
     .row.g-3.mb-4
       // Thẻ Vốn Kho
       .col-md-4
@@ -158,9 +234,9 @@ block main
               span #{kpis.installmentPendingCount} hồ sơ đang chờ đối tác
               span.text-primary.fw-medium Đối tác: HomeCredit, Mirae, HD
 
-    // Row 3: Biểu Đồ Doanh Thu Theo Kênh & Cơ Cấu Kênh
+    // Row 4: Biểu Đồ Doanh Thu Theo Kênh & Cơ Cấu Kênh
     .row.g-3.mb-4
-      // Biểu đồ xu hướng Timeline (POS vs Online)
+      // Biểu đồ xu hướng Timeline (POS vs Online vs Wholesale)
       .col-lg-8
         .card.h-100.border.shadow-none
           .card-header.bg-transparent.border-bottom.py-3
@@ -168,28 +244,33 @@ block main
               h5.card-title.mb-0 Xu hướng Doanh thu theo Kênh bán hàng (#{chartData.isHourly ? "Từng giờ" : "Từng ngày"})
               span.fs-12.text-muted
                 span.badge.bg-info.me-1 &nbsp;
-                | Tại Cửa hàng &nbsp;&nbsp;
+                | Quầy POS &nbsp;&nbsp;
                 span.badge.bg-warning.me-1 &nbsp;
-                | Online Web
+                | Online Web &nbsp;&nbsp;
+                span.badge.bg-success.me-1 &nbsp;
+                | Bán sỉ Đại lý
           .card-body
             div(style="position: relative; height: 320px;")
               canvas#salesTimelineChart
 
-      // Biểu đồ tỷ trọng kênh bán hàng
+      // Biểu đồ tỷ trọng 3 kênh bán hàng
       .col-lg-4
         .card.h-100.border.shadow-none
           .card-header.bg-transparent.border-bottom.py-3
-            h5.card-title.mb-0 Cơ cấu Kênh Bán Hàng
+            h5.card-title.mb-0 Cơ cấu 3 Kênh Bán Hàng
           .card-body.d-flex.flex-column.align-items-center.justify-content-center
             div(style="position: relative; height: 240px; width: 100%;")
               canvas#channelShareChart
-            .d-flex.justify-content-around.w-100.mt-3.pt-2.border-top
-              .text-center
-                span.fs-12.text-muted Tại Cửa hàng
-                h6.mb-0.text-info #{kpis.posShare}% (#{kpis.posOrders} đơn)
-              .text-center
-                span.fs-12.text-muted Website Online
-                h6.mb-0.text-warning #{kpis.onlineShare}% (#{kpis.onlineOrders} đơn)
+            .row.w-100.mt-3.pt-2.border-top.text-center.g-1
+              .col-4
+                span.fs-11.text-muted Quầy POS
+                h6.mb-0.text-info.fs-12 #{kpis.posShare}% (#{kpis.posOrders})
+              .col-4
+                span.fs-11.text-muted Online Web
+                h6.mb-0.text-warning.fs-12 #{kpis.onlineShare}% (#{kpis.onlineOrders})
+              .col-4
+                span.fs-11.text-muted Bán sỉ Đại lý
+                h6.mb-0.text-success.fs-12 #{kpis.wholesaleShare}% (#{kpis.wholesaleOrders})
 
     // Row 4: Phương Thức Thanh Toán & Tồn Kho
     .row.g-3.mb-4
@@ -306,6 +387,51 @@ block main
                 span.fs-12.text-muted Doanh thu linh kiện thay thế:
                 span.fs-13.fw-semibold #{warrantyBreakdown.partsRevenue.toLocaleString("vi-VN")} đ
 
+    // Row 6: Bảng Xếp Hạng Top Đại Lý Lấy Hàng Nhiều Nhất (Kênh Bán Sỉ)
+    .row.g-3.mb-4
+      .col-12
+        .card.border.shadow-none
+          .card-header.bg-transparent.border-bottom.py-3
+            .d-flex.flex-wrap.align-items-center.justify-content-between.gap-2
+              div
+                h5.card-title.mb-0
+                  i.las.la-award.text-warning.fs-20.me-1
+                  | Xếp hạng Top Đại lý lấy hàng nhiều nhất
+                small.text-muted Tự động xếp hạng theo tổng giá trị doanh thu hàng sỉ xuất bán
+              ul.nav.nav-pills.card-header-pills#topDealerTabs(role="tablist")
+                li.nav-item
+                  button.nav-link.active.py-1.px-3.fs-12#tab-month-dealers(
+                    data-bs-toggle="pill" 
+                    data-bs-target="#dealers-month" 
+                    type="button" 
+                    role="tab"
+                  ) Tháng này
+                li.nav-item
+                  button.nav-link.py-1.px-3.fs-12#tab-year-dealers(
+                    data-bs-toggle="pill" 
+                    data-bs-target="#dealers-year" 
+                    type="button" 
+                    role="tab"
+                  ) Năm nay
+                li.nav-item
+                  button.nav-link.py-1.px-3.fs-12#tab-period-dealers(
+                    data-bs-toggle="pill" 
+                    data-bs-target="#dealers-period" 
+                    type="button" 
+                    role="tab"
+                  ) Theo kỳ lọc (#{range.periodLabel})
+          .card-body.p-0
+            .tab-content
+              // Tab Tháng này
+              .tab-pane.fade.show.active#dealers-month(role="tabpanel")
+                +renderDealerTable(topDealersThisMonth, "tháng này")
+              // Tab Năm nay
+              .tab-pane.fade#dealers-year(role="tabpanel")
+                +renderDealerTable(topDealersThisYear, "năm nay")
+              // Tab Theo kỳ lọc
+              .tab-pane.fade#dealers-period(role="tabpanel")
+                +renderDealerTable(topDealersPeriod, "kỳ báo cáo")
+
 block script
   script(src="https://cdn.jsdelivr.net/npm/chart.js")
   script.
@@ -313,6 +439,7 @@ block script
     const timelineLabels = !{chartData.timelineLabels};
     const posTimeline = !{chartData.posTimeline};
     const onlineTimeline = !{chartData.onlineTimeline};
+    const wholesaleTimeline = !{chartData.wholesaleTimeline};
     const channelLabels = !{chartData.channelLabels};
     const channelRevenue = !{chartData.channelRevenue};
     const paymentLabels = !{chartData.paymentLabels};
@@ -323,7 +450,7 @@ block script
     // Format tiền VND trong tooltip Chart.js
     const formatCurrency = (val) => Number(val || 0).toLocaleString('vi-VN') + ' đ';
 
-    // 1. Biểu đồ Timeline Doanh thu Kênh POS vs Online
+    // 1. Biểu đồ Timeline Doanh thu 3 Kênh (POS vs Online vs Wholesale)
     const ctxTimeline = document.getElementById('salesTimelineChart');
     if (ctxTimeline) {
       new Chart(ctxTimeline, {
@@ -332,7 +459,7 @@ block script
           labels: timelineLabels,
           datasets: [
             {
-              label: 'tại Cửa hàng',
+              label: 'Tại quầy POS',
               data: posTimeline,
               backgroundColor: 'rgba(13, 202, 240, 0.75)',
               borderColor: 'rgba(13, 202, 240, 1)',
@@ -340,10 +467,18 @@ block script
               borderRadius: 4
             },
             {
-              label: 'Online Store',
+              label: 'Online Web',
               data: onlineTimeline,
               backgroundColor: 'rgba(255, 193, 7, 0.75)',
               borderColor: 'rgba(255, 193, 7, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            },
+            {
+              label: 'Bán sỉ Đại lý',
+              data: wholesaleTimeline,
+              backgroundColor: 'rgba(25, 135, 84, 0.75)',
+              borderColor: 'rgba(25, 135, 84, 1)',
               borderWidth: 1,
               borderRadius: 4
             }
@@ -379,7 +514,7 @@ block script
       });
     }
 
-    // 2. Biểu đồ Donut Tỷ trọng Kênh bán hàng
+    // 2. Biểu đồ Donut Tỷ trọng 3 Kênh bán hàng
     const ctxChannel = document.getElementById('channelShareChart');
     if (ctxChannel) {
       new Chart(ctxChannel, {
@@ -390,7 +525,8 @@ block script
             data: channelRevenue,
             backgroundColor: [
               'rgba(13, 202, 240, 0.85)',
-              'rgba(255, 193, 7, 0.85)'
+              'rgba(255, 193, 7, 0.85)',
+              'rgba(25, 135, 84, 0.85)'
             ],
             borderWidth: 2,
             hoverOffset: 6
