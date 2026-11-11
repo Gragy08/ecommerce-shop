@@ -14,6 +14,7 @@ import WholesaleRegistration from "../../models/wholesale-registration.model";
 import { pathAdmin } from "../../configs/variable.config";
 import { upsertCustomerFromOrder, syncCustomerOrdersByPhone } from "./customer.controller";
 import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
+import { searchAndRankVariants } from "../../helpers/product-search.helper";
 import { logAdminAction } from "../../helpers/log.helper";
 
 /**
@@ -97,152 +98,62 @@ export const searchProducts = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const qUpper = q.toUpperCase();
+    await ensureDefaultVariantsForProducts();
 
-    // 1. Kiểm tra xem có quét trúng đích danh mã IMEI không
-    const matchedDevice: any = await InventoryItem.findOne({
-      identifier: qUpper,
-      deleted: false
-    })
-      .populate("productId", "name slug inventoryType priceNew images")
-      .populate("variantId", "sku attributeValue priceNew stock")
-      .lean();
+    const results = await searchAndRankVariants(q, { isWholesale: false });
 
-    if (matchedDevice && matchedDevice.productId && matchedDevice.variantId) {
-      const product = matchedDevice.productId as any;
-      const variant = matchedDevice.variantId as any;
-
-      if (matchedDevice.status !== "available") {
+    // 1. Trường hợp quét trúng IMEI trực tiếp
+    if (results.length > 0 && results[0].isDirectImeiMatch) {
+      const match = results[0];
+      if (match.deviceStatus && match.deviceStatus !== "available") {
         res.json({
           code: "warning",
-          message: `Thiết bị có mã IMEI "${qUpper}" hiện đang ở trạng thái "${matchedDevice.status}" (không thể bán)!`,
-          deviceStatus: matchedDevice.status
+          message: `Thiết bị có mã IMEI "${match.matchedImei}" hiện đang ở trạng thái "${match.deviceStatus}" (không thể bán)!`,
+          deviceStatus: match.deviceStatus
         });
         return;
       }
 
-      const availableItems = await InventoryItem.find({
-        variantId: variant._id,
-        status: "available",
-        deleted: false
-      })
-        .select("identifier")
-        .lean();
-
-      const availableIdentifiers = availableItems.map((i: any) => i.identifier).filter(Boolean);
-      const availableStock = availableIdentifiers.length;
-      const unitPrice = Number(variant.priceNew || product.priceNew || 0);
-
       res.json({
         code: "success",
         isDirectImeiMatch: true,
-        matchedImei: qUpper,
+        matchedImei: match.matchedImei,
         product: {
-          _id: product._id,
-          name: product.name,
-          inventoryType: product.inventoryType || "imei",
-          image: product.images && product.images[0] ? product.images[0] : ""
+          _id: match.productId,
+          name: match.productName,
+          inventoryType: match.inventoryType,
+          image: match.image
         },
         variant: {
-          _id: variant._id,
-          sku: variant.sku,
-          attributeValues: (variant.attributeValue || []).map((a: any) => ({
-            label: a.label || a.value || "",
-            value: a.value || ""
-          }))
+          _id: match.variantId,
+          sku: match.sku,
+          attributeValues: match.attributeValues
         },
-        unitPrice,
-        availableStock,
-        availableIdentifiers
+        unitPrice: match.unitPrice,
+        availableStock: match.stock,
+        availableIdentifiers: match.availableIdentifiers
       });
       return;
     }
 
-    // 2. Tìm kiếm theo tên sản phẩm hoặc mã SKU
-    await ensureDefaultVariantsForProducts();
-
-    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-    const slugQuery = slugify(q, { replacement: " ", lower: true });
-    const slugRegex = slugQuery
-      ? new RegExp(slugQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
-      : regex;
-
-    const matchedProducts = await Product.find({
-      $or: [{ name: regex }, { sku: regex }, { search: regex }, { search: slugRegex }],
-      deleted: false,
-      status: "active"
-    })
-      .select("_id name slug inventoryType priceNew images")
-      .limit(25)
-      .lean();
-
-    const productIds = matchedProducts.map((p: any) => p._id);
-
-    const variants = await ProductVariant.find({
-      $or: [{ productId: { $in: productIds } }, { sku: regex }],
-      status: "active"
-    })
-      .populate("productId", "name slug inventoryType priceNew status images deleted")
-      .limit(40)
-      .lean();
-
-    const activeVariants = variants.filter(
-      (v: any) => v.productId && !(v.productId as any).deleted && (v.productId as any).status === "active"
-    );
-    const variantIds = activeVariants.map((v: any) => v._id);
-
-    // Lấy danh sách IMEI có sẵn cho các biến thể loại IMEI
-    const availableImeiItems = await InventoryItem.find({
-      variantId: { $in: variantIds },
-      trackingType: "imei",
-      status: "available",
-      deleted: false
-    })
-      .select("variantId identifier")
-      .lean();
-
-    const imeiMap = new Map<string, string[]>();
-    for (const item of availableImeiItems) {
-      const vId = String(item.variantId);
-      if (!imeiMap.has(vId)) imeiMap.set(vId, []);
-      if (item.identifier) imeiMap.get(vId)!.push(item.identifier);
-    }
-
-    const results = activeVariants.map((v: any) => {
-      const p = v.productId as any;
-      const vId = String(v._id);
-      const invType = p.inventoryType || "quantity";
-      const unitPrice = Number(v.priceNew || p.priceNew || 0);
-      const imeiList = imeiMap.get(vId) || [];
-      const availableStock = invType === "imei" ? imeiList.length : Number(v.stock || 0);
-
-      return {
-        productId: p._id,
-        productName: p.name,
-        productImage: p.images && p.images[0] ? p.images[0] : "",
-        inventoryType: invType,
-        variantId: v._id,
-        variantSku: v.sku,
-        attributeValues: (v.attributeValue || []).map((a: any) => ({
-          label: a.label || a.value || "",
-          value: a.value || ""
-        })),
-        unitPrice,
-        availableStock,
-        availableIdentifiers: imeiList
-      };
-    });
-
-    results.sort((a, b) => {
-      if (a.availableStock > 0 && b.availableStock <= 0) return -1;
-      if (a.availableStock <= 0 && b.availableStock > 0) return 1;
-      return b.availableStock - a.availableStock;
-    });
+    // 2. Format tương thích với POS Retail
+    const mappedResults = results.map((r: any) => ({
+      productId: r.productId,
+      productName: r.productName,
+      productImage: r.image,
+      inventoryType: r.inventoryType,
+      variantId: r.variantId,
+      variantSku: r.sku,
+      attributeValues: r.attributeValues,
+      unitPrice: r.unitPrice,
+      availableStock: r.stock,
+      availableIdentifiers: r.availableIdentifiers
+    }));
 
     res.json({
       code: "success",
       isDirectImeiMatch: false,
-      results
+      results: mappedResults
     });
   } catch (error) {
     console.error("Error searchProducts:", error);

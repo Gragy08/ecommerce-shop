@@ -86,6 +86,7 @@ block main
                 option(value="" selected=(!filters || !filters.paymentMethod)) Tất cả thanh toán
                 option(value="money" selected=(filters && filters.paymentMethod == "money")) Tiền mặt
                 option(value="bank_transfer" selected=(filters && filters.paymentMethod == "bank_transfer")) Chuyển khoản
+                option(value="debt" selected=(filters && filters.paymentMethod == "debt")) Công nợ
                 option(value="installment" selected=(filters && filters.paymentMethod == "installment")) Trả góp
                 option(value="vnpay" selected=(filters && filters.paymentMethod == "vnpay")) VNPay
                 option(value="zalopay" selected=(filters && filters.paymentMethod == "zalopay")) ZaloPay
@@ -159,6 +160,10 @@ block main
                             span.badge.bg-info Chuyển khoản
                           when "credit_card"
                             span.badge.bg-dark Quẹt thẻ
+                          when "debt"
+                            span.badge.bg-dark-subtle.text-dark.border Công nợ
+                            if item.total > (item.paidAmount || 0)
+                              .small.text-danger.mt-1 Nợ: #{(item.total - (item.paidAmount || 0)).toLocaleString('vi-VN')} đ
                           when "installment"
                             span.badge.bg-warning.text-dark Trả góp
                             if item.installmentInfo

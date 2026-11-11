@@ -570,12 +570,89 @@
 
   // 4. Chọn Đại lý & Hiển thị thông tin
   const dealerSelect = document.querySelector("#dealerSelect");
+  const dealerSearchInput = document.querySelector("#dealerSearchInput");
+  const clearDealerSearchBtn = document.querySelector("#btnClearDealerSearch");
   const dealerDetailsSection = document.querySelector("#dealerDetailsSection");
   const dealerStoreName = document.querySelector("#dealerStoreName");
   const dealerFullName = document.querySelector("#dealerFullName");
   const dealerPhone = document.querySelector("#dealerPhone");
   const dealerTaxCode = document.querySelector("#dealerTaxCode");
   const dealerAddress = document.querySelector("#dealerAddress");
+
+  const normalizeStr = (str) => {
+    if (!str) return "";
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase()
+      .trim();
+  };
+
+  if (dealerSearchInput && dealerSelect) {
+    const filterDealerOptions = () => {
+      const q = normalizeStr(dealerSearchInput.value);
+      if (clearDealerSearchBtn) clearDealerSearchBtn.style.display = q ? "block" : "none";
+
+      const tokens = q.split(/\s+/).filter(Boolean);
+      let matchCount = 0;
+      let firstMatchedOption = null;
+
+      for (let i = 1; i < dealerSelect.options.length; i++) {
+        const opt = dealerSelect.options[i];
+        if (!tokens.length) {
+          opt.hidden = false;
+          opt.style.display = "";
+          continue;
+        }
+
+        const text = normalizeStr(opt.textContent || "");
+        const store = normalizeStr(opt.getAttribute("data-store-name") || "");
+        const name = normalizeStr(opt.getAttribute("data-full-name") || "");
+        const phone = (opt.getAttribute("data-phone") || "").replace(/\D/g, "");
+        const tax = normalizeStr(opt.getAttribute("data-tax-code") || "");
+        const combined = `${text} ${store} ${name} ${phone} ${tax}`;
+
+        const isMatch = tokens.every((token) => combined.includes(token));
+        if (isMatch) {
+          opt.hidden = false;
+          opt.style.display = "";
+          matchCount++;
+          if (!firstMatchedOption) firstMatchedOption = opt;
+        } else {
+          opt.hidden = true;
+          opt.style.display = "none";
+        }
+      }
+      return { matchCount, firstMatchedOption };
+    };
+
+    dealerSearchInput.addEventListener("input", filterDealerOptions);
+
+    dealerSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const { matchCount, firstMatchedOption } = filterDealerOptions();
+        if (matchCount === 1 && firstMatchedOption) {
+          dealerSelect.value = firstMatchedOption.value;
+          dealerSelect.dispatchEvent(new Event("change"));
+          if (typeof notyf !== "undefined") {
+            notyf.success(`Đã chọn: ${firstMatchedOption.getAttribute("data-store-name") || firstMatchedOption.textContent}`);
+          }
+        }
+      }
+    });
+
+    if (clearDealerSearchBtn) {
+      clearDealerSearchBtn.addEventListener("click", () => {
+        dealerSearchInput.value = "";
+        clearDealerSearchBtn.style.display = "none";
+        filterDealerOptions();
+        dealerSearchInput.focus();
+      });
+    }
+  }
 
   if (dealerSelect) {
     dealerSelect.addEventListener("change", () => {
@@ -596,6 +673,11 @@
   }
 
   // 5. Tính toán thành tiền & Kiểm tra điều kiện chính sách sỉ
+  const debtSection = document.querySelector("#debtPaymentSection");
+  const debtDownPaymentInput = document.querySelector("#debtDownPaymentInput");
+  const debtRemainingDisplay = document.querySelector("#debtRemainingAmountDisplay");
+  const btnDebtZero = document.querySelector("#btnDebtZero");
+
   const getTotals = () => {
     const subTotal = cart.reduce((sum, i) => sum + Number(i.totalPrice || 0), 0);
     const discountInput = document.querySelector("#orderDiscountInput");
@@ -615,9 +697,22 @@
     if (subEl) subEl.textContent = `${subTotal.toLocaleString("vi-VN")} đ`;
     if (totEl) totEl.textContent = `${total.toLocaleString("vi-VN")} đ`;
 
-    const paid = Math.max(0, parseFloat(paidEl && paidEl.value !== "" ? paidEl.value : String(total)) || 0);
-    const change = Math.max(0, paid - total);
-    if (changeEl) changeEl.textContent = `${change.toLocaleString("vi-VN")} đ`;
+    const isDebt = paymentMethodSelect && paymentMethodSelect.value === "debt";
+
+    if (isDebt) {
+      const downPayment = Math.max(0, parseFloat(debtDownPaymentInput ? debtDownPaymentInput.value : "0") || 0);
+      const remainingDebt = Math.max(0, total - downPayment);
+      if (debtRemainingDisplay) {
+        debtRemainingDisplay.textContent = `${remainingDebt.toLocaleString("vi-VN")} đ`;
+      }
+      if (paymentStatusSelect) {
+        paymentStatusSelect.value = remainingDebt === 0 && total > 0 ? "paid" : "unpaid";
+      }
+    } else {
+      const paid = Math.max(0, parseFloat(paidEl && paidEl.value !== "" ? paidEl.value : String(total)) || 0);
+      const change = Math.max(0, paid - total);
+      if (changeEl) changeEl.textContent = `${change.toLocaleString("vi-VN")} đ`;
+    }
 
     // Cập nhật thanh điều kiện sỉ
     const curQtyEl = document.querySelector("#policyCurrentQuantity");
@@ -645,6 +740,13 @@
 
   document.querySelector("#orderDiscountInput")?.addEventListener("input", updateTotals);
   document.querySelector("#paidAmountInput")?.addEventListener("input", updateTotals);
+  debtDownPaymentInput?.addEventListener("input", updateTotals);
+
+  btnDebtZero?.addEventListener("click", () => {
+    if (debtDownPaymentInput) debtDownPaymentInput.value = "0";
+    updateTotals();
+  });
+
   document.querySelector("#btnExactAmount")?.addEventListener("click", () => {
     const { total } = getTotals();
     const paidEl = document.querySelector("#paidAmountInput");
@@ -652,20 +754,34 @@
     updateTotals();
   });
 
-  // Hiển thị ô tiền khách đưa nếu thanh toán tiền mặt
+  // Hiển thị khung tiền tương ứng hình thức thanh toán
   const paymentStatusSelect = document.querySelector("#paymentStatus");
   const paymentMethodSelect = document.querySelector("#paymentMethod");
   const paidSection = document.querySelector("#paidAmountSection");
 
-  const togglePaidSection = () => {
-    if (!paidSection || !paymentStatusSelect || !paymentMethodSelect) return;
-    const isPaid = paymentStatusSelect.value === "paid";
-    const isCash = paymentMethodSelect.value === "money";
-    paidSection.style.display = isPaid && isCash ? "block" : "none";
+  const togglePaymentSections = () => {
+    if (!paymentMethodSelect) return;
+    const method = paymentMethodSelect.value;
+    const isPaid = paymentStatusSelect ? paymentStatusSelect.value === "paid" : true;
+
+    if (method === "debt") {
+      if (debtSection) debtSection.style.display = "block";
+      if (paidSection) paidSection.style.display = "none";
+    } else if (method === "money") {
+      if (debtSection) debtSection.style.display = "none";
+      if (paidSection) paidSection.style.display = isPaid ? "block" : "none";
+    } else {
+      if (debtSection) debtSection.style.display = "none";
+      if (paidSection) paidSection.style.display = "none";
+    }
+    updateTotals();
   };
 
-  paymentStatusSelect?.addEventListener("change", togglePaidSection);
-  paymentMethodSelect?.addEventListener("change", togglePaidSection);
+  paymentStatusSelect?.addEventListener("change", togglePaymentSections);
+  paymentMethodSelect?.addEventListener("change", togglePaymentSections);
+
+  // Khởi tạo trạng thái ban đầu của khung thanh toán
+  togglePaymentSections();
 
   // 6. Gửi đơn hàng sỉ (Submit)
   const btnSubmit = document.querySelector("#btnSubmitWholesaleOrder");
@@ -715,8 +831,16 @@
 
       const deliveryMethod = document.querySelector("#deliveryMethod")?.value || "pickup";
       const paymentMethod = document.querySelector("#paymentMethod")?.value || "bank_transfer";
-      const paymentStatus = document.querySelector("#paymentStatus")?.value || "paid";
-      const paidAmount = parseFloat(document.querySelector("#paidAmountInput")?.value || String(total)) || total;
+      const isDebt = paymentMethod === "debt";
+
+      const downPayment = isDebt ? Math.max(0, parseFloat(debtDownPaymentInput?.value || "0") || 0) : 0;
+      const rawPaid = parseFloat(document.querySelector("#paidAmountInput")?.value || String(total)) || 0;
+      const paidAmount = isDebt ? downPayment : (document.querySelector("#paymentStatus")?.value === "paid" ? total : rawPaid);
+
+      const paymentStatus = isDebt
+        ? (downPayment >= total && total > 0 ? "paid" : "unpaid")
+        : (document.querySelector("#paymentStatus")?.value || "paid");
+
       const note = document.querySelector("#orderNote")?.value || "";
 
       const payload = {
@@ -737,6 +861,7 @@
         paymentMethod,
         paymentStatus,
         paidAmount,
+        downPayment,
         note,
         isPolicyOverride: isOverride
       };

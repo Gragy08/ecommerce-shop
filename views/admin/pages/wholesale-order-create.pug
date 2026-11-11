@@ -90,6 +90,16 @@ block main
         .card-body.pt-0
           .mb-3
             label.form-label.fw-semibold(for="dealerSelect") Chọn đại lý *
+            .input-group.input-group-sm.mb-1
+              span.input-group-text.bg-light
+                i.fa-solid.fa-magnifying-glass.text-muted
+              input#dealerSearchInput.form-control(
+                type="text"
+                placeholder="Tìm nhanh theo tên, SĐT, cửa hàng..."
+                autocomplete="off"
+              )
+              button#btnClearDealerSearch.btn.btn-outline-secondary(type="button" style="display: none;")
+                i.fa-solid.fa-xmark
             select#dealerSelect.form-select
               option(value="") -- Chọn đại lý đã duyệt --
               if (dealers && dealers.length > 0)
@@ -122,8 +132,8 @@ block main
             .mb-2
               label.form-label.small.text-muted.mb-1 Hình thức giao nhận
               select#deliveryMethod.form-select.form-select-sm
-                option(value="pickup" selected) Nhận trực tiếp tại kho / quầy
-                option(value="delivery") Giao hàng đến địa chỉ đại lý / Chành xe
+                option(value="pickup" selected) Nhận trực tiếp tại CH
+                option(value="delivery") Giao hàng đến địa chỉ đại lý 
             .mb-0
               label.form-label.small.text-muted.mb-1 Địa chỉ giao nhận
               textarea#dealerAddress.form-control.form-control-sm(rows="2")
@@ -173,6 +183,21 @@ block main
             .d-flex.justify-content-between.align-items-center.p-2.bg-light.rounded.mb-3.small
               span.text-muted Tiền thừa trả lại:
               strong#changeAmountDisplay.text-success 0 đ
+
+          #debtPaymentSection.p-3.border.rounded.bg-light.mb-3(style="display: none;")
+            .mb-2
+              .d-flex.justify-content-between.align-items-center.mb-1
+                label.form-label.small.text-muted.mb-0(for="debtDownPaymentInput") Số tiền khách đã trả trước (VNĐ)
+                button#btnDebtZero.btn.btn-link.btn-sm.p-0.text-decoration-none.small(type="button") Trả trước 0đ
+              input#debtDownPaymentInput.form-control.form-control-sm.text-end.fw-bold(
+                type="number"
+                min="0"
+                value="0"
+                placeholder="0"
+              )
+            .d-flex.justify-content-between.align-items-center.pt-2.border-top.small
+              span.text-muted Số tiền khách còn nợ:
+              h6#debtRemainingAmountDisplay.fw-bold.text-danger.mb-0 0 đ
 
           .mb-3
             label.form-label.small.text-muted.mb-1(for="orderNote") Ghi chú đơn sỉ

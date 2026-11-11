@@ -154,7 +154,8 @@ const schema = new mongoose.Schema(
         "zalopay",       // ZaloPay
         "bank_transfer", // Chuyển khoản ngân hàng
         "credit_card",   // Quẹt thẻ POS (legacy)
-        "installment"    // Trả góp qua đơn vị tài chính
+        "installment",   // Trả góp qua đơn vị tài chính
+        "debt"           // Công nợ / Thanh toán sau
       ],
       default: "money"
     },

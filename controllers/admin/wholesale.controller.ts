@@ -14,6 +14,7 @@ import Product from "../../models/product.model";
 import ProductVariant from "../../models/product-variant.model";
 import InventoryItem from "../../models/inventory-item.model";
 import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
+import { searchAndRankVariants } from "../../helpers/product-search.helper";
 import { pathAdmin } from "../../configs/variable.config";
 
 /**
@@ -860,7 +861,7 @@ export const searchApprovedDealers = async (req: Request, res: Response): Promis
 };
 
 /**
- * [GET] /admin/wholesale/api/search-products - Tìm kiếm sản phẩm & IMEI với Giá Sỉ
+ * [GET] /admin/wholesale/api/search-products - Tìm kiếm sản phẩm & IMEI với Giá Sỉ (Smart Search & Ranking)
  */
 export const searchWholesaleProducts = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -870,161 +871,45 @@ export const searchWholesaleProducts = async (req: Request, res: Response): Prom
       return;
     }
 
-    const qUpper = q.toUpperCase();
+    await ensureDefaultVariantsForProducts();
 
-    // 1. Kiểm tra xem có quét trúng đích danh mã IMEI không
-    const matchedDevice: any = await InventoryItem.findOne({
-      identifier: qUpper,
-      deleted: false
-    })
-      .populate("productId", "name slug inventoryType priceNew priceWholeSale images")
-      .populate("variantId", "sku attributeValue priceNew priceWholeSale stock")
-      .lean();
+    const results = await searchAndRankVariants(q, { isWholesale: true });
 
-    if (matchedDevice && matchedDevice.productId && matchedDevice.variantId) {
-      const product = matchedDevice.productId as any;
-      const variant = matchedDevice.variantId as any;
-
-      if (matchedDevice.status !== "available") {
+    // Trường hợp quét trúng IMEI trực tiếp
+    if (results.length > 0 && results[0].isDirectImeiMatch) {
+      const match = results[0];
+      if (match.deviceStatus && match.deviceStatus !== "available") {
         res.json({
           code: "warning",
-          message: `Thiết bị có mã IMEI "${qUpper}" hiện đang ở trạng thái "${matchedDevice.status}" (không thể bán)!`,
-          deviceStatus: matchedDevice.status
+          message: `Thiết bị có mã IMEI "${match.matchedImei}" hiện đang ở trạng thái "${match.deviceStatus}" (không thể bán)!`,
+          deviceStatus: match.deviceStatus
         });
         return;
       }
 
-      const availableItems = await InventoryItem.find({
-        variantId: variant._id,
-        status: "available",
-        deleted: false
-      })
-        .select("identifier")
-        .lean();
-
-      const availableIdentifiers = availableItems.map((i: any) => i.identifier).filter(Boolean);
-      const availableStock = availableIdentifiers.length;
-
-      // Ưu tiên Giá sỉ
-      const wholesalePrice = Number(
-        variant.priceWholeSale && variant.priceWholeSale > 0
-          ? variant.priceWholeSale
-          : (product.priceWholeSale && product.priceWholeSale > 0
-              ? product.priceWholeSale
-              : (variant.priceNew || product.priceNew || 0))
-      );
-      const retailPrice = Number(variant.priceNew || product.priceNew || 0);
-
       res.json({
         code: "success",
         isDirectImeiMatch: true,
-        matchedImei: qUpper,
+        matchedImei: match.matchedImei,
         product: {
-          _id: product._id,
-          name: product.name,
-          inventoryType: product.inventoryType || "imei",
-          image: product.images && product.images[0] ? product.images[0] : ""
+          _id: match.productId,
+          name: match.productName,
+          inventoryType: match.inventoryType,
+          image: match.image
         },
         variant: {
-          _id: variant._id,
-          sku: variant.sku,
-          attributeValues: (variant.attributeValue || []).map((a: any) => ({
-            label: a.label || a.value || "",
-            value: a.value || ""
-          }))
+          _id: match.variantId,
+          sku: match.sku,
+          attributeValues: match.attributeValues
         },
-        unitPrice: wholesalePrice,
-        priceRetail: retailPrice,
-        isWholesalePriced: Boolean((variant.priceWholeSale && variant.priceWholeSale > 0) || (product.priceWholeSale && product.priceWholeSale > 0)),
-        availableStock,
-        availableIdentifiers
+        unitPrice: match.unitPrice,
+        priceRetail: match.priceRetail,
+        isWholesalePriced: match.isWholesalePriced,
+        availableStock: match.stock,
+        availableIdentifiers: match.availableIdentifiers
       });
       return;
     }
-
-    // 2. Tìm kiếm theo tên sản phẩm hoặc mã SKU
-    await ensureDefaultVariantsForProducts();
-
-    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-    const slugQuery = slugify(q, { replacement: " ", lower: true });
-    const slugRegex = slugQuery
-      ? new RegExp(slugQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
-      : regex;
-
-    const matchedProducts = await Product.find({
-      $or: [{ name: regex }, { sku: regex }, { search: regex }, { search: slugRegex }],
-      deleted: false,
-      status: "active"
-    })
-      .select("_id name slug inventoryType priceNew priceWholeSale images")
-      .limit(25)
-      .lean();
-
-    const productIds = matchedProducts.map((p: any) => p._id);
-
-    const variants = await ProductVariant.find({
-      $or: [{ productId: { $in: productIds } }, { sku: regex }],
-      status: "active"
-    })
-      .populate("productId", "name slug inventoryType priceNew priceWholeSale status images deleted")
-      .limit(40)
-      .lean();
-
-    const activeVariants = variants.filter(
-      (v: any) => v.productId && !(v.productId as any).deleted && (v.productId as any).status === "active"
-    );
-    const variantIds = activeVariants.map((v: any) => v._id);
-
-    // Lấy IMEI có sẵn
-    const availableImeiItems = await InventoryItem.find({
-      variantId: { $in: variantIds },
-      status: "available",
-      deleted: false
-    })
-      .select("variantId identifier")
-      .lean();
-
-    const imeiMap = new Map<string, string[]>();
-    for (const item of availableImeiItems) {
-      const vId = String(item.variantId);
-      if (!imeiMap.has(vId)) imeiMap.set(vId, []);
-      if (item.identifier) imeiMap.get(vId)!.push(item.identifier);
-    }
-
-    const results = activeVariants.map((v: any) => {
-      const prod = v.productId as any;
-      const invType = prod.inventoryType || "imei";
-      const vIdStr = String(v._id);
-      const imeiList = imeiMap.get(vIdStr) || [];
-      const stock = invType === "imei" ? imeiList.length : (Number(v.stock) || 0);
-
-      const wholesalePrice = Number(
-        v.priceWholeSale && v.priceWholeSale > 0
-          ? v.priceWholeSale
-          : (prod.priceWholeSale && prod.priceWholeSale > 0
-              ? prod.priceWholeSale
-              : (v.priceNew || prod.priceNew || 0))
-      );
-      const retailPrice = Number(v.priceNew || prod.priceNew || 0);
-
-      return {
-        variantId: v._id,
-        sku: v.sku,
-        productId: prod._id,
-        productName: prod.name,
-        inventoryType: invType,
-        image: prod.images && prod.images[0] ? prod.images[0] : "",
-        attributeValues: (v.attributeValue || []).map((a: any) => ({
-          label: a.label || a.value || "",
-          value: a.value || ""
-        })),
-        unitPrice: wholesalePrice,
-        priceRetail: retailPrice,
-        isWholesalePriced: Boolean((v.priceWholeSale && v.priceWholeSale > 0) || (prod.priceWholeSale && prod.priceWholeSale > 0)),
-        stock,
-        availableIdentifiers: imeiList
-      };
-    });
 
     res.json({
       code: "success",
@@ -1254,9 +1139,23 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
     const validPaymentMethods = ["money", "bank_transfer", "debt"];
     const chosenPaymentMethod = validPaymentMethods.includes(paymentMethod) ? paymentMethod : "money";
 
-    const isPaid = paymentStatus === "paid";
-    const paidAmount = isPaid ? total : Math.max(0, parseFloat(String(rawPaidAmount)) || 0);
-    const changeAmount = Math.max(0, paidAmount - total);
+    let paidAmount = 0;
+    let changeAmount = 0;
+    let finalPaymentStatus = "unpaid";
+    let debtRemaining = 0;
+
+    if (chosenPaymentMethod === "debt") {
+      const downPayment = Math.max(0, parseFloat(String(req.body.downPayment ?? rawPaidAmount ?? 0)) || 0);
+      paidAmount = downPayment;
+      changeAmount = Math.max(0, paidAmount - total);
+      debtRemaining = Math.max(0, total - paidAmount);
+      finalPaymentStatus = paidAmount >= total ? "paid" : "unpaid";
+    } else {
+      const isPaid = paymentStatus === "paid";
+      paidAmount = isPaid ? total : Math.max(0, parseFloat(String(rawPaidAmount)) || 0);
+      changeAmount = Math.max(0, paidAmount - total);
+      finalPaymentStatus = isPaid ? "paid" : "unpaid";
+    }
 
     const orderDeliveryMethod = deliveryMethod === "delivery" ? "delivery" : "pickup";
     const orderStatus = orderDeliveryMethod === "pickup" ? "completed" : "confirmed";
@@ -1269,6 +1168,11 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
     const cashierName = res.locals.accountAdmin ? res.locals.accountAdmin.fullName : "SuperAdmin";
 
     const code = createWholesaleOrderCode();
+
+    let orderNote = note ? `[Đơn sỉ đại lý] ${note}` : "[Đơn sỉ đại lý]";
+    if (chosenPaymentMethod === "debt") {
+      orderNote += ` [Công nợ: Đã trả trước ${paidAmount.toLocaleString("vi-VN")} đ, Còn nợ ${debtRemaining.toLocaleString("vi-VN")} đ]`;
+    }
 
     const newOrder = await Order.create({
       code,
@@ -1285,15 +1189,15 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
       address: address || dealer.businessAddress || "Lấy trực tiếp tại quầy",
       storeName: dealer.storeName,
       taxCode: dealer.taxCode || "",
-      note: note ? `[Đơn sỉ đại lý] ${note}` : "[Đơn sỉ đại lý]",
+      note: orderNote,
       items: orderItems,
       subTotal: calculatedSubTotal,
       discount: orderDiscount,
       total,
       paidAmount,
       changeAmount,
-      paymentMethod: chosenPaymentMethod === "debt" ? "money" : chosenPaymentMethod,
-      paymentStatus: isPaid ? "paid" : "unpaid",
+      paymentMethod: chosenPaymentMethod,
+      paymentStatus: finalPaymentStatus,
       orderStatus
     });
 
