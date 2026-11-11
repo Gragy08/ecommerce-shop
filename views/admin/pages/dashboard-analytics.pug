@@ -21,11 +21,11 @@ block main
                 tr
                   td.ps-3
                     if idx === 0
-                      span.badge.bg-warning.text-dark.fw-bold.fs-12 #1
+                      span.badge.bg-success.text-white.fw-bold.fs-12 #1
                     else if idx === 1
-                      span.badge.bg-secondary.text-white.fw-bold.fs-12 #2
+                      span.badge.bg-info.text-white.fw-bold.fs-12 #2
                     else if idx === 2
-                      span.badge.bg-danger.text-white.fw-bold.fs-12 #3
+                      span.badge.bg-primary.text-white.fw-bold.fs-12 #3
                     else
                       span.fw-bold.text-muted.ms-2 ##{idx + 1}
                   td
@@ -52,29 +52,30 @@ block main
 
     // Header & Filter Toolbar
     .row.align-items-center.mb-3
-      .col-md-6
+      .col-lg-5
         h4.page-title.mb-1 Báo cáo Bán hàng Đa kênh & Lợi nhuận gộp
         p.text-muted.fs-13.mb-0
           | Phạm vi thời gian: 
           span.badge.bg-primary-subtle.text-primary.fw-semibold #{range.periodLabel}
           |  (từ #{range.formattedStart} đến #{range.formattedEnd})
-      .col-md-6.text-md-end.mt-3.mt-md-0
-        .btn-group.me-2(role="group")
-          a.btn.btn-sm(class=range.period === "today" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=today`) Hôm nay
-          a.btn.btn-sm(class=range.period === "yesterday" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=yesterday`) Hôm qua
-          a.btn.btn-sm(class=range.period === "7days" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=7days`) 7 ngày
-          a.btn.btn-sm(class=range.period === "30days" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=30days`) 30 ngày
-          a.btn.btn-sm(class=range.period === "thisMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisMonth`) Tháng này
-          a.btn.btn-sm(class=range.period === "lastMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=lastMonth`) Tháng trước
-          a.btn.btn-sm(class=range.period === "thisYear" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisYear`) Năm nay
-        button.mt-2.btn.btn-sm.btn-outline-primary(
-          type="button" 
-          data-bs-toggle="collapse" 
-          data-bs-target="#customDateFilter" 
-          aria-expanded="false"
-        )
-          i.las.la-calendar.me-1
-          | Tùy chọn ngày
+      .col-lg-7.mt-3.mt-lg-0
+        .d-flex.flex-column.align-items-end.gap-2
+          .btn-group(role="group")
+            a.btn.btn-sm(class=range.period === "today" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=today`) Hôm nay
+            a.btn.btn-sm(class=range.period === "yesterday" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=yesterday`) Hôm qua
+            a.btn.btn-sm(class=range.period === "7days" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=7days`) 7 ngày
+            a.btn.btn-sm(class=range.period === "30days" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=30days`) 30 ngày
+            a.btn.btn-sm(class=range.period === "thisMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisMonth`) Tháng này
+            a.btn.btn-sm(class=range.period === "lastMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=lastMonth`) Tháng trước
+            a.btn.btn-sm(class=range.period === "thisYear" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisYear`) Năm nay
+          button.btn.btn-sm.btn-outline-primary(
+            type="button" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#customDateFilter" 
+            aria-expanded="false"
+          )
+            i.las.la-calendar.me-1
+            | Tùy chọn ngày
 
     // Form Tùy Chọn Ngày (Collapsible)
     #customDateFilter.collapse.mb-4(class=range.period === "custom" ? "show" : "")
@@ -124,7 +125,7 @@ block main
         .card.h-100.border.shadow-none
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Lợi Nhuận Gộp Toàn Hệ Thống
+              span.text-muted.fs-13.fw-medium Lợi Nhuận Gộp (Toàn hệ thống)
               span.avatar-xs.bg-success-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-chart-line.text-success.fs-18
             if canViewCost
@@ -395,7 +396,7 @@ block main
             .d-flex.flex-wrap.align-items-center.justify-content-between.gap-2
               div
                 h5.card-title.mb-0
-                  i.las.la-award.text-warning.fs-20.me-1
+                  i.las.la-award.text-success.fs-20.me-1
                   | Xếp hạng Top Đại lý lấy hàng nhiều nhất
                 small.text-muted Tự động xếp hạng theo tổng giá trị doanh thu hàng sỉ xuất bán
               ul.nav.nav-pills.card-header-pills#topDealerTabs(role="tablist")
