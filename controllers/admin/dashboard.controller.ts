@@ -1478,6 +1478,7 @@ export const omnichannelAnalytics = async (req: Request, res: Response) => {
         completedOrders: totalCompletedOrders,
         cancelledOrders: cancelledOrdersCount,
         avgOrderValue,
+        aov: avgOrderValue,
         posRevenue,
         posOrders: posOrdersCount,
         posGrossProfit,

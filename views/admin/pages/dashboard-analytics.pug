@@ -67,7 +67,7 @@ block main
           a.btn.btn-sm(class=range.period === "thisMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisMonth`) Tháng này
           a.btn.btn-sm(class=range.period === "lastMonth" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=lastMonth`) Tháng trước
           a.btn.btn-sm(class=range.period === "thisYear" ? "btn-primary" : "btn-outline-secondary", href=`/${pathAdmin}/dashboard/analytics?period=thisYear`) Năm nay
-        button.btn.btn-sm.btn-outline-primary(
+        button.mt-2.btn.btn-sm.btn-outline-primary(
           type="button" 
           data-bs-toggle="collapse" 
           data-bs-target="#customDateFilter" 
@@ -111,27 +111,27 @@ block main
         .card.h-100.border.shadow-none
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Tổng Doanh Thu Thuần (Toàn bộ 3 kênh)
+              span.text-muted.fs-13.fw-medium Tổng Doanh Thu (Toàn bộ kênh)
               span.avatar-xs.bg-primary-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-wallet.text-primary.fs-18
             h3.fs-24.fw-bold.text-primary.mb-1 #{kpis.netRevenue.toLocaleString("vi-VN")} đ
             .d-flex.align-items-center.justify-content-between.text-muted.fs-12
               span #{kpis.completedOrders} đơn hoàn tất / #{kpis.totalOrders} đơn phát sinh
-              span AOV: #{kpis.avgOrderValue.toLocaleString("vi-VN")} đ / đơn
+              span Giá trị đơn hàng trung bình: #{kpis.avgOrderValue.toLocaleString("vi-VN")} đ / đơn
 
       // KPI 2: Lợi Nhuận Gộp
       .col-md-6
         .card.h-100.border.shadow-none
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Lợi Nhuận Gộp Toàn Hệ Thống (Gross Profit)
+              span.text-muted.fs-13.fw-medium Lợi Nhuận Gộp Toàn Hệ Thống
               span.avatar-xs.bg-success-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-chart-line.text-success.fs-18
             if canViewCost
               h3.fs-24.fw-bold.text-success.mb-1 #{kpis.grossProfit.toLocaleString("vi-VN")} đ
               .d-flex.align-items-center.justify-content-between.fs-12
-                span.badge.bg-success-subtle.text-success Biên LN: +#{kpis.grossProfitMargin}%
-                span.text-muted Giá vốn (COGS): #{kpis.cogs.toLocaleString("vi-VN")} đ
+                span.badge.bg-success-subtle.text-success Mức lãi: +#{kpis.grossProfitMargin}%
+                span.text-muted Giá vốn: #{kpis.cogs.toLocaleString("vi-VN")} đ
             else
               h3.fs-20.fw-bold.text-secondary.mb-1 ****** đ
               p.text-muted.fs-12.mb-0 Chỉ tài khoản có quyền xem giá vốn
@@ -143,7 +143,7 @@ block main
         .card.h-100.border.shadow-none.border-info-subtle
           .card-body
             .d-flex.align-items-center.justify-content-between.mb-2
-              span.text-muted.fs-13.fw-medium Kênh Bán lẻ tại quầy POS
+              span.text-muted.fs-13.fw-medium Kênh Bán lẻ tại Cửa hàng
               span.avatar-xs.bg-info-subtle.rounded-circle.d-flex.align-items-center.justify-content-center
                 i.las.la-cash-register.text-info.fs-18
             h4.fs-20.fw-bold.text-info.mb-1 #{kpis.posRevenue.toLocaleString("vi-VN")} đ
@@ -151,7 +151,7 @@ block main
               span.badge.bg-info-subtle.text-info Chiếm #{kpis.posShare}%
               span.text-muted #{kpis.posOrders} hóa đơn tại quầy
             .d-flex.align-items-center.justify-content-between.fs-12.text-muted
-              span AOV: #{kpis.posAov.toLocaleString("vi-VN")} đ
+              span giá trị đơn hàng trung bình: #{kpis.posAov.toLocaleString("vi-VN")} đ
               if canViewCost
                 span LN: #{kpis.posGrossProfit.toLocaleString("vi-VN")} đ
 
@@ -168,7 +168,7 @@ block main
               span.badge.bg-warning-subtle.text-warning Chiếm #{kpis.onlineShare}%
               span.text-muted #{kpis.onlineOrders} đơn đặt trực tuyến
             .d-flex.align-items-center.justify-content-between.fs-12.text-muted
-              span AOV: #{kpis.onlineAov.toLocaleString("vi-VN")} đ
+              span giá trị đơn hàng trung bình: #{kpis.onlineAov.toLocaleString("vi-VN")} đ
               if canViewCost
                 span LN: #{kpis.onlineGrossProfit.toLocaleString("vi-VN")} đ
 
@@ -185,7 +185,7 @@ block main
               span.badge.bg-success-subtle.text-success Chiếm #{kpis.wholesaleShare}%
               span.text-muted #{kpis.wholesaleOrders} đơn hàng sỉ
             .d-flex.align-items-center.justify-content-between.fs-12.text-muted
-              span AOV: #{kpis.wholesaleAov.toLocaleString("vi-VN")} đ
+              span giá trị đơn hàng trung bình: #{kpis.wholesaleAov.toLocaleString("vi-VN")} đ
               if canViewCost
                 span LN: #{kpis.wholesaleGrossProfit.toLocaleString("vi-VN")} đ
 
