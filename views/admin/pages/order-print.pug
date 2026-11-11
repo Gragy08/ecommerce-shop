@@ -64,31 +64,44 @@ block main
             .text-end
               h4.fw-bold.text-primary.mb-1
                 if order.orderType === 'wholesale'
-                  | HÓA ĐƠN BÁN SỈ
+                  | PHIẾU XUẤT KHO KIÊM BÀN GIAO HÀNG SỈ
                 else
                   | HÓA ĐƠN BÁN HÀNG
-              div.small Mã HĐ: 
+              div.small Mã phiếu: 
                 strong #{order.code}
               if order.orderType === 'wholesale'
-                div.badge.bg-primary.text-white.mb-1 Đơn sỉ đại lý
+                div.badge.bg-primary.text-white.mb-1 Đơn bán sỉ đại lý
               div.small Ngày lập: #{order.createdAtFormat}
               if order.cashierName
-                div.small Thu ngân: #{order.cashierName}
+                div.small Người lập: #{order.cashierName}
 
           .row.mb-3
             .col-6
-              div.small.text-muted Khách hàng:
-              strong #{order.fullName}
-              if order.storeName
-                div.small.fw-bold.text-dark Cửa hàng / Đại lý: #{order.storeName}
-              if order.phone
-                div.small SĐT: #{order.phone}
-              if order.address
-                div.small Địa chỉ: #{order.address}
+              if order.orderType === 'wholesale'
+                div.small.text-muted Đại lý nhận hàng:
+                strong.fs-6 #{order.storeName || order.fullName}
+                if order.storeName && order.fullName
+                  div.small Người đại diện: #{order.fullName}
+                if order.phone
+                  div.small SĐT: #{order.phone}
+                if order.taxCode
+                  div.small MST: #{order.taxCode}
+                div.small Địa chỉ nhận: #{order.address || order.businessAddress || 'Nhận trực tiếp tại kho'}
+              else
+                div.small.text-muted Khách hàng:
+                strong #{order.fullName}
+                if order.storeName
+                  div.small.fw-bold.text-dark Cửa hàng / Đại lý: #{order.storeName}
+                if order.phone
+                  div.small SĐT: #{order.phone}
+                if order.address
+                  div.small Địa chỉ: #{order.address}
             .col-6.text-end
               div.small.text-muted Hình thức thanh toán:
               strong
                 case order.paymentMethod
+                  when "debt"
+                    | Công nợ / Thanh toán sau
                   when "money"
                     | Tiền mặt
                   when "bank_transfer"
@@ -102,16 +115,29 @@ block main
                   when "zalopay"
                     | ZaloPay
                   default
-                    | Tiền mặt
+                    | #{order.paymentMethod || 'Tiền mặt'}
+              div.small Trạng thái thanh toán: 
+                strong
+                  case order.paymentStatus
+                    when "paid"
+                      span.text-success Đã thanh toán đủ (100%)
+                    when "partially_paid"
+                      span.text-warning Đã thanh toán 1 phần
+                    when "unpaid"
+                      span.text-danger Ghi nhận công nợ
+                    when "refunded"
+                      span.text-secondary Đã hoàn tiền
+                    default
+                      span Chưa thanh toán
               div.small Kênh bán: #{order.channel == 'pos' ? 'Tại Cửa hàng' : 'Online Web'}
 
           table.table.table-bordered.table-sm.align-middle.mb-3
             thead.table-light
               tr
                 th.text-center(style="width: 45px") STT
-                th Sản phẩm
+                th #{order.orderType === 'wholesale' ? 'Sản phẩm & Biến thể / Danh sách IMEI' : 'Sản phẩm'}
                 th.text-center(style="width: 70px") SL
-                th.text-end(style="width: 130px") Đơn giá
+                th.text-end(style="width: 130px") #{order.orderType === 'wholesale' ? 'Đơn giá sỉ' : 'Đơn giá'}
                 th.text-end(style="width: 140px") Thành tiền
             tbody
               each item, idx in order.items
@@ -122,15 +148,17 @@ block main
                     if item.variant && item.variant.length > 0
                       small.text-muted.d-block #{item.variant.join(' | ')}
                     if item.identifiers && item.identifiers.length > 0
-                      small.d-block.mt-1
-                        | IMEI: 
-                        code.text-dark #{item.identifiers.join(', ')}
+                      .mt-1.p-1.border.rounded.bg-light
+                        span.small.fw-bold.d-block.mb-1 Danh sách IMEI xuất kho (#{item.identifiers.length}):
+                        .d-flex.flex-wrap.gap-1
+                          each imei in item.identifiers
+                            span.badge.border.text-dark.bg-white.font-monospace #{imei}
                   td.text-center #{item.quantity}
                   td.text-end #{(item.price || 0).toLocaleString('vi-VN')} đ
                   td.text-end.fw-semibold #{((item.price || 0) * (item.quantity || 1) - (item.discount || 0)).toLocaleString('vi-VN')} đ
 
           .row.justify-content-end
-            .col-md-5
+            .col-md-6
               .d-flex.justify-content-between.mb-1
                 span Tạm tính:
                 strong #{(order.subTotal || 0).toLocaleString('vi-VN')} đ
@@ -165,6 +193,19 @@ block main
                   .d-flex.justify-content-between.text-primary
                     span Khoản vay giải ngân:
                     strong #{(order.installmentInfo.loanAmount || 0).toLocaleString('vi-VN')} đ
+              else if order.orderType === "wholesale" || order.paymentMethod === "debt" || order.paidAmount > 0 || order.remainingDebt > 0
+                .border.rounded.p-2.mt-2.bg-light.small
+                  .d-flex.justify-content-between
+                    span Đã thanh toán (Trả trước):
+                    strong.text-success #{(order.paidAmount || 0).toLocaleString('vi-VN')} đ
+                  if order.remainingDebt > 0
+                    .d-flex.justify-content-between.mt-1
+                      span.fw-bold.text-danger Công nợ còn lại:
+                      strong.text-danger #{(order.remainingDebt || 0).toLocaleString('vi-VN')} đ
+                  else
+                    .d-flex.justify-content-between.mt-1
+                      span Tình trạng:
+                      strong.text-success Đã tất toán đủ 100%
               else if order.paymentMethod === "money" && order.paidAmount > 0
                 .d-flex.justify-content-between.mt-1.small
                   span Tiền khách đưa:
@@ -174,13 +215,27 @@ block main
                     span Tiền thừa trả khách:
                     span #{(order.changeAmount || 0).toLocaleString('vi-VN')} đ
 
-          .row.mt-5.text-center
-            .col-6
-              strong Khách hàng
-              .text-muted.small (Ký và ghi rõ họ tên)
-            .col-6
-              strong Người lập phiếu
-              .text-muted.small (Ký và ghi rõ họ tên)
+          if order.orderType === 'wholesale'
+            .mt-3.p-2.border.rounded.bg-light.text-center.small.fst-italic
+              | "Hai bên đã kiểm tra đầy đủ số lượng, quy cách và toàn bộ mã IMEI thiết bị niêm phong nguyên vẹn khi bàn giao."
+            .row.mt-4.text-center
+              .col-4
+                strong Đại lý / Người nhận hàng
+                .text-muted.small (Ký và ghi rõ họ tên)
+              .col-4
+                strong Người lập phiếu / Xuất kho
+                .text-muted.small (Ký và ghi rõ họ tên)
+              .col-4
+                strong Đại diện Cửa hàng Tỷ Phú Quý
+                .text-muted.small (Ký và đóng dấu xác nhận)
+          else
+            .row.mt-5.text-center
+              .col-6
+                strong Khách hàng
+                .text-muted.small (Ký và ghi rõ họ tên)
+              .col-6
+                strong Người lập phiếu
+                .text-muted.small (Ký và ghi rõ họ tên)
 
     // Khổ nhiệt K80 bên phải
     .col-lg-4#printAreaK80
@@ -192,7 +247,7 @@ block main
             div SĐT: 0982.887.761
             .fw-bold.mt-2
               if order.orderType === 'wholesale'
-                | HÓA ĐƠN BÁN SỈ
+                | PHIẾU XUẤT KHO BÁN SỈ
               else
                 | HÓA ĐƠN BÁN HÀNG
             div Mã: #{order.code}
@@ -201,11 +256,20 @@ block main
             div Ngày: #{order.createdAtFormat}
 
           .border-bottom.pb-2.mb-2
-            div Khách: #{order.fullName}
-            if order.storeName
-              div Cửa hàng: #{order.storeName}
-            if order.phone
-              div SĐT: #{order.phone}
+            if order.orderType === 'wholesale'
+              if order.storeName
+                div.fw-bold Cửa hàng: #{order.storeName}
+              div Đại diện: #{order.fullName}
+              if order.phone
+                div SĐT: #{order.phone}
+              if order.taxCode
+                div MST: #{order.taxCode}
+            else
+              div Khách: #{order.fullName}
+              if order.storeName
+                div Cửa hàng: #{order.storeName}
+              if order.phone
+                div SĐT: #{order.phone}
             if order.cashierName
               div Thu ngân: #{order.cashierName}
 
@@ -248,6 +312,19 @@ block main
                 .d-flex.justify-content-between
                   span Khoản vay:
                   strong #{(order.installmentInfo.loanAmount || 0).toLocaleString('vi-VN')} đ
+            else if order.orderType === "wholesale" || order.paymentMethod === "debt" || order.paidAmount > 0 || order.remainingDebt > 0
+              .border-top.pt-1.mt-1.small
+                .d-flex.justify-content-between
+                  span Đã thanh toán:
+                  strong #{(order.paidAmount || 0).toLocaleString('vi-VN')} đ
+                if order.remainingDebt > 0
+                  .d-flex.justify-content-between
+                    span Còn nợ:
+                    strong #{(order.remainingDebt || 0).toLocaleString('vi-VN')} đ
+                else
+                  .d-flex.justify-content-between
+                    span Còn nợ:
+                    strong 0 đ (Đủ)
             else if order.paymentMethod === "money" && order.paidAmount > 0
               .d-flex.justify-content-between.small
                 span Khách đưa:
@@ -257,8 +334,13 @@ block main
                   span Tiền thừa:
                   span #{(order.changeAmount || 0).toLocaleString('vi-VN')} đ
 
-          .text-center.border-top.pt-2.mt-2.small
-            div Cảm ơn Quý khách & Hẹn gặp lại!
+          if order.orderType === 'wholesale'
+            .text-center.border-top.pt-2.mt-2.small
+              div.fst-italic Đã kiểm đủ SL & IMEI khi nhận hàng
+              div Cảm ơn Quý Đại lý đã hợp tác!
+          else
+            .text-center.border-top.pt-2.mt-2.small
+              div Cảm ơn Quý khách & Hẹn gặp lại!
 
   script.
     function printInvoiceMode(mode) {

@@ -170,6 +170,7 @@ block main
                     type="text"
                     readonly
                     value=
+                      orderDetail.paymentMethod == 'debt' ? 'Công nợ / Thanh toán sau' :
                       orderDetail.paymentMethod == 'money' ? 'Tiền mặt' :
                       orderDetail.paymentMethod == 'vnpay' ? 'VNPay' :
                       orderDetail.paymentMethod == 'zalopay' ? 'ZaloPay' :
@@ -193,22 +194,47 @@ block main
                     readonly
                     value=`Giảm mã: ${(orderDetail.discount || 0).toLocaleString('vi-VN')} đ | Giảm điểm: ${(orderDetail.pointDiscount || 0).toLocaleString('vi-VN')} đ`
                   )
-              .col-md-4
+              .col-md-3
                 .mb-3
                   label.form-label Tổng thanh toán
-                  input.form-control.fw-bold.text-danger(
+                  input.form-control.fw-bold.text-dark(
                     type="text"
                     readonly
-                    value=`${(orderDetail.total || 0).toLocaleString('vi-VN')} đ`
+                    value=orderDetail.totalFormatted
                   )
-              .col-md-4
+              .col-md-3
+                .mb-3
+                  label.form-label Đã thanh toán
+                  input.form-control.fw-bold.text-success(
+                    type="text"
+                    readonly
+                    value=orderDetail.paidAmountFormatted
+                  )
+              .col-md-3
+                .mb-3
+                  label.form-label Còn nợ hiện tại
+                  .input-group
+                    input.form-control.fw-bold.text-danger(
+                      type="text"
+                      readonly
+                      value=orderDetail.remainingDebtFormatted
+                    )
+                    if orderDetail.remainingDebt > 0
+                      button.btn.btn-outline-danger(
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#collectDebtModal"
+                        title="Thu công nợ đơn hàng"
+                      ) Thu nợ
+              .col-md-3
                 .mb-3
                   label.form-label Trạng thái thanh toán
                   select.form-select(name="paymentStatus")
-                    option(value="unpaid" selected=(orderDetail.paymentStatus == "unpaid")) Chưa thanh toán
-                    option(value="paid" selected=(orderDetail.paymentStatus == "paid")) Đã thanh toán
+                    option(value="unpaid" selected=(orderDetail.paymentStatus == "unpaid")) Chưa thanh toán (Ghi nợ)
+                    option(value="partially_paid" selected=(orderDetail.paymentStatus == "partially_paid")) Đã thanh toán 1 phần
+                    option(value="paid" selected=(orderDetail.paymentStatus == "paid")) Đã thanh toán đủ (100%)
                     option(value="refunded" selected=(orderDetail.paymentStatus == "refunded")) Đã hoàn tiền
-              .col-md-4
+              .col-12
                 .mb-3
                   label.form-label Trạng thái đơn hàng
                   select#orderStatusSelect.form-select(name="orderStatus")
@@ -308,6 +334,97 @@ block main
               .col-md-3.col-6
                 .text-muted.small Ghi chú hồ sơ
                 div #{inst.note || '-'}
+
+      if (orderDetail.paymentLogs && orderDetail.paymentLogs.length > 0)
+        .card.mt-3.border
+          .card-header.bg-light.d-flex.justify-content-between.align-items-center
+            h5.card-title.mb-0
+              i.fa-solid.fa-clock-rotate-left.me-2.text-primary
+              | Lịch sử thanh toán & thu hồi công nợ (#{orderDetail.paymentLogs.length} đợt)
+            if orderDetail.remainingDebt > 0
+              button.btn.btn-outline-danger.btn-sm(type="button" data-bs-toggle="modal" data-bs-target="#collectDebtModal")
+                i.fa-solid.fa-hand-holding-dollar.me-1
+                | Thu nợ đợt tiếp theo
+          .card-body.p-0
+            .table-responsive
+              table.table.table-hover.align-middle.mb-0
+                thead.table-light
+                  tr
+                    th.text-center(style="width: 50px") #
+                    th Thời gian thu
+                    th.text-end Số tiền
+                    th Phương thức
+                    th Người thu
+                    th Ghi chú
+                tbody
+                  each log, logIdx in orderDetail.paymentLogs
+                    tr
+                      td.text-center #{logIdx + 1}
+                      td #{log.receivedAtFormat}
+                      td.text-end.fw-bold.text-success +#{log.amountFormatted}
+                      td
+                        case log.paymentMethod
+                          when "money"
+                            span.badge.bg-secondary Tiền mặt
+                          when "bank_transfer"
+                            span.badge.bg-primary Chuyển khoản
+                          when "credit_card"
+                            span.badge.bg-info.text-dark Quẹt thẻ POS
+                          default
+                            span.badge.bg-light.text-dark #{log.paymentMethod}
+                      td #{log.receivedByName || 'SuperAdmin'}
+                      td.text-muted #{log.note || '-'}
+
+  // Modal Thu hồi công nợ
+  #collectDebtModal.modal.fade(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header
+          h5.modal-title Thu hồi công nợ đơn hàng #{orderDetail.code}
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        .modal-body
+          .alert.alert-light.border.mb-3
+            .d-flex.justify-content-between.mb-1
+              span.text-muted Tổng tiền đơn hàng:
+              strong #{orderDetail.totalFormatted}
+            .d-flex.justify-content-between.mb-1
+              span.text-muted Đã thanh toán:
+              strong.text-success #{orderDetail.paidAmountFormatted}
+            .d-flex.justify-content-between
+              span.fw-bold Còn nợ hiện tại:
+              strong.text-danger.fs-6 #{orderDetail.remainingDebtFormatted}
+
+          .mb-3
+            .d-flex.justify-content-between.align-items-center.mb-1
+              label.form-label.mb-0 Số tiền thu đợt này (VNĐ) *
+              .d-flex.gap-1
+                button#btnQuickHalfDebt.btn.btn-outline-secondary.btn-sm(type="button" data-debt=Math.round(orderDetail.remainingDebt / 2)) 50% nợ
+                button#btnQuickAllDebt.btn.btn-outline-primary.btn-sm(type="button" data-debt=orderDetail.remainingDebt) Thu hết 100%
+            input#collectDebtAmount.form-control(
+              type="number"
+              min="1000"
+              max=orderDetail.remainingDebt
+              step="1000"
+              value=orderDetail.remainingDebt
+              placeholder="Nhập số tiền thu..."
+            )
+            small.text-muted Tối đa: #{orderDetail.remainingDebtFormatted}
+
+          .mb-3
+            label.form-label Hình thức nhận tiền *
+            select#collectDebtMethod.form-select
+              option(value="bank_transfer" selected) Chuyển khoản ngân hàng
+              option(value="money") Tiền mặt
+              option(value="credit_card") Quẹt thẻ POS
+
+          .mb-0
+            label.form-label Ghi chú đợt thu
+            textarea#collectDebtNote.form-control(rows="2" placeholder="Ví dụ: Đại lý chuyển khoản qua Vietcombank đợt 2...")
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button#btnConfirmCollectDebt.btn.btn-success(type="button" data-order-id=orderDetail.id)
+            i.fa-solid.fa-check.me-1
+            | Xác nhận thu tiền
 
   // Modal Cập nhật hồ sơ trả góp
   if (orderDetail.paymentMethod == "installment")
@@ -519,6 +636,58 @@ block script
           } catch (e) {
             if (typeof notyf !== "undefined") notyf.error("Lỗi kết nối máy chủ!");
             btnReturnOrder.disabled = false;
+          }
+        });
+      }
+
+      // Xử lý nút chọn nhanh số tiền thu nợ
+      const quickHalfBtn = document.querySelector("#btnQuickHalfDebt");
+      const quickAllBtn = document.querySelector("#btnQuickAllDebt");
+      const collectAmountInput = document.querySelector("#collectDebtAmount");
+      if (quickHalfBtn && collectAmountInput) {
+        quickHalfBtn.addEventListener("click", () => {
+          collectAmountInput.value = quickHalfBtn.getAttribute("data-debt") || "";
+        });
+      }
+      if (quickAllBtn && collectAmountInput) {
+        quickAllBtn.addEventListener("click", () => {
+          collectAmountInput.value = quickAllBtn.getAttribute("data-debt") || "";
+        });
+      }
+
+      // Xác nhận thu hồi công nợ đơn hàng
+      const btnConfirmCollect = document.querySelector("#btnConfirmCollectDebt");
+      if (btnConfirmCollect) {
+        btnConfirmCollect.addEventListener("click", async () => {
+          const orderId = btnConfirmCollect.getAttribute("data-order-id");
+          const amountRaw = document.querySelector("#collectDebtAmount")?.value || "";
+          const amount = parseFloat(amountRaw);
+          const paymentMethod = document.querySelector("#collectDebtMethod")?.value || "bank_transfer";
+          const note = (document.querySelector("#collectDebtNote")?.value || "").trim();
+
+          if (isNaN(amount) || amount <= 0) {
+            if (typeof notyf !== "undefined") notyf.error("Vui lòng nhập số tiền thu nợ hợp lệ lớn hơn 0 đ!");
+            return;
+          }
+
+          btnConfirmCollect.disabled = true;
+          try {
+            const res = await fetch(`/${pathAdmin}/order/collect-debt/${orderId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ amount, paymentMethod, note })
+            });
+            const data = await res.json();
+            if (data.code === "success") {
+              if (typeof drawNotify === "function") drawNotify("success", data.message);
+              window.location.reload();
+            } else {
+              if (typeof notyf !== "undefined") notyf.error(data.message || "Lỗi thu nợ!");
+              btnConfirmCollect.disabled = false;
+            }
+          } catch (e) {
+            if (typeof notyf !== "undefined") notyf.error("Lỗi kết nối máy chủ!");
+            btnConfirmCollect.disabled = false;
           }
         });
       }

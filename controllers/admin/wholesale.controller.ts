@@ -711,7 +711,61 @@ export const dealerList = async (req: Request, res: Response): Promise<void> => 
       .skip(skip)
       .lean();
 
+    const customerIds = recordList.map((c: any) => c._id);
+    const phones = recordList.map((c: any) => c.phone).filter(Boolean);
+
+    // Tính công nợ các đại lý trong trang hiện tại
+    const debtOrders = await Order.find({
+      deleted: { $ne: true },
+      orderStatus: { $nin: ["cancelled", "returned"] },
+      paymentStatus: { $ne: "paid" },
+      $or: [
+        { customerId: { $in: customerIds } },
+        { phone: { $in: phones } }
+      ]
+    }).select("customerId phone total paidAmount").lean();
+
+    const debtMap = new Map<string, number>();
+    for (const ord of debtOrders) {
+      const debt = Math.max(0, (ord.total || 0) - (ord.paidAmount || 0));
+      if (debt > 0) {
+        if (ord.customerId) {
+          const cId = String(ord.customerId);
+          debtMap.set(cId, (debtMap.get(cId) || 0) + debt);
+        } else if (ord.phone) {
+          debtMap.set(ord.phone, (debtMap.get(ord.phone) || 0) + debt);
+        }
+      }
+    }
+
+    // Tổng công nợ toàn bộ kênh sỉ
+    const totalDebtAgg = await Order.aggregate([
+      {
+        $match: {
+          deleted: { $ne: true },
+          orderType: "wholesale",
+          orderStatus: { $nin: ["cancelled", "returned"] },
+          paymentStatus: { $ne: "paid" }
+        }
+      },
+      {
+        $project: {
+          debt: { $subtract: ["$total", { $ifNull: ["$paidAmount", 0] }] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalDebt: { $sum: "$debt" }
+        }
+      }
+    ]);
+    const totalWholesaleDebt = Math.max(0, totalDebtAgg[0]?.totalDebt || 0);
+
     for (const item of recordList as any[]) {
+      const debt = debtMap.get(String(item._id)) || (item.phone ? debtMap.get(item.phone) : 0) || 0;
+      item.currentDebt = debt;
+      item.currentDebtFormatted = `${debt.toLocaleString("vi-VN")} đ`;
       item.totalSpentFormatted = `${Number(item.totalSpent || 0).toLocaleString("vi-VN")} đ`;
       item.createdAtFormat = item.createdAt ? moment(item.createdAt).format("DD/MM/YYYY") : "---";
     }
@@ -723,7 +777,8 @@ export const dealerList = async (req: Request, res: Response): Promise<void> => 
         totalDealers,
         webAccountsCount,
         totalRevenueFormatted: `${totalRevenue.toLocaleString("vi-VN")} đ`,
-        totalOrders
+        totalOrders,
+        totalDebtFormatted: `${totalWholesaleDebt.toLocaleString("vi-VN")} đ`
       },
       filters: {
         keyword
@@ -1187,12 +1242,12 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
       paidAmount = downPayment;
       changeAmount = Math.max(0, paidAmount - total);
       debtRemaining = Math.max(0, total - paidAmount);
-      finalPaymentStatus = paidAmount >= total ? "paid" : "unpaid";
+      finalPaymentStatus = paidAmount >= total ? "paid" : (paidAmount > 0 ? "partially_paid" : "unpaid");
     } else {
       const isPaid = paymentStatus === "paid";
       paidAmount = isPaid ? total : Math.max(0, parseFloat(String(rawPaidAmount)) || 0);
       changeAmount = Math.max(0, paidAmount - total);
-      finalPaymentStatus = isPaid ? "paid" : "unpaid";
+      finalPaymentStatus = isPaid ? "paid" : (paidAmount > 0 ? "partially_paid" : "unpaid");
     }
 
     const orderDeliveryMethod = deliveryMethod === "delivery" ? "delivery" : "pickup";
@@ -1211,6 +1266,17 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
     if (chosenPaymentMethod === "debt") {
       orderNote += ` [Công nợ: Đã trả trước ${paidAmount.toLocaleString("vi-VN")} đ, Còn nợ ${debtRemaining.toLocaleString("vi-VN")} đ]`;
     }
+
+    const paymentLogs = paidAmount > 0 ? [
+      {
+        amount: paidAmount,
+        paymentMethod: chosenPaymentMethod === "debt" ? "bank_transfer" : chosenPaymentMethod,
+        note: chosenPaymentMethod === "debt" ? `Trả trước khi tạo đơn sỉ` : `Thanh toán khi tạo đơn sỉ`,
+        receivedAt: new Date(),
+        receivedBy: validAdminObjectId,
+        receivedByName: cashierName
+      }
+    ] : [];
 
     const newOrder = await Order.create({
       code,
@@ -1236,6 +1302,7 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
       changeAmount,
       paymentMethod: chosenPaymentMethod,
       paymentStatus: finalPaymentStatus,
+      paymentLogs,
       orderStatus
     });
 

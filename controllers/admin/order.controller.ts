@@ -613,22 +613,47 @@ export const printInvoice = async (req: Request, res: Response): Promise<void> =
       : "-";
 
     let storeName = "";
+    let taxCode = "";
+    let businessAddress = "";
+
     if (order.userId && mongoose.isValidObjectId(order.userId)) {
       const userDoc: any = await AccountUser.findOne({
         _id: order.userId,
         $or: [{ wholesaleStatus: "approved" }, { userType: "wholesale" }]
-      }).select("storeName").lean();
-      if (userDoc?.storeName) storeName = userDoc.storeName;
+      }).select("storeName taxCode address").lean();
+      if (userDoc) {
+        if (userDoc.storeName) storeName = userDoc.storeName;
+        if (userDoc.taxCode) taxCode = userDoc.taxCode;
+        if (userDoc.address) businessAddress = userDoc.address;
+      }
     }
-    if (!storeName && order.phone) {
+    if (order.phone) {
       const regDoc: any = await WholesaleRegistration.findOne({
         phone: order.phone,
         status: "approved",
         deleted: false
-      }).select("storeName").lean();
-      if (regDoc?.storeName) storeName = regDoc.storeName;
+      }).select("storeName taxCode businessAddress address").lean();
+      if (regDoc) {
+        if (!storeName && regDoc.storeName) storeName = regDoc.storeName;
+        if (!taxCode && regDoc.taxCode) taxCode = regDoc.taxCode;
+        if (!businessAddress && (regDoc.businessAddress || (regDoc as any).address)) {
+          businessAddress = regDoc.businessAddress || (regDoc as any).address;
+        }
+      }
     }
     order.storeName = storeName;
+    order.taxCode = taxCode;
+    order.businessAddress = businessAddress;
+
+    const total = Number(order.total || 0);
+    const paidAmount = Number(order.paidAmount || 0);
+    const remainingDebt = Math.max(0, total - paidAmount);
+    order.paidAmount = paidAmount;
+    order.remainingDebt = remainingDebt;
+    order.totalFormatted = `${total.toLocaleString("vi-VN")} đ`;
+    order.paidAmountFormatted = `${paidAmount.toLocaleString("vi-VN")} đ`;
+    order.remainingDebtFormatted = `${remainingDebt.toLocaleString("vi-VN")} đ`;
+    order.subTotalFormatted = `${Number(order.subTotal || 0).toLocaleString("vi-VN")} đ`;
 
     res.render("admin/pages/order-print", {
       pageTitle: `In hóa đơn: ${order.code}`,
@@ -944,6 +969,26 @@ export const edit = async (req: Request, res: Response): Promise<void> => {
 
           item.availableImeis = availDocs.map((d: any) => d.identifier).filter(Boolean);
         }
+      }
+    }
+
+    const total = Number(orderDetail.total || 0);
+    const subTotal = Number(orderDetail.subTotal || 0);
+    const paidAmount = Number(orderDetail.paidAmount || 0);
+    const remainingDebt = Math.max(0, total - paidAmount);
+
+    orderDetail.totalFormatted = `${total.toLocaleString("vi-VN")} đ`;
+    orderDetail.subTotalFormatted = `${subTotal.toLocaleString("vi-VN")} đ`;
+    orderDetail.paidAmountFormatted = `${paidAmount.toLocaleString("vi-VN")} đ`;
+    orderDetail.remainingDebt = remainingDebt;
+    orderDetail.remainingDebtFormatted = `${remainingDebt.toLocaleString("vi-VN")} đ`;
+
+    if (Array.isArray(orderDetail.paymentLogs)) {
+      for (const log of orderDetail.paymentLogs) {
+        log.amountFormatted = `${Number(log.amount || 0).toLocaleString("vi-VN")} đ`;
+        log.receivedAtFormat = log.receivedAt
+          ? moment(log.receivedAt).format("DD/MM/YYYY HH:mm")
+          : "-";
       }
     }
 
@@ -1599,6 +1644,104 @@ export const settleInstallment = async (req: Request, res: Response): Promise<vo
   } catch (error) {
     console.error("Error settleInstallment:", error);
     res.status(500).json({ code: "error", message: "Lỗi hệ thống khi xác nhận giải ngân trả góp!" });
+  }
+};
+
+// [PATCH] /admin/order/collect-debt/:id — Thu hồi công nợ đơn hàng
+export const collectDebtPatch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.json({ code: "error", message: "Mã đơn hàng không hợp lệ!" });
+      return;
+    }
+
+    const order: any = await Order.findOne({ _id: id, deleted: { $ne: true } });
+    if (!order) {
+      res.json({ code: "error", message: "Không tìm thấy đơn hàng!" });
+      return;
+    }
+
+    if (["cancelled", "returned"].includes(order.orderStatus || "")) {
+      res.json({
+        code: "error",
+        message: `Đơn hàng đang ở trạng thái "${order.orderStatus}", không thể thu nợ!`
+      });
+      return;
+    }
+
+    const total = Number(order.total || 0);
+    const currentPaid = Number(order.paidAmount || 0);
+    const currentDebt = Math.max(0, total - currentPaid);
+
+    if (currentDebt <= 0) {
+      res.json({ code: "error", message: "Đơn hàng này đã thanh toán đủ 100%, không còn công nợ!" });
+      return;
+    }
+
+    const rawAmount = parseFloat(String(req.body.amount || "").replace(/[^0-9.]/g, ""));
+    if (isNaN(rawAmount) || rawAmount <= 0) {
+      res.json({ code: "error", message: "Vui lòng nhập số tiền thu nợ hợp lệ lớn hơn 0 đ!" });
+      return;
+    }
+
+    const collectAmount = Math.min(rawAmount, currentDebt);
+    const newPaidAmount = currentPaid + collectAmount;
+    const remainingDebt = Math.max(0, total - newPaidAmount);
+
+    const validPaymentMethods = ["money", "bank_transfer", "credit_card", "other"];
+    const chosenMethod = validPaymentMethods.includes(req.body.paymentMethod)
+      ? req.body.paymentMethod
+      : "bank_transfer";
+
+    const rawAdminId = (req as any).adminId;
+    const validAdminObjectId =
+      rawAdminId && mongoose.isValidObjectId(rawAdminId)
+        ? new mongoose.Types.ObjectId(rawAdminId)
+        : undefined;
+    const cashierName = res.locals.accountAdmin ? res.locals.accountAdmin.fullName : "SuperAdmin";
+    const note = String(req.body.note || "").trim() || `Thu nợ đơn hàng (${collectAmount.toLocaleString("vi-VN")} đ)`;
+
+    order.paidAmount = newPaidAmount;
+    order.paymentStatus = remainingDebt <= 0 ? "paid" : "partially_paid";
+
+    const paymentLogEntry: any = {
+      amount: collectAmount,
+      paymentMethod: chosenMethod,
+      note,
+      receivedAt: new Date(),
+      receivedBy: validAdminObjectId,
+      receivedByName: cashierName
+    };
+
+    if (!Array.isArray(order.paymentLogs)) {
+      order.paymentLogs = [] as any;
+    }
+    order.paymentLogs.push(paymentLogEntry);
+
+    const logNote = `[Thu nợ ${moment().format("DD/MM/YYYY HH:mm")}: +${collectAmount.toLocaleString("vi-VN")} đ (${chosenMethod === "money" ? "Tiền mặt" : "Chuyển khoản"}). Còn nợ: ${remainingDebt.toLocaleString("vi-VN")} đ]`;
+    order.note = order.note ? `${order.note}\n${logNote}` : logNote;
+
+    await order.save();
+
+    await logAdminAction(
+      req as any,
+      `Thu công nợ đơn hàng ${order.code}: ${collectAmount.toLocaleString("vi-VN")} đ (Đã thu: ${newPaidAmount.toLocaleString("vi-VN")} đ, Còn nợ: ${remainingDebt.toLocaleString("vi-VN")} đ)`
+    );
+
+    res.json({
+      code: "success",
+      message: remainingDebt <= 0
+        ? `Đã thu ${collectAmount.toLocaleString("vi-VN")} đ thành công! Đơn hàng đã được thanh toán ĐỦ 100%.`
+        : `Đã thu ${collectAmount.toLocaleString("vi-VN")} đ thành công! Số tiền còn nợ: ${remainingDebt.toLocaleString("vi-VN")} đ.`,
+      collectedAmount: collectAmount,
+      newPaidAmount,
+      remainingDebt,
+      paymentStatus: order.paymentStatus
+    });
+  } catch (error) {
+    console.error("Error collectDebtPatch:", error);
+    res.status(500).json({ code: "error", message: "Lỗi hệ thống khi thu hồi công nợ!" });
   }
 };
 

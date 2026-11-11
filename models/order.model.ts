@@ -1,5 +1,36 @@
 import mongoose from "mongoose";
 
+const paymentLogSchema = new mongoose.Schema(
+  {
+    amount: {
+      type: Number,
+      required: true
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["money", "bank_transfer", "vnpay", "zalopay", "credit_card", "debt", "other"],
+      default: "bank_transfer"
+    },
+    note: {
+      type: String,
+      default: ""
+    },
+    receivedAt: {
+      type: Date,
+      default: Date.now
+    },
+    receivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AccountAdmin"
+    },
+    receivedByName: {
+      type: String,
+      default: ""
+    }
+  },
+  { _id: true }
+);
+
 const installmentInfoSchema = new mongoose.Schema(
   {
     provider: {
@@ -163,10 +194,15 @@ const schema = new mongoose.Schema(
       type: installmentInfoSchema,
       default: null
     },
+    paymentLogs: {
+      type: [paymentLogSchema],
+      default: []
+    },
     paymentStatus: { // Trạng thái thanh toán
       type: String,
       enum: [
         "unpaid", // Chưa thanh toán
+        "partially_paid", // Thanh toán một phần / Còn nợ
         "paid", // Đã thanh toán
         "refunded" // Đã hoàn lại tiền
       ],
