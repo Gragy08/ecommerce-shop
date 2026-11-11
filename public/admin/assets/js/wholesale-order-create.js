@@ -568,10 +568,15 @@
     if (modal) modal.hide();
   });
 
-  // 4. Chọn Đại lý & Hiển thị thông tin
+  // 4. Chọn Đại lý (Gộp thành 1 ô tìm kiếm + Dropdown danh sách bên dưới)
   const dealerSelect = document.querySelector("#dealerSelect");
   const dealerSearchInput = document.querySelector("#dealerSearchInput");
-  const clearDealerSearchBtn = document.querySelector("#btnClearDealerSearch");
+  const clearDealerBtn = document.querySelector("#btnClearDealer");
+  const toggleDealerDropdownBtn = document.querySelector("#btnToggleDealerDropdown");
+  const dealerDropdownList = document.querySelector("#dealerDropdownList");
+  const dealerNoMatchMessage = document.querySelector("#dealerNoMatchMessage");
+  const dealerItems = document.querySelectorAll(".dealer-dropdown-item");
+
   const dealerDetailsSection = document.querySelector("#dealerDetailsSection");
   const dealerStoreName = document.querySelector("#dealerStoreName");
   const dealerFullName = document.querySelector("#dealerFullName");
@@ -590,87 +595,148 @@
       .trim();
   };
 
-  if (dealerSearchInput && dealerSelect) {
-    const filterDealerOptions = () => {
-      const q = normalizeStr(dealerSearchInput.value);
-      if (clearDealerSearchBtn) clearDealerSearchBtn.style.display = q ? "block" : "none";
+  const selectDealerItem = (el) => {
+    if (!el) return;
+    const dId = el.getAttribute("data-id") || "";
+    const store = el.getAttribute("data-store-name") || "";
+    const name = el.getAttribute("data-full-name") || "";
+    const phone = el.getAttribute("data-phone") || "";
+    const tax = el.getAttribute("data-tax-code") || "";
+    const addr = el.getAttribute("data-address") || "";
 
-      const tokens = q.split(/\s+/).filter(Boolean);
-      let matchCount = 0;
-      let firstMatchedOption = null;
+    if (dealerSelect) dealerSelect.value = dId;
+    if (dealerSearchInput) dealerSearchInput.value = `${store} - ${name} (${phone})`;
 
-      for (let i = 1; i < dealerSelect.options.length; i++) {
-        const opt = dealerSelect.options[i];
-        if (!tokens.length) {
-          opt.hidden = false;
-          opt.style.display = "";
-          continue;
-        }
+    if (dealerStoreName) dealerStoreName.value = store;
+    if (dealerFullName) dealerFullName.value = name;
+    if (dealerPhone) dealerPhone.value = phone;
+    if (dealerTaxCode) dealerTaxCode.value = tax;
+    if (dealerAddress) dealerAddress.value = addr;
 
-        const text = normalizeStr(opt.textContent || "");
-        const store = normalizeStr(opt.getAttribute("data-store-name") || "");
-        const name = normalizeStr(opt.getAttribute("data-full-name") || "");
-        const phone = (opt.getAttribute("data-phone") || "").replace(/\D/g, "");
-        const tax = normalizeStr(opt.getAttribute("data-tax-code") || "");
-        const combined = `${text} ${store} ${name} ${phone} ${tax}`;
+    if (dealerDetailsSection) dealerDetailsSection.style.display = "block";
+    if (clearDealerBtn) clearDealerBtn.style.display = "block";
+    if (dealerDropdownList) dealerDropdownList.style.display = "none";
+  };
 
-        const isMatch = tokens.every((token) => combined.includes(token));
-        if (isMatch) {
-          opt.hidden = false;
-          opt.style.display = "";
-          matchCount++;
-          if (!firstMatchedOption) firstMatchedOption = opt;
-        } else {
-          opt.hidden = true;
-          opt.style.display = "none";
-        }
+  const clearDealerSelection = () => {
+    if (dealerSelect) dealerSelect.value = "";
+    if (dealerSearchInput) dealerSearchInput.value = "";
+    if (dealerDetailsSection) dealerDetailsSection.style.display = "none";
+    if (clearDealerBtn) clearDealerBtn.style.display = "none";
+    filterDealerDropdown("");
+  };
+
+  const filterDealerDropdown = (rawQuery) => {
+    const q = normalizeStr(rawQuery);
+    const tokens = q.split(/\s+/).filter(Boolean);
+    let matchCount = 0;
+    let firstMatch = null;
+
+    dealerItems.forEach((item) => {
+      if (!tokens.length) {
+        item.style.display = "block";
+        matchCount++;
+        return;
       }
-      return { matchCount, firstMatchedOption };
-    };
 
-    dealerSearchInput.addEventListener("input", filterDealerOptions);
+      const store = normalizeStr(item.getAttribute("data-store-name") || "");
+      const name = normalizeStr(item.getAttribute("data-full-name") || "");
+      const phone = (item.getAttribute("data-phone") || "").replace(/\D/g, "");
+      const tax = normalizeStr(item.getAttribute("data-tax-code") || "");
+      const combined = `${store} ${name} ${phone} ${tax}`;
+
+      const isMatch = tokens.every((token) => combined.includes(token));
+      if (isMatch) {
+        item.style.display = "block";
+        matchCount++;
+        if (!firstMatch) firstMatch = item;
+      } else {
+        item.style.display = "none";
+      }
+    });
+
+    if (dealerNoMatchMessage) {
+      dealerNoMatchMessage.style.display = matchCount === 0 ? "block" : "none";
+    }
+    return { matchCount, firstMatch };
+  };
+
+  if (dealerSearchInput) {
+    dealerSearchInput.addEventListener("focus", () => {
+      if (dealerDropdownList) {
+        filterDealerDropdown(dealerSelect && dealerSelect.value ? "" : dealerSearchInput.value);
+        dealerDropdownList.style.display = "block";
+      }
+    });
+
+    dealerSearchInput.addEventListener("input", (e) => {
+      if (dealerSelect) dealerSelect.value = "";
+      if (dealerDetailsSection) dealerDetailsSection.style.display = "none";
+      if (clearDealerBtn) clearDealerBtn.style.display = e.target.value ? "block" : "none";
+
+      filterDealerDropdown(e.target.value);
+      if (dealerDropdownList) dealerDropdownList.style.display = "block";
+    });
 
     dealerSearchInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        const { matchCount, firstMatchedOption } = filterDealerOptions();
-        if (matchCount === 1 && firstMatchedOption) {
-          dealerSelect.value = firstMatchedOption.value;
-          dealerSelect.dispatchEvent(new Event("change"));
+        const { matchCount, firstMatch } = filterDealerDropdown(dealerSearchInput.value);
+        if (matchCount === 1 && firstMatch) {
+          selectDealerItem(firstMatch);
           if (typeof notyf !== "undefined") {
-            notyf.success(`Đã chọn: ${firstMatchedOption.getAttribute("data-store-name") || firstMatchedOption.textContent}`);
+            notyf.success(`Đã chọn: ${firstMatch.getAttribute("data-store-name")}`);
           }
         }
       }
     });
-
-    if (clearDealerSearchBtn) {
-      clearDealerSearchBtn.addEventListener("click", () => {
-        dealerSearchInput.value = "";
-        clearDealerSearchBtn.style.display = "none";
-        filterDealerOptions();
-        dealerSearchInput.focus();
-      });
-    }
   }
 
-  if (dealerSelect) {
-    dealerSelect.addEventListener("change", () => {
-      const selectedOption = dealerSelect.options[dealerSelect.selectedIndex];
-      if (!selectedOption || !selectedOption.value) {
-        if (dealerDetailsSection) dealerDetailsSection.style.display = "none";
-        return;
+  if (toggleDealerDropdownBtn) {
+    toggleDealerDropdownBtn.addEventListener("click", () => {
+      if (!dealerDropdownList) return;
+      const isVisible = dealerDropdownList.style.display === "block";
+      if (isVisible) {
+        dealerDropdownList.style.display = "none";
+      } else {
+        filterDealerDropdown("");
+        dealerDropdownList.style.display = "block";
+        dealerSearchInput?.focus();
       }
-
-      if (dealerStoreName) dealerStoreName.value = selectedOption.getAttribute("data-store-name") || "";
-      if (dealerFullName) dealerFullName.value = selectedOption.getAttribute("data-full-name") || "";
-      if (dealerPhone) dealerPhone.value = selectedOption.getAttribute("data-phone") || "";
-      if (dealerTaxCode) dealerTaxCode.value = selectedOption.getAttribute("data-tax-code") || "";
-      if (dealerAddress) dealerAddress.value = selectedOption.getAttribute("data-address") || "";
-
-      if (dealerDetailsSection) dealerDetailsSection.style.display = "block";
     });
   }
+
+  if (clearDealerBtn) {
+    clearDealerBtn.addEventListener("click", () => {
+      clearDealerSelection();
+      dealerSearchInput?.focus();
+    });
+  }
+
+  dealerItems.forEach((item) => {
+    item.addEventListener("mouseenter", () => {
+      item.classList.add("bg-light");
+    });
+    item.addEventListener("mouseleave", () => {
+      item.classList.remove("bg-light");
+    });
+    item.addEventListener("click", () => {
+      selectDealerItem(item);
+    });
+  });
+
+  // Đóng dropdown đại lý khi click ra ngoài
+  document.addEventListener("click", (e) => {
+    if (
+      dealerDropdownList &&
+      !dealerDropdownList.contains(e.target) &&
+      e.target !== dealerSearchInput &&
+      e.target !== toggleDealerDropdownBtn &&
+      !toggleDealerDropdownBtn?.contains(e.target)
+    ) {
+      dealerDropdownList.style.display = "none";
+    }
+  });
 
   // 5. Tính toán thành tiền & Kiểm tra điều kiện chính sách sỉ
   const debtSection = document.querySelector("#debtPaymentSection");

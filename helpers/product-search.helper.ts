@@ -105,68 +105,7 @@ export const searchAndRankVariants = async (
 
   if (tokens.length === 0) return [];
 
-  // 1. Kiểm tra quét trúng đích danh mã IMEI trước
-  const qUpper = qTrim.toUpperCase();
-  const directDevice = await InventoryItem.findOne({
-    identifier: qUpper,
-    deleted: false
-  })
-    .populate("productId", "name slug inventoryType priceNew priceWholeSale images status deleted")
-    .populate("variantId", "sku attributeValue priceNew priceWholeSale stock status")
-    .lean();
-
-  if (directDevice && directDevice.productId && directDevice.variantId) {
-    const product = directDevice.productId as any;
-    const variant = directDevice.variantId as any;
-
-    if (product.status === "active" && !product.deleted && variant.status === "active") {
-      const availableItems = await InventoryItem.find({
-        variantId: variant._id,
-        status: "available",
-        deleted: false
-      })
-        .select("identifier")
-        .lean();
-
-      const availableIdentifiers = availableItems.map((i: any) => i.identifier).filter(Boolean);
-      const wholesalePrice = Number(
-        variant.priceWholeSale && variant.priceWholeSale > 0
-          ? variant.priceWholeSale
-          : product.priceWholeSale && product.priceWholeSale > 0
-            ? product.priceWholeSale
-            : variant.priceNew || product.priceNew || 0
-      );
-      const retailPrice = Number(variant.priceNew || product.priceNew || 0);
-
-      return [
-        {
-          isDirectImeiMatch: true,
-          matchedImei: qUpper,
-          deviceStatus: directDevice.status,
-          variantId: variant._id,
-          sku: variant.sku,
-          productId: product._id,
-          productName: product.name,
-          inventoryType: product.inventoryType || "imei",
-          image: product.images && product.images[0] ? product.images[0] : "",
-          attributeValues: (variant.attributeValue || []).map((a: any) => ({
-            label: a.label || a.value || "",
-            value: a.value || ""
-          })),
-          unitPrice: options.isWholesale ? wholesalePrice : retailPrice,
-          priceRetail: retailPrice,
-          isWholesalePriced: Boolean(
-            (variant.priceWholeSale && variant.priceWholeSale > 0) ||
-            (product.priceWholeSale && product.priceWholeSale > 0)
-          ),
-          stock: availableIdentifiers.length,
-          availableIdentifiers
-        }
-      ];
-    }
-  }
-
-  // 2. Tìm kiếm ứng viên theo Tên sản phẩm hoặc SKU
+  // Tìm kiếm ứng viên theo Tên sản phẩm hoặc SKU
   const strictRegex = new RegExp(escapeRegex(qTrim), "i");
   const flexSkuRegex = new RegExp(
     tokens.map((t) => escapeRegex(t)).join("[-_.\\s]*"),
@@ -192,15 +131,15 @@ export const searchAndRankVariants = async (
 
   const [matchedProducts, directSkuVariants] = await Promise.all([
     Product.find({
-      deleted: false,
-      status: "active",
+      deleted: { $ne: true },
+      status: { $ne: "inactive" },
       $or: productOrConditions
     })
       .select("_id name slug inventoryType priceNew priceWholeSale images deleted status")
       .limit(100)
       .lean(),
     ProductVariant.find({
-      status: "active",
+      status: { $ne: "inactive" },
       $or: [{ sku: strictRegex }, { sku: flexSkuRegex }]
     })
       .select("_id productId sku")
@@ -222,7 +161,7 @@ export const searchAndRankVariants = async (
   // Lấy tất cả các biến thể đang active của các sản phẩm ứng viên
   const candidateVariants = await ProductVariant.find({
     productId: { $in: candidateProductIds },
-    status: "active"
+    status: { $ne: "inactive" }
   })
     .populate("productId", "name slug inventoryType priceNew priceWholeSale status images deleted")
     .lean();
@@ -231,7 +170,8 @@ export const searchAndRankVariants = async (
     (v: any) =>
       v.productId &&
       !(v.productId as any).deleted &&
-      (v.productId as any).status === "active"
+      (v.productId as any).status !== "inactive" &&
+      v.status !== "inactive"
   );
 
   if (activeVariants.length === 0) {

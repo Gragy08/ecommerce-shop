@@ -14,7 +14,7 @@ import Product from "../../models/product.model";
 import ProductVariant from "../../models/product-variant.model";
 import InventoryItem from "../../models/inventory-item.model";
 import { syncStockToProduct, ensureDefaultVariantsForProducts } from "../../helpers/variant.helper";
-import { searchAndRankVariants } from "../../helpers/product-search.helper";
+import { searchAndRankVariants, escapeRegex } from "../../helpers/product-search.helper";
 import { pathAdmin } from "../../configs/variable.config";
 
 /**
@@ -871,45 +871,81 @@ export const searchWholesaleProducts = async (req: Request, res: Response): Prom
       return;
     }
 
-    await ensureDefaultVariantsForProducts();
+    const qUpper = q.toUpperCase();
 
-    const results = await searchAndRankVariants(q, { isWholesale: true });
+    // 1. Kiểm tra xem có quét trúng đích danh mã IMEI không
+    const matchedDevice: any = await InventoryItem.findOne({
+      identifier: { $regex: new RegExp(`^${escapeRegex(qUpper)}$`, "i") },
+      deleted: { $ne: true }
+    })
+      .populate("productId", "name slug inventoryType priceNew priceWholeSale images deleted status")
+      .populate("variantId", "sku attributeValue priceNew priceWholeSale stock status")
+      .lean();
 
-    // Trường hợp quét trúng IMEI trực tiếp
-    if (results.length > 0 && results[0].isDirectImeiMatch) {
-      const match = results[0];
-      if (match.deviceStatus && match.deviceStatus !== "available") {
+    if (matchedDevice && matchedDevice.productId && matchedDevice.variantId) {
+      const product = matchedDevice.productId as any;
+      const variant = matchedDevice.variantId as any;
+
+      if (matchedDevice.status !== "available") {
         res.json({
           code: "warning",
-          message: `Thiết bị có mã IMEI "${match.matchedImei}" hiện đang ở trạng thái "${match.deviceStatus}" (không thể bán)!`,
-          deviceStatus: match.deviceStatus
+          message: `Thiết bị có mã IMEI "${matchedDevice.identifier || qUpper}" hiện đang ở trạng thái "${matchedDevice.status}" (không thể bán)!`,
+          deviceStatus: matchedDevice.status
         });
         return;
       }
 
+      const availableItems = await InventoryItem.find({
+        variantId: variant._id,
+        status: "available",
+        deleted: { $ne: true }
+      })
+        .select("identifier")
+        .lean();
+
+      const availableIdentifiers = availableItems.map((i: any) => i.identifier).filter(Boolean);
+      const availableStock = availableIdentifiers.length;
+
+      const wholesalePrice = Number(
+        variant.priceWholeSale && variant.priceWholeSale > 0
+          ? variant.priceWholeSale
+          : (product.priceWholeSale && product.priceWholeSale > 0
+              ? product.priceWholeSale
+              : (variant.priceNew || product.priceNew || 0))
+      );
+      const retailPrice = Number(variant.priceNew || product.priceNew || 0);
+
       res.json({
         code: "success",
         isDirectImeiMatch: true,
-        matchedImei: match.matchedImei,
+        matchedImei: matchedDevice.identifier || qUpper,
         product: {
-          _id: match.productId,
-          name: match.productName,
-          inventoryType: match.inventoryType,
-          image: match.image
+          _id: product._id,
+          name: product.name,
+          inventoryType: product.inventoryType || "imei",
+          image: product.images && product.images[0] ? product.images[0] : ""
         },
         variant: {
-          _id: match.variantId,
-          sku: match.sku,
-          attributeValues: match.attributeValues
+          _id: variant._id,
+          sku: variant.sku,
+          attributeValues: (variant.attributeValue || []).map((a: any) => ({
+            label: a.label || a.value || "",
+            value: a.value || ""
+          }))
         },
-        unitPrice: match.unitPrice,
-        priceRetail: match.priceRetail,
-        isWholesalePriced: match.isWholesalePriced,
-        availableStock: match.stock,
-        availableIdentifiers: match.availableIdentifiers
+        unitPrice: wholesalePrice,
+        priceRetail: retailPrice,
+        isWholesalePriced: Boolean((variant.priceWholeSale && variant.priceWholeSale > 0) || (product.priceWholeSale && product.priceWholeSale > 0)),
+        availableStock,
+        availableIdentifiers
       });
       return;
     }
+
+    // 2. Tìm kiếm thông minh theo Tên sản phẩm, Mã SKU, Thuộc tính
+    await ensureDefaultVariantsForProducts();
+
+    const results = await searchAndRankVariants(q, { isWholesale: true });
 
     res.json({
       code: "success",

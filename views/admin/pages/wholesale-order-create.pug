@@ -88,32 +88,44 @@ block main
         .card-header
           h5.card-title.mb-0 Thông tin đại lý nhận hàng
         .card-body.pt-0
-          .mb-3
-            label.form-label.fw-semibold(for="dealerSelect") Chọn đại lý *
-            .input-group.input-group-sm.mb-1
-              span.input-group-text.bg-light
-                i.fa-solid.fa-magnifying-glass.text-muted
-              input#dealerSearchInput.form-control(
-                type="text"
-                placeholder="Tìm nhanh theo tên, SĐT, cửa hàng..."
-                autocomplete="off"
+          .mb-3(style="position: relative; z-index: 25;")
+            label.form-label.fw-semibold(for="dealerSearchInput") Chọn đại lý *
+            input#dealerSelect(type="hidden" value="")
+            .position-relative
+              .input-group
+                span.input-group-text.bg-light
+                  i.fa-solid.fa-shop.text-muted
+                input#dealerSearchInput.form-control(
+                  type="text"
+                  placeholder="Nhập tên đại lý, SĐT, cửa hàng..."
+                  autocomplete="off"
+                )
+                button#btnClearDealer.btn.btn-outline-secondary(type="button" style="display: none;")
+                  i.fa-solid.fa-xmark
+                button#btnToggleDealerDropdown.btn.btn-outline-secondary(type="button")
+                  i.fa-solid.fa-chevron-down
+
+              #dealerDropdownList.dropdown-menu.w-100.p-1.shadow-sm(
+                style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50; max-height: 280px; overflow-y: auto; display: none;"
               )
-              button#btnClearDealerSearch.btn.btn-outline-secondary(type="button" style="display: none;")
-                i.fa-solid.fa-xmark
-            select#dealerSelect.form-select
-              option(value="") -- Chọn đại lý đã duyệt --
-              if (dealers && dealers.length > 0)
-                each d in dealers
-                  option(
-                    value=d._id
-                    data-store-name=d.storeName
-                    data-full-name=d.fullName
-                    data-phone=d.phone
-                    data-address=d.businessAddress
-                    data-tax-code=d.taxCode
-                  ) #{d.storeName} - #{d.fullName} (#{d.phone})
-              else
-                option(value="" disabled) Chưa có đại lý nào được phê duyệt
+                if (dealers && dealers.length > 0)
+                  each d in dealers
+                    .dealer-dropdown-item.p-2.rounded(
+                      data-id=d._id
+                      data-store-name=d.storeName
+                      data-full-name=d.fullName
+                      data-phone=d.phone
+                      data-address=d.businessAddress
+                      data-tax-code=d.taxCode
+                      style="cursor: pointer; border-bottom: 1px dashed #f0f0f0;"
+                    )
+                      .d-flex.justify-content-between.align-items-center
+                        strong.text-dark.small #{d.storeName}
+                        span.badge.bg-light.text-dark.border #{d.phone}
+                      .small.text-muted #{d.fullName}
+                  #dealerNoMatchMessage.p-3.text-center.text-muted.small(style="display: none;") Không tìm thấy đại lý phù hợp
+                else
+                  .p-3.text-center.text-muted.small Chưa có đại lý nào được phê duyệt
 
           #dealerDetailsSection(style="display: none;")
             .mb-2
