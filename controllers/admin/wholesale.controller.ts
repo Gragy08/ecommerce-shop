@@ -971,7 +971,7 @@ export const availableWholesaleImeis = async (req: Request, res: Response): Prom
     const items = await InventoryItem.find({
       variantId,
       status: "available",
-      deleted: false
+      deleted: { $ne: true }
     })
       .select("identifier createdAt")
       .sort({ createdAt: 1 })
@@ -1048,7 +1048,7 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
         return;
       }
 
-      const productDoc: any = await Product.findOne({ _id: item.productId, deleted: false }).lean();
+      const productDoc: any = await Product.findOne({ _id: item.productId, deleted: { $ne: true } }).lean();
       if (!productDoc) {
         res.json({ code: "error", message: `Không tìm thấy sản phẩm mã: ${item.productId}` });
         return;
@@ -1056,7 +1056,7 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
 
       let variantDoc: any = null;
       if (item.variantId && mongoose.isValidObjectId(item.variantId)) {
-        variantDoc = await ProductVariant.findOne({ _id: item.variantId, status: "active" }).lean();
+        variantDoc = await ProductVariant.findOne({ _id: item.variantId }).lean();
       }
 
       // Giá sỉ của sản phẩm
@@ -1092,26 +1092,28 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
         }
 
         // Kiểm tra tính khả dụng của từng IMEI
-        const availableCount = await InventoryItem.countDocuments({
+        const availableItems = await InventoryItem.find({
           identifier: { $in: rawIds },
-          variantId: variantDoc ? variantDoc._id : undefined,
           status: "available",
-          deleted: false
-        });
+          deleted: { $ne: true }
+        }).lean();
 
-        if (availableCount !== rawIds.length) {
+        if (availableItems.length !== rawIds.length) {
+          const foundIdentifiers = availableItems.map((i: any) => String(i.identifier).toUpperCase());
+          const missing = rawIds.filter((id) => !foundIdentifiers.includes(id));
           res.json({
             code: "error",
-            message: `Một hoặc nhiều mã IMEI của "${productDoc.name}" đã không còn ở trạng thái Có sẵn!`
+            message: `Mã IMEI [${missing.join(", ")}] của "${productDoc.name}" đã không còn ở trạng thái Có sẵn!`
           });
           return;
         }
 
         identifiers = rawIds;
         for (const imei of rawIds) {
+          const matchedInv = availableItems.find((a: any) => String(a.identifier).toUpperCase() === imei);
           imeiToSellList.push({
             imei,
-            variantId: variantDoc ? variantDoc._id : undefined,
+            variantId: matchedInv?.variantId || (variantDoc ? variantDoc._id : undefined),
             productId: productDoc._id
           });
         }
@@ -1242,7 +1244,7 @@ export const wholesaleOrderCreatePost = async (req: Request, res: Response): Pro
     for (const imeiEntry of imeiToSellList) {
       const invDoc = await InventoryItem.findOne({
         identifier: imeiEntry.imei,
-        deleted: false
+        deleted: { $ne: true }
       }).select("_id status").lean();
 
       if (invDoc) {
